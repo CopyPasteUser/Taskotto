@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Taskotto
+GenericName=Task Manager
+Comment=Monitor system resources and manage Linux processes
+Exec=taskotto
+Icon=io.github.copypasteuser.taskotto
+Terminal=false
+Categories=System;Monitor;
+Keywords=process;task;monitor;system;cpu;memory;
+StartupNotify=true

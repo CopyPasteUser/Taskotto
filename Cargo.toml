@@ -1,0 +1,20 @@
+[package]
+name = "taskotto"
+version = "1.0.0-rc.1"
+edition = "2024"
+rust-version = "1.88"
+license = "MIT"
+description = "A riceable Linux process manager and system monitor"
+repository = "https://github.com/CopyPasteUser/Taskotto"
+
+[dependencies]
+eframe = { version = "0.33", default-features = false, features = ["default_fonts", "glow", "x11", "wayland", "accesskit"] }
+libc = "0.2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.9"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = "symbols"

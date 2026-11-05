@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <title>Taskotto</title>
+  <rect x="8" y="8" width="112" height="112" rx="27" fill="#162437"/>
+  <path d="M25 69c0 21 18 35 39 35s39-14 39-35H25Z" fill="#eaf3ef"/>
+  <path d="M25 69h78" fill="none" stroke="#6cafa7" stroke-width="7" stroke-linecap="round"/>
+  <path d="M38 77h13l7-13 12 22 9-17h11" fill="none" stroke="#258b86" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M46 50c-6-8 6-11 0-20M66 50c-6-8 6-11 0-20M86 50c-6-8 6-11 0-20" fill="none" stroke="#85cdd0" stroke-width="5" stroke-linecap="round"/>
+</svg>
