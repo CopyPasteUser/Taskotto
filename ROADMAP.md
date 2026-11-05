@@ -89,7 +89,7 @@ Taskotto is a **standalone, on-demand Rust system monitor and process manager** 
 - [x] Virtualized process table; no full UI repaint loop while idle.
 - [x] Configurable sample interval (500ms–10s), no resident process when closed.
 - [x] Bounded history and no external monitoring service.
-- [x] Document reproducible headless snapshot measurement commands in QA.
+- [x] Document reproducible measured headless CLI binary size, timing and point-sampled RSS in `PERFORMANCE.md` (not GUI-equivalent).
 - [ ] Measure **GUI** cold start, idle CPU and RSS on low-end and modern machines. *Requires desktop sessions.*
 
 **Gate:** collect measured metrics, compare to `gnome-system-monitor`, `xfce4-taskmanager` and `btop` where available; avoid invented numbers.

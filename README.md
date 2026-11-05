@@ -105,6 +105,7 @@ cargo build --locked --release
 
 - [Roadmap to 1.0](ROADMAP.md) — milestones, acceptance gates and deferred enhancements.
 - [Hardware QA checklist](QA.md) — X11/Wayland, process safety and measured resource use.
+- [Performance measurements](PERFORMANCE.md) — reproducible headless baseline and GUI acceptance limits.
 - [Release candidate notes](RELEASE_NOTES.md) — implemented scope, verified checks and known limitations.
 - [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) · [Changelog](CHANGELOG.md)
 - [RiceField](https://github.com/CopyPasteUser/Ricefield) — matching standalone Rust file manager.
