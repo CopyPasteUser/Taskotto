@@ -120,9 +120,10 @@ fn run() -> Result<(), String> {
             Settings::default()
         }
     };
-    settings.theme = forced_theme
-        .or_else(configured_theme)
-        .unwrap_or(settings.theme);
+    if let Some(theme) = forced_theme.or_else(configured_theme) {
+        settings.launch_theme_original = Some(settings.theme);
+        settings.theme = theme;
+    }
     if let Some(ms) = refresh_ms {
         settings.refresh_ms = ms;
     }

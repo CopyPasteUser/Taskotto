@@ -21,7 +21,12 @@ pub struct Process {
     pub cpu_percent: f32,
     pub read_bytes: u64,
     pub written_bytes: u64,
+    pub io_accessible: bool,
+    pub read_per_second: u64,
+    pub written_per_second: u64,
     pub start_ticks: u64,
+    pub start_unix_seconds: u64,
+    pub elapsed_seconds: f64,
     #[serde(skip)]
     pub(crate) total_ticks: u64,
 }
@@ -80,7 +85,15 @@ struct Sample {
     at: Instant,
     cpu: Vec<CpuTicks>,
     io: IoTotals,
-    processes: HashMap<i32, (u64, u64)>,
+    processes: HashMap<i32, ProcessCounters>,
+}
+
+#[derive(Clone, Copy)]
+struct ProcessCounters {
+    start: u64,
+    cpu: u64,
+    read: u64,
+    written: u64,
 }
 
 #[derive(Default)]
@@ -96,7 +109,20 @@ impl Monitor {
         let uptime_seconds = read_uptime().unwrap_or_default();
         let io = read_io();
         let page_size = unsafe { libc::sysconf(libc::_SC_PAGESIZE) }.max(4096) as u64;
-        let mut processes = read_processes(page_size);
+        let mut processes = read_processes(page_size)?;
+        let ticks_per_second = unsafe { libc::sysconf(libc::_SC_CLK_TCK) }.max(1) as u64;
+        let unix_now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs();
+        for process in &mut processes {
+            (process.start_unix_seconds, process.elapsed_seconds) = process_times(
+                process.start_ticks,
+                ticks_per_second,
+                uptime_seconds,
+                unix_now,
+            );
+        }
         let logical_cpus = cpu.len().saturating_sub(1).max(1);
         let previous = self.previous.as_ref();
         let elapsed = previous
@@ -121,16 +147,21 @@ impl Monitor {
             .and_then(|old| old.cpu.first().zip(cpu.first()))
             .map_or(0, |(old, now)| now.total.saturating_sub(old.total));
         for process in &mut processes {
-            if let Some((old_start, old_ticks)) = previous
+            if let Some(old) = previous
                 .and_then(|old| old.processes.get(&process.pid))
                 .copied()
-                && old_start == process.start_ticks
-                && total_delta > 0
+                && old.start == process.start_ticks
             {
-                let delta = process.total_ticks.saturating_sub(old_ticks);
-                process.cpu_percent =
-                    ((delta as f64 / total_delta as f64) * 100.0 * logical_cpus as f64)
-                        .clamp(0.0, logical_cpus as f64 * 100.0) as f32;
+                if total_delta > 0 {
+                    let delta = process.total_ticks.saturating_sub(old.cpu);
+                    process.cpu_percent =
+                        ((delta as f64 / total_delta as f64) * 100.0 * logical_cpus as f64)
+                            .clamp(0.0, logical_cpus as f64 * 100.0) as f32;
+                }
+                if process.io_accessible {
+                    (process.read_per_second, process.written_per_second) =
+                        process_rates(process, old, elapsed);
+                }
             }
         }
 
@@ -150,7 +181,17 @@ impl Monitor {
             io,
             processes: processes
                 .iter()
-                .map(|p| (p.pid, (p.start_ticks, p.total_ticks)))
+                .map(|p| {
+                    (
+                        p.pid,
+                        ProcessCounters {
+                            start: p.start_ticks,
+                            cpu: p.total_ticks,
+                            read: p.read_bytes,
+                            written: p.written_bytes,
+                        },
+                    )
+                })
                 .collect(),
         });
         Ok(Snapshot {
@@ -171,6 +212,24 @@ fn fraction(part: u64, total: u64) -> f32 {
     } else {
         (part as f64 / total as f64).clamp(0.0, 1.0) as f32
     }
+}
+
+fn process_times(start_ticks: u64, hz: u64, uptime_seconds: f64, unix_now: u64) -> (u64, f64) {
+    if hz == 0 || uptime_seconds <= 0.0 {
+        return (0, 0.0);
+    }
+    let elapsed = (uptime_seconds - start_ticks as f64 / hz as f64).max(0.0);
+    (unix_now.saturating_sub(elapsed as u64), elapsed)
+}
+
+fn process_rates(now: &Process, old: ProcessCounters, elapsed: f64) -> (u64, u64) {
+    if old.start != now.start_ticks || elapsed <= 0.0 {
+        return (0, 0);
+    }
+    (
+        per_second(now.read_bytes, old.read, elapsed),
+        per_second(now.written_bytes, old.written, elapsed),
+    )
 }
 
 fn per_second(now: u64, previous: u64, elapsed: f64) -> u64 {
@@ -276,15 +335,13 @@ fn read_io() -> IoTotals {
     totals
 }
 
-fn read_processes(page_size: u64) -> Vec<Process> {
-    let Ok(entries) = fs::read_dir("/proc") else {
-        return Vec::new();
-    };
-    entries
+fn read_processes(page_size: u64) -> io::Result<Vec<Process>> {
+    let entries = fs::read_dir("/proc")?;
+    Ok(entries
         .flatten()
         .filter_map(|entry| entry.file_name().to_string_lossy().parse::<i32>().ok())
         .filter_map(|pid| read_process(pid, page_size).ok())
-        .collect()
+        .collect())
 }
 
 fn read_process(pid: i32, page_size: u64) -> io::Result<Process> {
@@ -310,6 +367,7 @@ fn read_process(pid: i32, page_size: u64) -> io::Result<Process> {
         }
     }
     if let Ok(io) = fs::read_to_string(directory.join("io")) {
+        process.io_accessible = true;
         for line in io.lines() {
             if let Some(raw) = line.strip_prefix("read_bytes:") {
                 process.read_bytes = raw.trim().parse().unwrap_or_default();
@@ -363,7 +421,12 @@ fn parse_process_stat(pid: i32, stat: &str, page_size: u64) -> io::Result<Proces
         cpu_percent: 0.0,
         read_bytes: 0,
         written_bytes: 0,
+        io_accessible: false,
+        read_per_second: 0,
+        written_per_second: 0,
         start_ticks: field(19)?,
+        start_unix_seconds: 0,
+        elapsed_seconds: 0.0,
         total_ticks: field(11)?.saturating_add(field(12)?),
     })
 }
@@ -403,6 +466,41 @@ mod tests {
         assert_eq!(cpu_usage(new, old), 0.0);
         assert_eq!(per_second(12, 20, 0.5), 0);
         assert_eq!(fraction(1, 0), 0.0);
+    }
+
+    #[test]
+    fn calculates_process_start_and_runtime() {
+        assert_eq!(process_times(30_000, 100, 400.0, 1_000), (900, 100.0));
+        assert_eq!(process_times(50_000, 100, 400.0, 1_000), (1_000, 0.0));
+        assert_eq!(process_times(100, 0, 400.0, 1_000), (0, 0.0));
+    }
+
+    #[test]
+    fn per_process_rates_reject_pid_reuse_and_counter_reset() {
+        let old = ProcessCounters {
+            start: 10,
+            cpu: 100,
+            read: 10_000,
+            written: 7_000,
+        };
+        let process = Process {
+            start_ticks: 10,
+            read_bytes: 12_000,
+            written_bytes: 6_000,
+            ..Process::default()
+        };
+        assert_eq!(process_rates(&process, old, 2.0), (1_000, 0));
+        assert_eq!(
+            process_rates(
+                &Process {
+                    start_ticks: 20,
+                    ..process
+                },
+                old,
+                2.0
+            ),
+            (0, 0)
+        );
     }
 
     #[test]

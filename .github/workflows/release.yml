@@ -27,7 +27,7 @@ jobs:
           install -Dm755 target/release/taskotto dist/taskotto/taskotto
           install -Dm644 packaging/io.github.copypasteuser.taskotto.desktop dist/taskotto/io.github.copypasteuser.taskotto.desktop
           install -Dm644 assets/io.github.copypasteuser.taskotto.svg dist/taskotto/io.github.copypasteuser.taskotto.svg
-          install -Dm644 README.md LICENSE QA.md RELEASE_NOTES.md dist/taskotto/
+          install -Dm644 README.md LICENSE QA.md RELEASE_NOTES.md CHANGELOG.md SECURITY.md dist/taskotto/
           tar -C dist -czf "taskotto-${GITHUB_REF_NAME}-linux-x86_64.tar.gz" taskotto
           sha256sum "taskotto-${GITHUB_REF_NAME}-linux-x86_64.tar.gz" > "taskotto-${GITHUB_REF_NAME}-SHA256SUMS.txt"
       - name: Publish GitHub release

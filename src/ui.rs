@@ -1,14 +1,15 @@
 use crate::{
     actions::{SignalAction, send_signal},
-    config::{Density, Settings, SortBy, Theme, is_hex_color},
+    config::{Density, LayoutMode, Settings, SortBy, Theme, is_hex_color},
     format,
     monitor::{Monitor, Process, Snapshot},
+    theme::ThemeStyle,
 };
 use eframe::egui::{self, Color32, RichText, Sense, Stroke, Vec2};
 use std::{
     collections::{HashMap, HashSet, VecDeque},
     io,
-    sync::mpsc::{self, Receiver, Sender},
+    sync::mpsc::{self, Receiver, Sender, TrySendError},
     thread::{self, JoinHandle},
     time::Duration,
 };
@@ -36,16 +37,19 @@ struct Worker {
 impl Worker {
     fn start(interval: u64, ctx: egui::Context) -> Self {
         let (commands, rx) = mpsc::channel();
-        let (tx, snapshots) = mpsc::channel();
+        // A minimized window may stop consuming frames. Never retain an
+        // unlimited number of full process snapshots in that case.
+        let (tx, snapshots) = mpsc::sync_channel(1);
         let thread = thread::spawn(move || {
             let mut monitor = Monitor::default();
             let mut interval = interval;
             loop {
                 let result = monitor.sample();
-                if tx.send(result).is_err() {
-                    break;
+                match tx.try_send(result) {
+                    Ok(()) => ctx.request_repaint(),
+                    Err(TrySendError::Full(_)) => {}
+                    Err(TrySendError::Disconnected(_)) => break,
                 }
-                ctx.request_repaint();
                 loop {
                     match rx.recv_timeout(Duration::from_millis(interval)) {
                         Ok(Command::Refresh) | Err(mpsc::RecvTimeoutError::Timeout) => break,
@@ -78,6 +82,8 @@ struct History {
     memory: VecDeque<f32>,
     received: VecDeque<f32>,
     sent: VecDeque<f32>,
+    disk_read: VecDeque<f32>,
+    disk_write: VecDeque<f32>,
 }
 
 impl History {
@@ -90,6 +96,14 @@ impl History {
                 snapshot.rates.received_per_second as f32,
             ),
             (&mut self.sent, snapshot.rates.sent_per_second as f32),
+            (
+                &mut self.disk_read,
+                snapshot.rates.disk_read_per_second as f32,
+            ),
+            (
+                &mut self.disk_write,
+                snapshot.rates.disk_write_per_second as f32,
+            ),
         ] {
             if queue.len() == 120 {
                 queue.pop_front();
@@ -122,6 +136,8 @@ pub struct TaskottoApp {
     pending: Option<PendingAction>,
     notification: Option<String>,
     theme_accent_input: String,
+    theme_surface_input: String,
+    theme_text_input: String,
     my_uid: u32,
     users: HashMap<u32, String>,
 }
@@ -134,6 +150,8 @@ impl TaskottoApp {
     ) -> Self {
         apply_theme(&context.egui_ctx, &settings);
         let accent_input = settings.accent_hex.clone().unwrap_or_default();
+        let surface_input = settings.surface_hex.clone().unwrap_or_default();
+        let text_input = settings.text_hex.clone().unwrap_or_default();
         Self {
             worker: Worker::start(settings.refresh_ms, context.egui_ctx.clone()),
             settings,
@@ -146,6 +164,8 @@ impl TaskottoApp {
             pending: None,
             notification: warning,
             theme_accent_input: accent_input,
+            theme_surface_input: surface_input,
+            theme_text_input: text_input,
             my_uid: unsafe { libc::geteuid() },
             users: load_users(),
         }
@@ -219,6 +239,7 @@ impl TaskottoApp {
             let order = match self.settings.sort_by {
                 SortBy::Cpu => a.cpu_percent.total_cmp(&b.cpu_percent),
                 SortBy::Memory => a.resident_bytes.cmp(&b.resident_bytes),
+                SortBy::Io => process_io_rate(a).cmp(&process_io_rate(b)),
                 SortBy::Name => a.name.to_lowercase().cmp(&b.name.to_lowercase()),
                 SortBy::Pid => a.pid.cmp(&b.pid),
             };
@@ -277,6 +298,7 @@ impl TaskottoApp {
             let cmp = match self.settings.sort_by {
                 SortBy::Cpu => a.cpu_percent.total_cmp(&b.cpu_percent),
                 SortBy::Memory => a.resident_bytes.cmp(&b.resident_bytes),
+                SortBy::Io => process_io_rate(a).cmp(&process_io_rate(b)),
                 SortBy::Name => a.name.to_lowercase().cmp(&b.name.to_lowercase()),
                 SortBy::Pid => a.pid.cmp(&b.pid),
             };
@@ -325,6 +347,23 @@ impl TaskottoApp {
     }
 
     fn nav(&mut self, ctx: &egui::Context) {
+        if self.settings.layout_mode.resolve(self.settings.theme) == LayoutMode::TopTabs {
+            egui::TopBottomPanel::top("navigation-tabs").show(ctx, |ui| {
+                ui.horizontal_wrapped(|ui| {
+                    for (page, label) in [
+                        (Page::Processes, "Processes"),
+                        (Page::Performance, "Performance"),
+                        (Page::Details, "Details"),
+                        (Page::Preferences, "Preferences"),
+                    ] {
+                        if ui.selectable_label(self.page == page, label).clicked() {
+                            self.page = page;
+                        }
+                    }
+                });
+            });
+            return;
+        }
         egui::SidePanel::left("navigation")
             .resizable(false)
             .exact_width(156.0)
@@ -432,12 +471,21 @@ impl TaskottoApp {
             });
             return;
         }
-        let height = if self.settings.density == Density::Compact {
+        let default_height = if self.settings.density == Density::Compact {
             26.0
         } else {
             34.0
         };
-        let label_width = (ui.available_width() - 355.0).max(145.0);
+        let height = self.settings.table_row_height.unwrap_or(default_height);
+        let show_io = self.settings.show_io_column && ui.available_width() >= 780.0;
+        let show_user = self.settings.show_user_column && ui.available_width() >= 560.0;
+        let reserved = 58.0
+            + 68.0
+            + 91.0
+            + if show_io { 104.0 } else { 0.0 }
+            + if show_user { 110.0 } else { 0.0 }
+            + 28.0;
+        let label_width = (ui.available_width() - reserved).max(135.0);
         ui.horizontal(|ui| {
             ui.add_sized(
                 [label_width, 21.0],
@@ -455,7 +503,15 @@ impl TaskottoApp {
                 [91.0, 21.0],
                 egui::Label::new(RichText::new("MEMORY").strong().small()),
             );
-            ui.label(RichText::new("USER").strong().small());
+            if show_io {
+                ui.add_sized(
+                    [104.0, 21.0],
+                    egui::Label::new(RichText::new("I/O RATE").strong().small()),
+                );
+            }
+            if show_user {
+                ui.label(RichText::new("USER").strong().small());
+            }
         });
         ui.separator();
         egui::ScrollArea::vertical()
@@ -488,12 +544,24 @@ impl TaskottoApp {
                             [91.0, height],
                             egui::Label::new(format::bytes(p.resident_bytes)),
                         );
-                        ui.label(
-                            self.users
-                                .get(&p.user_id)
-                                .cloned()
-                                .unwrap_or_else(|| p.user_id.to_string()),
-                        );
+                        if show_io {
+                            ui.add_sized(
+                                [104.0, height],
+                                egui::Label::new(if p.io_accessible {
+                                    format::rate(process_io_rate(p))
+                                } else {
+                                    "Unavailable".to_owned()
+                                }),
+                            );
+                        }
+                        if show_user {
+                            ui.label(
+                                self.users
+                                    .get(&p.user_id)
+                                    .cloned()
+                                    .unwrap_or_else(|| p.user_id.to_string()),
+                            );
+                        }
                     });
                 }
             });
@@ -549,9 +617,15 @@ impl TaskottoApp {
                 columns[0].label(RichText::new("Network (all interfaces except loopback)").strong());
                 columns[0].label(format!("↓  {}", format::rate(snapshot.rates.received_per_second)));
                 columns[0].label(format!("↑  {}", format::rate(snapshot.rates.sent_per_second)));
+                let network_max = graph_max(&self.history.received, &self.history.sent);
+                chart(&mut columns[0], &self.history.received, network_max, accent);
+                chart(&mut columns[0], &self.history.sent, network_max, Color32::from_rgb(82, 173, 155));
                 columns[1].label(RichText::new("Block devices").strong());
                 columns[1].label(format!("Read  {}", format::rate(snapshot.rates.disk_read_per_second)));
                 columns[1].label(format!("Write  {}", format::rate(snapshot.rates.disk_write_per_second)));
+                let disk_max = graph_max(&self.history.disk_read, &self.history.disk_write);
+                chart(&mut columns[1], &self.history.disk_read, disk_max, accent);
+                chart(&mut columns[1], &self.history.disk_write, disk_max, Color32::from_rgb(82, 173, 155));
             });
             ui.add_space(12.0);
             ui.label(RichText::new("The first sample has no rate baseline. Network totals can include virtual interfaces; disk data represents block-layer traffic, not filesystem-only I/O.").small().weak());
@@ -586,14 +660,30 @@ impl TaskottoApp {
                             .unwrap_or_else(|| process.user_id.to_string()),
                     ),
                     ("State", state_name(process.state).to_owned()),
+                    (
+                        "Started (local)",
+                        format::local_timestamp(process.start_unix_seconds),
+                    ),
+                    ("Runtime", format::process_age(process.elapsed_seconds)),
                     ("CPU", format!("{:.1}%", process.cpu_percent)),
                     ("Resident memory", format::bytes(process.resident_bytes)),
                     ("Virtual memory", format::bytes(process.virtual_bytes)),
                     ("Threads", process.threads.to_string()),
-                    ("Disk read (cumulative)", format::bytes(process.read_bytes)),
+                    (
+                        "Disk read (cumulative)",
+                        format_process_io(process.io_accessible, process.read_bytes, false),
+                    ),
+                    (
+                        "Disk read / second",
+                        format_process_io(process.io_accessible, process.read_per_second, true),
+                    ),
                     (
                         "Disk written (cumulative)",
-                        format::bytes(process.written_bytes),
+                        format_process_io(process.io_accessible, process.written_bytes, false),
+                    ),
+                    (
+                        "Disk written / second",
+                        format_process_io(process.io_accessible, process.written_per_second, true),
                     ),
                 ] {
                     ui.label(RichText::new(name).weak());
@@ -640,7 +730,10 @@ impl TaskottoApp {
                     .selected_text(self.settings.theme.label())
                     .show_ui(ui, |ui| {
                         for theme in Theme::ALL {
-                            changed |= ui.selectable_value(&mut self.settings.theme, theme, theme.label()).changed();
+                            if ui.selectable_value(&mut self.settings.theme, theme, theme.label()).changed() {
+                                self.settings.launch_theme_original = None;
+                                changed = true;
+                            }
                         }
                     });
             });
@@ -649,6 +742,31 @@ impl TaskottoApp {
                 changed |= ui.radio_value(&mut self.settings.density, Density::Compact, "Compact").changed();
                 changed |= ui.radio_value(&mut self.settings.density, Density::Comfortable, "Comfortable").changed();
             });
+            ui.horizontal(|ui| {
+                ui.label("Navigation");
+                egui::ComboBox::from_id_salt("layout-choice")
+                    .selected_text(match self.settings.layout_mode {
+                        LayoutMode::Auto => "Automatic",
+                        LayoutMode::Sidebar => "Sidebar",
+                        LayoutMode::TopTabs => "Top tabs",
+                    })
+                    .show_ui(ui, |ui| {
+                        changed |= ui.selectable_value(&mut self.settings.layout_mode, LayoutMode::Auto, "Automatic per profile").changed();
+                        changed |= ui.selectable_value(&mut self.settings.layout_mode, LayoutMode::Sidebar, "Sidebar").changed();
+                        changed |= ui.selectable_value(&mut self.settings.layout_mode, LayoutMode::TopTabs, "Top tabs").changed();
+                    });
+            });
+            changed |= ui.add(egui::Slider::new(&mut self.settings.font_scale, 0.8..=1.5).text("Font scale")).changed();
+            changed |= ui.add(egui::Slider::new(&mut self.settings.ui_spacing, 3.0..=16.0).text("Widget spacing")).changed();
+            let mut radius = self.settings.corner_radius.unwrap_or_else(|| ThemeStyle::from_settings(&self.settings).rounding);
+            if ui.add(egui::Slider::new(&mut radius, 0..=16).text("Corner radius")).changed() {
+                self.settings.corner_radius = Some(radius);
+                changed = true;
+            }
+            if self.settings.corner_radius.is_some() && ui.small_button("Use profile's default corners").clicked() {
+                self.settings.corner_radius = None;
+                changed = true;
+            }
             ui.horizontal(|ui| {
                 ui.label("Accent color (optional #RRGGBB)");
                 let response = ui.add(egui::TextEdit::singleline(&mut self.theme_accent_input).desired_width(130.0));
@@ -661,6 +779,37 @@ impl TaskottoApp {
                     }
                 }
             });
+            for (label, input, destination) in [
+                ("Surface color (optional #RRGGBB)", &mut self.theme_surface_input, &mut self.settings.surface_hex),
+                ("Text color (optional #RRGGBB)", &mut self.theme_text_input, &mut self.settings.text_hex),
+            ] {
+                ui.horizontal(|ui| {
+                    ui.label(label);
+                    let response = ui.add(egui::TextEdit::singleline(input).desired_width(130.0));
+                    if response.lost_focus() {
+                        if input.is_empty() || is_hex_color(input) {
+                            *destination = if input.is_empty() { None } else { Some(input.clone()) };
+                            changed = true;
+                        } else {
+                            self.notification = Some(format!("{label} must be a #RRGGBB color"));
+                        }
+                    }
+                });
+            }
+            ui.label(RichText::new("Low-contrast text colors automatically fall back to a readable color.").small().weak());
+            ui.add_space(18.0);
+            ui.heading("Process table");
+            changed |= ui.checkbox(&mut self.settings.show_io_column, "Show I/O rate (wide windows)").changed();
+            changed |= ui.checkbox(&mut self.settings.show_user_column, "Show user (wide windows)").changed();
+            let mut row_height = self.settings.table_row_height.unwrap_or(if self.settings.density == Density::Compact { 26.0 } else { 34.0 });
+            if ui.add(egui::Slider::new(&mut row_height, 22.0..=48.0).text("Row height")).changed() {
+                self.settings.table_row_height = Some(row_height);
+                changed = true;
+            }
+            if self.settings.table_row_height.is_some() && ui.small_button("Use default row height").clicked() {
+                self.settings.table_row_height = None;
+                changed = true;
+            }
             ui.add_space(18.0);
             ui.heading("Monitoring");
             changed |= ui.add(egui::Slider::new(&mut self.settings.refresh_ms, 500..=10_000).text("Refresh interval (ms)")).changed();
@@ -672,6 +821,8 @@ impl TaskottoApp {
             if ui.button("Reset to defaults").clicked() {
                 self.settings = Settings::default();
                 self.theme_accent_input.clear();
+                self.theme_surface_input.clear();
+                self.theme_text_input.clear();
                 changed = true;
             }
             ui.add_space(10.0);
@@ -811,6 +962,22 @@ fn is_kernel_thread(process: &Process) -> bool {
     process.pid == 2 || process.parent_pid == 2
 }
 
+fn process_io_rate(process: &Process) -> u64 {
+    process
+        .read_per_second
+        .saturating_add(process.written_per_second)
+}
+
+fn format_process_io(accessible: bool, value: u64, per_second: bool) -> String {
+    if !accessible {
+        "Unavailable (permissions)".to_string()
+    } else if per_second {
+        format::rate(value)
+    } else {
+        format::bytes(value)
+    }
+}
+
 fn state_name(state: char) -> &'static str {
     match state {
         'R' => "Running",
@@ -860,70 +1027,21 @@ fn chart(ui: &mut egui::Ui, values: &VecDeque<f32>, max_value: f32, color: Color
         .add(egui::Shape::line(points, Stroke::new(2.0_f32, color)));
 }
 
+fn graph_max(first: &VecDeque<f32>, second: &VecDeque<f32>) -> f32 {
+    first
+        .iter()
+        .chain(second.iter())
+        .copied()
+        .filter(|value| value.is_finite())
+        .fold(1.0, f32::max)
+}
+
 fn accent_color(settings: &Settings) -> Color32 {
-    if let Some(hex) = settings
-        .accent_hex
-        .as_deref()
-        .filter(|color| is_hex_color(color))
-        && let (Ok(r), Ok(g), Ok(b)) = (
-            u8::from_str_radix(&hex[1..3], 16),
-            u8::from_str_radix(&hex[3..5], 16),
-            u8::from_str_radix(&hex[5..7], 16),
-        )
-    {
-        return Color32::from_rgb(r, g, b);
-    }
-    match settings.theme {
-        Theme::System => Color32::from_rgb(130, 180, 255),
-        Theme::Windows98 => Color32::from_rgb(0, 128, 128),
-        Theme::XpLuna => Color32::from_rgb(48, 105, 215),
-        Theme::Windows7 => Color32::from_rgb(43, 138, 195),
-        Theme::Windows10 => Color32::from_rgb(0, 120, 215),
-        Theme::FrutigerAero => Color32::from_rgb(37, 149, 114),
-        Theme::Chromeos => Color32::from_rgb(68, 125, 220),
-        Theme::Macos => Color32::from_rgb(24, 118, 238),
-    }
+    ThemeStyle::from_settings(settings).accent
 }
 
 fn apply_theme(ctx: &egui::Context, settings: &Settings) {
-    let light = matches!(
-        settings.theme,
-        Theme::Windows98
-            | Theme::XpLuna
-            | Theme::Windows7
-            | Theme::FrutigerAero
-            | Theme::Chromeos
-            | Theme::Macos
-    );
-    let mut visuals = if light {
-        egui::Visuals::light()
-    } else {
-        egui::Visuals::dark()
-    };
-    let accent = accent_color(settings);
-    visuals.selection.bg_fill = accent;
-    visuals.hyperlink_color = accent;
-    visuals.widgets.active.bg_fill = accent;
-    if settings.theme == Theme::Windows98 {
-        visuals.panel_fill = Color32::from_rgb(196, 196, 196);
-        visuals.window_fill = visuals.panel_fill;
-        visuals.widgets.noninteractive.corner_radius = egui::CornerRadius::ZERO;
-        visuals.widgets.inactive.corner_radius = egui::CornerRadius::ZERO;
-    }
-    if settings.theme == Theme::XpLuna {
-        visuals.panel_fill = Color32::from_rgb(237, 235, 222);
-    }
-    if settings.theme == Theme::FrutigerAero {
-        visuals.panel_fill = Color32::from_rgb(226, 243, 238);
-    }
-    ctx.set_visuals(visuals);
-    let mut style = (*ctx.style()).clone();
-    style.spacing.item_spacing = if settings.density == Density::Compact {
-        Vec2::new(6.0, 3.0)
-    } else {
-        Vec2::new(8.0, 6.0)
-    };
-    ctx.set_style(style);
+    ThemeStyle::from_settings(settings).apply(ctx, settings);
 }
 
 #[cfg(test)]
@@ -934,6 +1052,10 @@ mod tests {
     fn missing_user_data_does_not_crash() {
         assert_eq!(state_name('Z'), "Zombie");
         assert_eq!(state_name('?'), "Other");
+        assert_eq!(
+            format_process_io(false, 0, true),
+            "Unavailable (permissions)"
+        );
     }
 
     #[test]
@@ -952,6 +1074,24 @@ mod tests {
             history.record(&snapshot);
         }
         assert_eq!(history.cpu.len(), 120);
+        assert_eq!(history.disk_read.len(), 120);
+    }
+
+    #[test]
+    fn throughput_scale_handles_idle_and_nonfinite_samples() {
+        assert_eq!(graph_max(&VecDeque::new(), &VecDeque::new()), 1.0);
+        assert_eq!(
+            graph_max(&VecDeque::from([f32::NAN, 3.0]), &VecDeque::from([5.0])),
+            5.0
+        );
+    }
+
+    #[test]
+    fn worker_does_not_accumulate_unbounded_pending_snapshots() {
+        let worker = Worker::start(500, egui::Context::default());
+        // An occluded/minimized GUI may not poll for an arbitrarily long time.
+        std::thread::sleep(Duration::from_millis(1_250));
+        assert!(worker.snapshots.try_iter().count() <= 1);
     }
 
     #[test]
@@ -1028,6 +1168,8 @@ mod tests {
             pending: None,
             notification: None,
             theme_accent_input: String::new(),
+            theme_surface_input: String::new(),
+            theme_text_input: String::new(),
             my_uid: 1000,
             users: HashMap::new(),
         };
@@ -1046,5 +1188,49 @@ mod tests {
                 app.preferences_page(ui);
             });
         });
+    }
+
+    #[test]
+    fn all_rice_profiles_layout_at_minimum_and_desktop_sizes() {
+        let ctx = egui::Context::default();
+        let mut settings = Settings::default();
+        let mut app = TaskottoApp {
+            worker: Worker::start(10_000, ctx.clone()),
+            settings: settings.clone(),
+            snapshot: None,
+            history: History::default(),
+            page: Page::Processes,
+            query: String::new(),
+            focus_search: false,
+            selected: None,
+            pending: None,
+            notification: None,
+            theme_accent_input: String::new(),
+            theme_surface_input: String::new(),
+            theme_text_input: String::new(),
+            my_uid: 1000,
+            users: HashMap::new(),
+        };
+        for theme in Theme::ALL {
+            for dimensions in [(650.0, 420.0), (1440.0, 900.0)] {
+                settings.theme = theme;
+                app.settings = settings.clone();
+                apply_theme(&ctx, &app.settings);
+                let input = egui::RawInput {
+                    screen_rect: Some(egui::Rect::from_min_size(
+                        egui::Pos2::ZERO,
+                        Vec2::new(dimensions.0, dimensions.1),
+                    )),
+                    ..Default::default()
+                };
+                let _ = ctx.run(input, |ctx| {
+                    app.topbar(ctx);
+                    app.nav(ctx);
+                    egui::CentralPanel::default().show(ctx, |ui| {
+                        app.processes_page(ui);
+                    });
+                });
+            }
+        }
     }
 }
