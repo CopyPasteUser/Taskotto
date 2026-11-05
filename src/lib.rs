@@ -5,4 +5,5 @@ pub mod config;
 pub mod desktop;
 pub mod format;
 pub mod monitor;
+pub mod theme;
 pub mod ui;
