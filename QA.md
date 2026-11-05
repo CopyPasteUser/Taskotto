@@ -9,14 +9,17 @@ Run this checklist before a stable 1.0 tag. Record distro, kernel, display serve
 - [ ] labwc / Wayland: launch without XFCE/KDE services; confirm no missing runtime dependencies.
 - [ ] At 650×420 and at a large desktop resolution, all controls remain reachable.
 - [ ] Tab through controls and use Ctrl+F, F5, Escape.
-- [ ] Switch each of the 8 profiles, compact mode and custom accent; close/reopen and verify persistence.
+- [ ] Switch all 8 profiles, density, custom accent/surface/text, font scale, spacing, corners, table columns/row height and sidebar/top-tabs; reopen and verify persistence.
 - [ ] Launch with `RICEBOWL_RICE=windows7 taskotto` and explicit `--theme xp-luna` override.
+- [ ] Confirm the launcher override does not replace the saved theme after changing another setting.
+- [ ] Test malformed `config.toml`: error shown, defaults active; original saved as `config.invalid-*.toml` after editing preferences.
 
 ## Process data and actions
 
 - [ ] Compare process CPU/RSS, host RAM, per-core CPU, uptime with `top`/`free`/`uptime`.
 - [ ] Compare network and disk rates during a known I/O operation.
-- [ ] Search by name, command, PID and user; sort each column and toggle tree mode.
+- [ ] Compare process start/runtime and read/write rates against `/proc/<PID>/stat` and `/proc/<PID>/io` for permitted processes.
+- [ ] Search by name, command, PID and user; sort CPU/RAM/I/O/PID/name and toggle tree mode.
 - [ ] Launch a disposable `sleep 1000` process; pause, resume and terminate it after confirmation.
 - [ ] Use the Force kill dialog only on a disposable test process; check warning text.
 - [ ] Attempt a signal to an inaccessible process; UI reports permission denied.
@@ -36,6 +39,7 @@ ps -C taskotto -o pid,rss,%cpu,etime,cmd
 - [ ] Same on a modern Wayland desktop.
 - [ ] Repeat at 500ms, 1500ms and 10000ms refresh periods.
 - [ ] Verify no taskotto worker remains after closing the window.
+- [ ] Minimize for 10 minutes, restore and verify fresh readings without a growing snapshot backlog.
 - [ ] Record results, kernel, display server, and system load in release notes.
 
 ## Sign-off

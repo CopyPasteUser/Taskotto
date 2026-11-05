@@ -24,8 +24,8 @@ Taskotto is a **standalone, on-demand Rust system monitor and process manager** 
 
 ## 0.2 — Process management
 
-- [x] Search, CPU/RAM/PID/name sorting, live process list.
-- [x] Process details, parent PID, state, thread count, command and I/O.
+- [x] Search, CPU/RAM/I/O/PID/name sorting, live process list.
+- [x] Process details, parent PID, state, thread count, command, start/runtime, I/O totals and rates.
 - [x] Graceful terminate, force kill, pause and resume with confirmation.
 - [x] Linux `pidfd` signals plus process start-time validation; no PID reuse race in the final signal.
 - [x] Permission and process-exit errors shown without application crashes.
@@ -36,9 +36,9 @@ Taskotto is a **standalone, on-demand Rust system monitor and process manager** 
 ## 0.3 — Performance view
 
 - [x] Total CPU and per-core usage, memory and swap.
-- [x] Rolling CPU/memory graphs and update interval.
+- [x] Rolling CPU/memory/network/disk graphs and update interval.
 - [x] Network RX/TX and block I/O rates, with correct units and caveats.
-- [x] Non-blocking sampler worker, rate baselines and bounded history.
+- [x] Non-blocking sampler worker, rate baselines, bounded history and one-slot snapshot queue.
 
 **Gate:** compare readings with `top`, `free`, `/proc/stat`, `/proc/net/dev` and `/proc/diskstats`. Document double-counting risks with virtual interfaces.
 
@@ -46,8 +46,9 @@ Taskotto is a **standalone, on-demand Rust system monitor and process manager** 
 
 - [x] Independent theme presets for Classic 98, Luna, Seven, Modern 10, Aero, Chrome and Mac.
 - [x] Compact and comfortable density.
-- [x] Optional accent hex override and persisted TOML settings.
+- [x] Data-driven colors/typography/spacing/corners, responsive table columns/row heights, layout variants and persisted TOML settings.
 - [x] Theme selection via `--theme` and opt-in RiceBowl environment contract.
+- [x] Session-only launcher overrides and readable-contrast fallback for custom text colors.
 
 **Gate:** no Microsoft, Google or Apple logos/assets; demonstrate theme and density switching without restart.
 
@@ -57,7 +58,7 @@ Taskotto is a **standalone, on-demand Rust system monitor and process manager** 
 - [x] Search focus with Ctrl+F, manual refresh with F5.
 - [x] Empty, error and confirmation states.
 - [x] No automatic elevated permissions, no actions on PID 1 or Taskotto itself.
-- [x] Show read/save failures rather than silently overwriting invalid preferences.
+- [x] Show read/save failures and back up malformed preferences before replacing the file.
 - [ ] Hardware UX acceptance on Mint (X11), Fedora KDE (Wayland), and labwc. *Needs the user's actual devices.*
 
 **Gate:** keyboard navigation, readable labels, graph scaling and selection remain usable when process list changes.
@@ -88,13 +89,15 @@ Taskotto is a **standalone, on-demand Rust system monitor and process manager** 
 - [x] Virtualized process table; no full UI repaint loop while idle.
 - [x] Configurable sample interval (500ms–10s), no resident process when closed.
 - [x] Bounded history and no external monitoring service.
-- [ ] Measure cold start, idle CPU and RSS on low-end and modern machines; record reproducible results.
+- [x] Document reproducible headless snapshot measurement commands in QA.
+- [ ] Measure **GUI** cold start, idle CPU and RSS on low-end and modern machines. *Requires desktop sessions.*
 
 **Gate:** collect measured metrics, compare to `gnome-system-monitor`, `xfce4-taskmanager` and `btop` where available; avoid invented numbers.
 
 ## 0.9 — Release candidate
 
-- [x] Buildable `1.0.0-rc.1` candidate with a headless layout smoke test and integration tests.
+- [x] Buildable `1.0.0-rc.2` candidate with all-profile small/large headless layout and integration tests.
+- [x] Contributor/security policies, dependency-update configuration and CI checks.
 - [ ] X11/Wayland screenshot and interaction walkthrough.
 - [ ] Complete hardware test checklist (`QA.md`) with recorded results.
 - [ ] Packaging/desktop integration acceptance.
@@ -111,7 +114,15 @@ Taskotto is a **standalone, on-demand Rust system monitor and process manager** 
 
 ### After 1.0 (not blockers)
 
-Optional per-GPU utilization (driver-specific), container/cgroup view, separate process inspector, more RiceBowl-specific window chrome, and profile-dependent layout modes. These must not burden the baseline runtime.
+Optional per-GPU utilization (driver-specific), container/cgroup view, separate process inspector and more RiceBowl-specific window chrome. These must not burden the baseline runtime.
+
+## Remaining 1.0 release gate
+
+1. **Automated:** exact RC commit passes formatting, Clippy, tests, release build, headless JSON and process-signal integration checks in CI.
+2. **GUI:** launch, resize, navigate, persist profiles and signal disposable processes on Mint/X11, KDE/Wayland and labwc/Wayland.
+3. **Efficiency:** measure three GUI runs of RSS, idle CPU and startup at 500/1500/10000 ms; record kernel, system load and hardware.
+4. **Packaging:** verify installed `.desktop` entry and release binary on representative sessions.
+5. **Stable:** only after these gates pass, bump to `1.0.0` and create the stable release; until then maintain an accurately labelled prerelease.
 
 ### Why this architecture?
 
