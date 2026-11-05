@@ -1,40 +1,92 @@
 <div align="center">
 
-# Taskotto
+# 🍚 Taskotto
 
 **The Linux task manager, served your way.**
 
-A planned **lightweight, customizable process manager and system monitor** for Linux, written in Rust and designed for the [RiceBowl desktop ecosystem](https://github.com/CopyPasteUser/Ricebowl).
+A customizable process manager and system monitor written in **Rust**. Runs alone or alongside [RiceBowl](https://github.com/CopyPasteUser/Ricebowl) on **X11 and Wayland**.
+
+![License](https://img.shields.io/badge/license-MIT-blue) ![Rust](https://img.shields.io/badge/language-Rust-orange) ![Status](https://img.shields.io/badge/status-1.0%20release%20candidate-yellow)
 
 </div>
 
-> **Project status: planning / repository bootstrap.** There is no working task manager, installer or release yet. The features below describe the intended scope.
+> **Status:** `1.0.0-rc.1` — the scoped feature set is implemented and automated tests pass. **Not a certified stable 1.0 yet:** real X11/Wayland GUI and resource-use acceptance remain. See [roadmap](ROADMAP.md) and [QA checklist](QA.md).
 
-## The idea
+## What works
 
-Taskotto will combine the utility of a traditional process manager with the flexibility of a riceable interface:
+- **Processes:** searchable live list, CPU/RAM/PID/name sort, tree, user filter and detailed stats.
+- **Safe actions:** terminate, force kill, pause and resume with confirmation and PID-reuse protection via Linux `pidfd`.
+- **Performance:** CPU/core load, RAM/swap, network and disk I/O rates, rolling graphs.
+- **Riceable:** 8 profiles, compact/comfortable density, custom accent and persistent TOML preferences.
+- **Independent:** no root service, no resident daemon, no RiceBowl or desktop-shell dependency.
+- **Headless:** `--snapshot --json` is available without a graphical session.
 
-- **Processes:** searchable and sortable process list, tree, details and resource usage.
-- **Performance:** CPU, memory, disk and network activity with clear units and update controls.
-- **Actions:** deliberate, permission-aware process termination and other supported Linux actions.
-- **Customization:** compact/classic and modern layouts, colors, density and accessible keyboard navigation.
-- **Desktop integration:** stand-alone operation first, optional RiceBowl theme synchronization later.
-- **Efficiency:** low idle CPU/RAM usage, measured on real hardware rather than advertised estimates.
+<details>
+<summary>Available Rice themes</summary>
 
-No extra privileged daemon, always-on background service or desktop environment will be required just to view processes.
+Taskotto dark, Classic 98, XP Luna, Windows 7, Windows 10, Frutiger Aero, ChromeOS and macOS-inspired. All assets are original; no proprietary OS icons are included.
 
-## Planned milestones
+</details>
 
-1. **Foundation:** Rust application, Linux process snapshot model, tests and baseline benchmarks.
-2. **Useful first version:** process list, filtering, details, CPU/memory meters and safe process actions.
-3. **Customizable UI:** multiple layouts, persistent preferences and theme configuration.
-4. **RiceBowl integration:** opt-in theme profile hand-off, packaging and hardware acceptance.
+## Build and run
 
-The UI toolkit and implementation details will be selected after a small performance/compatibility prototype. Taskotto is not yet a dependency of RiceBowl.
+Requires Linux, Rust 1.88+ and a working X11 or Wayland session with OpenGL support.
 
-## Related projects
+```bash
+git clone https://github.com/CopyPasteUser/Taskotto.git
+cd Taskotto
+cargo run --release
+```
 
-- [RiceBowl](https://github.com/CopyPasteUser/Ricebowl) — the modular Linux desktop environment in development.
-- [RiceField](https://github.com/CopyPasteUser/Ricefield) — the separate Rust file manager, currently a 1.0 release candidate.
+The first compilation may take a while because of the GUI toolkit. Later starts do not recompile.
 
-Licensed under [MIT](LICENSE). Contributions and design discussions can begin before the first executable release.
+### Install for your user
+
+```bash
+cargo install --path . --locked
+taskotto --install-desktop
+```
+
+The installer creates a user-local application entry with the executable's absolute path, so the menu does not depend on your graphical session's `PATH`. Then launch **Taskotto** from the applications menu.
+
+## Controls
+
+| Action | Shortcut / command |
+| --- | --- |
+| Search processes | `Ctrl+F` |
+| Refresh immediately | `F5` |
+| Clear search / dismiss confirmation | `Esc` |
+| Show system snapshot | `taskotto --snapshot` |
+| JSON snapshot | `taskotto --snapshot --json` |
+| Choose a rice | `taskotto --theme xp-luna` |
+| Reduce polling | `taskotto --refresh-ms 5000` |
+
+Select a process to see **Details** and signal actions. A confirmation dialog appears before any signal. Taskotto uses only the permissions of the current user and refuses signals to PID 1 and itself.
+
+### RiceBowl integration
+
+RiceBowl can pass its current rice when launching Taskotto:
+
+```bash
+RICEBOWL_RICE=windows7 taskotto
+```
+
+The `--theme` flag overrides this environment variable. Preferences are stored at `~/.config/taskotto/config.toml` or the XDG config location. No external service or theme assets are needed.
+
+## Development
+
+```bash
+cargo fmt --all -- --check
+cargo clippy --locked --all-targets -- -D warnings
+cargo test --locked --all-targets
+cargo build --locked --release
+```
+
+- [Roadmap to 1.0](ROADMAP.md) — milestones, acceptance gates and deferred enhancements.
+- [Hardware QA checklist](QA.md) — X11/Wayland, process safety and measured resource use.
+- [Release candidate notes](RELEASE_NOTES.md) — implemented scope, verified checks and known limitations.
+- [RiceField](https://github.com/CopyPasteUser/Ricefield) — matching standalone Rust file manager.
+
+**Limitations:** Linux only. The first sample has no historical CPU/I/O baseline. Disk rates are block-device totals, and network rates sum interfaces excluding loopback (virtual interfaces can double-count traffic). Kernel 5.3+ is required for safe process signals; monitoring works on older kernels. GPU monitoring and container-specific views are future extensions.
+
+MIT licensed. © 2026 CopyPasteUser.
