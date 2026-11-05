@@ -28,7 +28,8 @@ Rust-only Linux process manager and system monitor. This is a **prerelease**, no
 
 - Rust stable 1.99.1, `cargo fmt`, warning-free `cargo clippy`, and automated unit/integration tests (run again against this exact revision before release).
 - Headless process actions on disposable children (pause, resume, terminate, and stale selection rejection).
-- Production-optimized x86_64 Linux build and manual `--snapshot`/JSON sanity checks are repeatable via CI; previous RC binary was approximately **11 MiB** in this environment.
+- Production-optimized x86_64 Linux binary measured **10,651,280 bytes** in the development environment. Headless CLI timing/RSS samples, methods and caveats are in [PERFORMANCE.md](PERFORMANCE.md); these are not GUI benchmarks.
+- PR #3 and its `main` merge passed GitHub Rust CI (2026-11-05; 32 automated tests locally). No stable release tag was created.
 
 ## Known limitations / still required for 1.0 stable
 
