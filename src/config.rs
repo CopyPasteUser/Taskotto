@@ -38,7 +38,7 @@ impl Theme {
             Self::XpLuna => "Luna",
             Self::Windows7 => "Seven",
             Self::Windows10 => "Modern 10",
-            Self::FrutigerAero => "Aero",
+            Self::FrutigerAero => "Frutiger Aero",
             Self::Chromeos => "ChromeOS",
             Self::Macos => "Mac",
         }
@@ -89,6 +89,7 @@ impl LayoutMode {
                 | Theme::XpLuna
                 | Theme::Windows7
                 | Theme::Windows10
+                | Theme::FrutigerAero
                 | Theme::Macos => Self::TopTabs,
                 _ => Self::Sidebar,
             },

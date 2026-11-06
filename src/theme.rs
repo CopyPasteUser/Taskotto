@@ -144,6 +144,18 @@ impl ThemeStyle {
                 };
                 visuals.widgets.active.bg_fill = self.accent;
             }
+            Theme::FrutigerAero => {
+                // A light, aquatic application surface. The parent window's
+                // borders and caption are the compositor's responsibility.
+                visuals.extreme_bg_color = Color32::WHITE;
+                visuals.faint_bg_color = Color32::from_rgb(239, 251, 247);
+                visuals.widgets.noninteractive.bg_fill = Color32::from_rgb(241, 252, 249);
+                visuals.widgets.inactive.bg_fill = Color32::from_rgb(235, 249, 247);
+                visuals.widgets.inactive.bg_stroke.color = Color32::from_rgb(155, 200, 193);
+                visuals.widgets.noninteractive.bg_stroke.color = Color32::from_rgb(177, 211, 205);
+                visuals.widgets.hovered.bg_fill = Color32::from_rgb(208, 244, 238);
+                visuals.widgets.active.bg_fill = self.accent;
+            }
             Theme::Macos => {
                 visuals.extreme_bg_color = Color32::WHITE;
                 visuals.faint_bg_color = Color32::from_rgb(246, 247, 249);

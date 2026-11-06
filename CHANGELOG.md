@@ -2,11 +2,13 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
-## Unreleased — ChromeOS Task Manager
+## [1.0.0-rc.12] — 2026-11-06
 
 - Promoted ChromeOS from a generic color preset to a dedicated, table-first task-manager client with search, owner filters, sorting, keyboard focus, Linux-backed memory/CPU/PID/disk I/O, selection, process inspection and confirmation-protected End process.
-- Added a compact overflow menu for the remaining Linux tools and optional custom navigation, plus responsive supplemental CPU/memory/disk/network views. Window frames remain owned by the compositor/RiceBowl.
-- Added real-egui screenshot scenarios and layout coverage for the new rice. ChromeOS-only private memory and per-PID network data are not invented. Native X11/Wayland fidelity and performance acceptance remain outstanding.
+- Added a compact ChromeOS overflow menu for the remaining Linux tools and optional custom navigation, plus responsive supplemental CPU/memory/disk/network views. ChromeOS-only private memory and per-PID network counters are not invented.
+- Added a standalone **Frutiger Aero** task-manager UI: original glass/sky gradient, aqua/leaf vector graphics, luminous tab navigation (and optional sidebar), process table and clear system-health presentation. No copied OS assets, extra native window borders or title buttons.
+- Processes use genuine Linux procfs entries with live search, persistent sorting, tree mode, selection, inspection and PID-safe confirmed termination. CPU/memory/disk/network pages show original meter/chart components backed by the existing bounded real-data histories. Network labeling explicitly identifies system-wide non-loopback traffic, not invented per-process rates.
+- Added six genuine live-data egui captures (two ChromeOS, four Aero), narrow/desktop and layout regression coverage, and docs. Native compositor, interaction and performance checks remain open for stable 1.0.
 
 ## [1.0.0-rc.11] — 2026-11-06
 

@@ -1,4 +1,4 @@
-# Windows 98 / XP Luna / Windows 7 / Windows 10 / ChromeOS / macOS rice fidelity
+# Frutiger Aero / Windows 98 / XP Luna / Windows 7 / Windows 10 / ChromeOS / macOS rice fidelity
 
 Taskotto is Linux system software. The goal is **recognizable task-manager
 interaction and visual hierarchy**, not a falsely branded Windows program.
@@ -34,6 +34,15 @@ and fonts are **not** copied or bundled.
 - Selection, hover, focus and context actions work; double-click shows process details. The blue End process button is unavailable until a permitted process is selected, then runs through the existing confirmation and pidfd safety gate.
 - An overflow menu keeps Performance, Network, Users, Details, Applications, App history, Startup, Services, filters, refresh rate, New Task and settings accessible without crowding the primary pane.
 - Appearance is a ChromeOS-inspired interpretation rather than a pixel-perfect verified release. The default egui font and Linux compositor differ; native visuals and keyboard testing remain necessary before claiming fidelity.
+
+## Frutiger Aero (original Y2K-inspired design)
+
+- Dedicated, original aqua/sky/leaf client surface with a vector bubble activity mark, glass-like layered gradients, meter rings and rounded navigation. The reference is a broad *Frutiger Aero* design language rather than a branded Windows or Mac Task Manager; no OS-specific wallpaper, artwork or proprietary fonts are bundled.
+- Seven destinations (Processes, Performance, Network, Users, Services, Details, Settings) operate on Taskotto's existing functions. The default is wide pill-shaped horizontal tabs; opting for a themed sidebar is an explicit RiceBowl/taskotto customization.
+- Process Garden offers actual Linux PID/name/command/owner, CPU/RSS and permission-dependent I/O readings; live search, sorting, child-process tree mode, process selection, details and terminate-with-confirmation all use the same protected signal mechanism as other rices. Column density responds to viewport width.
+- System Vitals features four genuine rolling charts (CPU, memory, disk read/write, network receive/send) and circular percent meters; displays do not invent CPU, GPU or battery readings. Network is explicitly non-loopback **system-wide** traffic, which can double-count virtual interfaces.
+- The masthead is **application content**, not simulated X11/Wayland title-bar buttons, borders or caption. Native decorations belong to RiceBowl/the compositor. Users/Services/Details/Settings reuse validated Linux functionality; fully custom Aero detail page designs can be iterated without sacrificing those controls.
+- Headless screenshots demonstrate the egui surfaces but not native input latency, compositor styling, accessibility tree or exact monitor color. Physical Linux Mint/Fedora and labwc checks remain in release QA.
 
 ## Windows 98 Close Program
 

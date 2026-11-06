@@ -16,7 +16,7 @@ The restricted capture environment currently exposes few processes and very
 little I/O; this is why some screenshots look sparse. They are not evidence of
 hardware compatibility or GUI performance.
 
-To regenerate all 33 images on Linux:
+To regenerate all 37 images on Linux:
 
 ```bash
 TASKOTTO_SCREENSHOT_DIR=assets/screenshots \
@@ -29,6 +29,13 @@ The command samples real system activity for about four seconds and writes:
 
 - `assets/screenshots/taskotto-chromeos-tasks.png` — compact ChromeOS-inspired Linux process list with live memory RSS, CPU, PID and a confirmation-protected End process action (disabled until selection); not a ChromeOS or Chromium native window.
 - `assets/screenshots/taskotto-chromeos-performance.png` — supplementary Linux CPU, RAM, disk and uptime metrics, reachable via the toolbar menu. It does not invent proprietary ChromeOS counters.
+
+### Frutiger Aero (original Y2K design)
+
+- `assets/screenshots/taskotto-frutiger-aero-processes.png` — live Linux process report, active aqua pill navigation and search/sort/tree/actions.
+- `assets/screenshots/taskotto-frutiger-aero-sidebar.png` — optional custom vertical navigation with the same process report.
+- `assets/screenshots/taskotto-frutiger-aero-performance.png` — four live CPU, RAM, disk and network graphs plus actual memory/CPU gauges.
+- `assets/screenshots/taskotto-frutiger-aero-network.png` — measured aggregate non-loopback RX/TX with explicit scope caveat.
 
 ### Windows 98 (Close Program and optional advanced tools)
 
@@ -77,13 +84,13 @@ The command samples real system activity for about four seconds and writes:
 - `assets/screenshots/taskotto-xp-luna-details.png` — process properties using live Linux fields.
 
 The obsolete generic dark/Classic 98 gallery captures were removed in RC7;
-RC11 adds four fresh, independently rendered Classic 98 views.
+RC11 added four independently rendered Classic 98 views; RC12 adds two ChromeOS and four Frutiger Aero views.
 
 To regenerate only one rice's screenshots (and preserve the others), set
 `TASKOTTO_SCREENSHOT_FILTER=win7`, `TASKOTTO_SCREENSHOT_FILTER=win10`,
 `TASKOTTO_SCREENSHOT_FILTER=xp-luna`, `TASKOTTO_SCREENSHOT_FILTER=win98`,
-`TASKOTTO_SCREENSHOT_FILTER=chromeos`
-or `TASKOTTO_SCREENSHOT_FILTER=macos`
+`TASKOTTO_SCREENSHOT_FILTER=chromeos`, `TASKOTTO_SCREENSHOT_FILTER=macos`
+or `TASKOTTO_SCREENSHOT_FILTER=frutiger-aero`
 before the same command.
 
 Classic 98 captures are rendered at the actual 650 × 450 default viewport;

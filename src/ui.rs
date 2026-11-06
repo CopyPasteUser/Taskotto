@@ -437,6 +437,12 @@ impl TaskottoApp {
             }
             return;
         }
+        if self.settings.theme == Theme::FrutigerAero
+            && self.settings.layout_mode.resolve(self.settings.theme) == LayoutMode::Sidebar
+        {
+            rices::vertical_navigation(self, ctx);
+            return;
+        }
         if self.settings.theme == Theme::Macos
             && self.settings.layout_mode.resolve(self.settings.theme) == LayoutMode::Sidebar
         {
@@ -1633,6 +1639,93 @@ mod tests {
                 });
             }
         }
+    }
+
+    #[test]
+    fn frutiger_aero_live_pages_render_at_two_sizes_and_both_navigations() {
+        let ctx = egui::Context::default();
+        let snapshot = Snapshot {
+            cpu_percent: 32.0,
+            cores_percent: vec![32.0, 8.0],
+            memory: crate::monitor::Memory {
+                total: 8 * 1024 * 1024 * 1024,
+                available: 4 * 1024 * 1024 * 1024,
+                swap_total: 0,
+                swap_free: 0,
+            },
+            rates: Default::default(),
+            uptime_seconds: 1_500.0,
+            processes: vec![Process {
+                pid: 5678,
+                name: "sample-service".into(),
+                command: "sample-service --foreground".into(),
+                user_id: 1000,
+                resident_bytes: 20 * 1024 * 1024,
+                cpu_percent: 12.0,
+                start_ticks: 77,
+                ..Process::default()
+            }],
+            logical_cpus: 2,
+        };
+        let mut history = History::default();
+        for _ in 0..4 {
+            history.record(&snapshot);
+        }
+        let settings = Settings {
+            theme: Theme::FrutigerAero,
+            ..Settings::default()
+        };
+        let mut app = TaskottoApp {
+            worker: Worker::start(10_000, ctx.clone()),
+            settings,
+            snapshot: Some(snapshot),
+            history,
+            page: Page::Processes,
+            performance_focus: PerformanceFocus::Cpu,
+            query: String::new(),
+            focus_search: false,
+            selected: Some((5678, 77)),
+            pending: None,
+            notification: None,
+            theme_accent_input: String::new(),
+            theme_surface_input: String::new(),
+            theme_text_input: String::new(),
+            my_uid: 1000,
+            users: HashMap::new(),
+            system_pages: rices::SystemPages::default(),
+            new_task: NewTaskDialog::default(),
+            mac_info_open: false,
+        };
+        assert_eq!(app.processes().len(), 1);
+        app.query = "not-there".into();
+        assert!(app.processes().is_empty());
+        app.query.clear();
+        for layout in [LayoutMode::TopTabs, LayoutMode::Sidebar] {
+            app.settings.layout_mode = layout;
+            apply_theme(&ctx, &app.settings);
+            for page in [
+                Page::Processes,
+                Page::Performance,
+                Page::Networking,
+                Page::Users,
+                Page::Services,
+                Page::Details,
+                Page::Preferences,
+            ] {
+                app.page = page;
+                for dimensions in [(650.0, 420.0), (1280.0, 800.0)] {
+                    let input = egui::RawInput {
+                        screen_rect: Some(egui::Rect::from_min_size(
+                            egui::Pos2::ZERO,
+                            Vec2::new(dimensions.0, dimensions.1),
+                        )),
+                        ..Default::default()
+                    };
+                    let _ = ctx.run(input, |ctx| app.draw_contents(ctx));
+                }
+            }
+        }
+        assert!(app.pending.is_none());
     }
 
     #[test]
