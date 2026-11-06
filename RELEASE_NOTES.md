@@ -1,16 +1,26 @@
-# Taskotto 1.0.0-rc.4 — release candidate
+# Taskotto 1.0.0-rc.5 — release candidate
 
 **Date:** 2026-11-06 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
 Rust-only Linux process manager and system monitor. This is a **prerelease**, not a stable 1.0 certification.
 
-## Changes since rc.3
+## Changes since rc.4
+
+- Tests now launch real disposable Linux processes and verify all four pidfd signal actions, stale start-tick rejection and safe cleanup.
+- End-to-end executable tests check JSON snapshots, malformed CLI options, XDG desktop installation and repeat installation.
+- Desktop launcher and icon are atomically replaced, including an automated symlink-target safety regression.
+- CI checks Rust 1.88 compatibility and warning-free documentation and pins upstream GitHub Actions to verified revision hashes.
+- Release archives use stable ordering/ownership/commit timestamps and undergo checksum verification, extraction, CLI smoke test and user-local desktop install before GitHub publication.
+- Source functionality and the Windows 10 / XP Luna rice appearance remain unchanged from rc.4; screenshots have been regenerated from rc.5's real egui renderer.
+- RC5 locally stripped Linux x86_64 binary: **10,892,944 bytes** (`stat -c %s target/release/taskotto`). This is executable file size, not runtime RSS.
+
+## Earlier changes (rc.3 → rc.4)
 
 - Dedicated XP Luna task-manager UI: original blue title gradient, raised beige tabs, white process table, persistent status strip and classic green-on-black CPU/RAM usage history.
 - Dedicated Windows 10-inspired UI: white task-manager chrome, menus and tabs, CPU/memory table heatmap, truthful user/system process groups and a four-way CPU/memory/disk/network performance navigator.
 - Menus, row/column sorting, process context actions and End Process/End task use existing real Taskotto features; all signals still require confirmation and pidfd safety checks.
 - Four new inspected headless screenshots using authentic egui commands and actual procfs samples, plus focused color/overflow/layout regressions.
-- Local stripped x86_64 Linux executable: **10,892,048 bytes** (`stat -c %s target/release/taskotto`, RC4 build). This is file size, not idle RAM.
+- The rc.4 stripped x86_64 Linux executable measured **10,892,048 bytes** (`stat -c %s target/release/taskotto`). File size is not idle RAM.
 - Window decorations remain under the Linux window manager/compositor; custom UI does not ship Windows logos, task-manager binaries or proprietary artwork. See [RICE_FIDELITY.md](RICE_FIDELITY.md).
 
 ## Earlier changes (rc.2 → rc.3)
@@ -40,12 +50,13 @@ Rust-only Linux process manager and system monitor. This is a **prerelease**, no
 - XDG desktop file/icon, user-local `--install-desktop`, CLI snapshots and JSON output.
 - Non-blocking sampler, no root service and no idle GUI render loop.
 
-## Validation performed in the development environment
+## Validation and release gates
 
-- Rust stable 1.99.1, `cargo fmt`, warning-free `cargo clippy`, and automated unit/integration tests (run again against this exact revision before release).
-- Headless process actions on disposable children (pause, resume, terminate, and stale selection rejection).
-- Production-optimized x86_64 Linux binary measured **10,651,280 bytes** in the development environment. Headless CLI timing/RSS samples, methods and caveats are in [PERFORMANCE.md](PERFORMANCE.md); these are not GUI benchmarks.
-- PR #3 and its `main` merge passed GitHub Rust CI (2026-11-05; 32 automated tests locally); the rc.3 checks are separately reported when complete. No stable release tag was created.
+- `cargo fmt --all -- --check`, warning-free `cargo clippy --locked --all-targets -- -D warnings`, `cargo test --locked --all-targets`, and `cargo build --locked --release` are the mandatory baseline; record exact results after each RC merge.
+- Rust 1.88 check, `cargo doc` with warnings denied, subprocess signal and actual CLI/desktop E2E tests are part of CI.
+- Headless CLI timing/RSS samples, methods and caveats are in [PERFORMANCE.md](PERFORMANCE.md); **they are not GUI benchmarks**.
+- The release workflow builds a checked archive and publishes only a version-matched tag, with a SHA256 verification and extracted-binary smoke test.
+- The local archive packaging rehearsal produced identical SHA256 checksums for two archives built from the same binary/files. Full binary reproducibility across toolchains is not claimed.
 
 ## Known limitations / still required for 1.0 stable
 

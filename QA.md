@@ -2,6 +2,26 @@
 
 Run this checklist before a stable 1.0 tag. Record distro, kernel, display server, compositor, CPU, and actual measurements. A green CI run is not a substitute for this list.
 
+## Automated checks (no desktop session needed)
+
+The Rust integration tests launch a disposable child, exercise SIGSTOP,
+SIGCONT, SIGTERM and SIGKILL through the real pidfd API, and verify stale
+start-tick rejection without killing that child. Additional tests exercise
+the executable's JSON snapshot, invalid CLI options, two successive desktop
+installs into a temporary XDG home, and symlink-safe atomic launcher updates.
+
+```bash
+cargo test --locked --all-targets
+cargo fmt --all -- --check
+cargo clippy --locked --all-targets -- -D warnings
+cargo build --locked --release
+```
+
+GitHub CI additionally checks the declared Rust 1.88 MSRV and documentation
+warnings. The release-tag workflow verifies the archive checksum, extracts the
+archive and invokes its binary and local desktop installer before publishing.
+**These tests do not replace the interactive checks below.**
+
 ## Desktop behavior
 
 - [ ] XP Luna: verify blue chrome, raised tabs, File/Options/View/Help menus, classic CPU/RAM history, process sorting and status strip; use keyboard focus and resize to minimum.

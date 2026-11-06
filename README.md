@@ -6,11 +6,11 @@
 
 A customizable process manager and system monitor written in **Rust**. Runs alone or alongside [RiceBowl](https://github.com/CopyPasteUser/Ricebowl) on **X11 and Wayland**.
 
-![License](https://img.shields.io/badge/license-MIT-blue) ![Rust](https://img.shields.io/badge/language-Rust-orange) ![Status](https://img.shields.io/badge/status-1.0%20RC4-yellow)
+![License](https://img.shields.io/badge/license-MIT-blue) ![Rust](https://img.shields.io/badge/language-Rust-orange) ![Status](https://img.shields.io/badge/status-1.0%20RC5-yellow)
 
 </div>
 
-> **Status:** `1.0.0-rc.4` — the 1.0 code scope is implemented; final X11/Wayland GUI and resource-use acceptance remain. See [roadmap](ROADMAP.md) and [QA checklist](QA.md). This is **not yet stable 1.0**.
+> **Status:** `1.0.0-rc.5` — the 1.0 code scope and automated process/installer acceptance checks are implemented; final X11/Wayland GUI and resource-use acceptance remain. See [roadmap](ROADMAP.md) and [QA checklist](QA.md). This is **not yet stable 1.0**.
 
 ## Screenshots
 
@@ -75,6 +75,7 @@ taskotto --install-desktop
 ```
 
 The installer creates a user-local application entry with the executable's absolute path, so the menu does not depend on your graphical session's `PATH`. Then launch **Taskotto** from the applications menu.
+The launcher and icon are replaced atomically on reinstall, so interrupted writes do not truncate the previous files.
 
 ## Controls
 
