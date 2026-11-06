@@ -19,18 +19,18 @@ struct StartupEntry {
 }
 
 #[derive(Debug, Clone)]
-struct ServiceEntry {
-    unit: String,
-    active: String,
-    state: String,
-    description: String,
+pub(super) struct ServiceEntry {
+    pub(super) unit: String,
+    pub(super) active: String,
+    pub(super) state: String,
+    pub(super) description: String,
 }
 
 #[derive(Default)]
 pub(in crate::ui) struct SystemPages {
     startup: Option<(Vec<StartupEntry>, Vec<String>)>,
-    services: Option<Result<Vec<ServiceEntry>, String>>,
-    services_loading: Option<Receiver<Result<Vec<ServiceEntry>, String>>>,
+    pub(super) services: Option<Result<Vec<ServiceEntry>, String>>,
+    pub(super) services_loading: Option<Receiver<Result<Vec<ServiceEntry>, String>>>,
 }
 
 pub(super) fn app_history(app: &mut TaskottoApp, ui: &mut egui::Ui) {
@@ -289,29 +289,7 @@ pub(super) fn services(app: &mut TaskottoApp, ui: &mut egui::Ui) {
             .weak(),
     );
     ui.add_space(10.0);
-    if app.system_pages.services.is_none() && app.system_pages.services_loading.is_none() {
-        let (tx, rx) = mpsc::channel();
-        let context = ui.ctx().clone();
-        thread::spawn(move || {
-            let result = query_user_services();
-            let _ = tx.send(result);
-            context.request_repaint();
-        });
-        app.system_pages.services_loading = Some(rx);
-    }
-    if let Some(rx) = &app.system_pages.services_loading {
-        match rx.try_recv() {
-            Ok(data) => {
-                app.system_pages.services = Some(data);
-                app.system_pages.services_loading = None;
-            }
-            Err(mpsc::TryRecvError::Disconnected) => {
-                app.system_pages.services = Some(Err("Service query stopped unexpectedly".into()));
-                app.system_pages.services_loading = None;
-            }
-            Err(mpsc::TryRecvError::Empty) => {}
-        }
-    }
+    poll_services(app, ui.ctx());
     let Some(result) = &app.system_pages.services else {
         ui.spinner();
         ui.label("Reading user services…");
@@ -348,6 +326,32 @@ pub(super) fn services(app: &mut TaskottoApp, ui: &mut egui::Ui) {
                 }
             });
     });
+}
+
+pub(super) fn poll_services(app: &mut TaskottoApp, ctx: &egui::Context) {
+    if app.system_pages.services.is_none() && app.system_pages.services_loading.is_none() {
+        let (tx, rx) = mpsc::channel();
+        let context = ctx.clone();
+        thread::spawn(move || {
+            let result = query_user_services();
+            let _ = tx.send(result);
+            context.request_repaint();
+        });
+        app.system_pages.services_loading = Some(rx);
+    }
+    if let Some(rx) = &app.system_pages.services_loading {
+        match rx.try_recv() {
+            Ok(data) => {
+                app.system_pages.services = Some(data);
+                app.system_pages.services_loading = None;
+            }
+            Err(mpsc::TryRecvError::Disconnected) => {
+                app.system_pages.services = Some(Err("Service query stopped unexpectedly".into()));
+                app.system_pages.services_loading = None;
+            }
+            Err(mpsc::TryRecvError::Empty) => {}
+        }
+    }
 }
 
 fn query_user_services() -> Result<Vec<ServiceEntry>, String> {

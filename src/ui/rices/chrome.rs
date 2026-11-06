@@ -101,7 +101,7 @@ pub(super) fn topbar(app: &mut TaskottoApp, ctx: &egui::Context) {
     menu_bar(app, ctx);
 }
 
-fn menu_bar(app: &mut TaskottoApp, ctx: &egui::Context) {
+pub(super) fn menu_bar(app: &mut TaskottoApp, ctx: &egui::Context) {
     let xp = is_xp(app);
     let surface = if xp {
         Color32::from_rgb(236, 233, 216)

@@ -16,9 +16,11 @@ pub(super) fn xp_page(app: &mut TaskottoApp, ui: &mut egui::Ui) {
             .strong(),
     );
     ui.add_space(8.0);
+    let seven = app.settings.theme == Theme::Windows7;
     egui::ScrollArea::vertical().show(ui, |ui| {
         classic_group(
             ui,
+            seven,
             "Identification",
             &[
                 ("Image Name", p.name.clone()),
@@ -40,6 +42,7 @@ pub(super) fn xp_page(app: &mut TaskottoApp, ui: &mut egui::Ui) {
         ui.add_space(9.0);
         classic_group(
             ui,
+            seven,
             "Performance",
             &[
                 ("CPU Usage", format!("{:.1}%", p.cpu_percent)),
@@ -53,6 +56,7 @@ pub(super) fn xp_page(app: &mut TaskottoApp, ui: &mut egui::Ui) {
         ui.add_space(9.0);
         classic_group(
             ui,
+            seven,
             "I/O Counters",
             &[
                 (
@@ -108,11 +112,22 @@ fn short_command(value: &str) -> String {
     result
 }
 
-fn classic_group(ui: &mut egui::Ui, title: &str, rows: &[(&str, String)]) {
+fn classic_group(ui: &mut egui::Ui, seven: bool, title: &str, rows: &[(&str, String)]) {
     ui.label(RichText::new(title).size(12.0).strong());
     egui::Frame::new()
-        .fill(Color32::from_rgb(250, 249, 241))
-        .stroke(Stroke::new(1.0_f32, Color32::from_rgb(156, 154, 137)))
+        .fill(if seven {
+            Color32::WHITE
+        } else {
+            Color32::from_rgb(250, 249, 241)
+        })
+        .stroke(Stroke::new(
+            1.0_f32,
+            if seven {
+                Color32::from_rgb(145, 162, 178)
+            } else {
+                Color32::from_rgb(156, 154, 137)
+            },
+        ))
         .inner_margin(egui::Margin::same(9))
         .show(ui, |ui| {
             ui.set_min_width(ui.available_width().max(320.0) - 20.0);

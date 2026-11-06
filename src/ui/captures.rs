@@ -30,6 +30,37 @@ fn generate_headless_ui_screenshots() {
 
     for (theme, page, file) in [
         (
+            Theme::Windows7,
+            Page::Applications,
+            "taskotto-win7-applications.png",
+        ),
+        (
+            Theme::Windows7,
+            Page::Processes,
+            "taskotto-win7-processes.png",
+        ),
+        (
+            Theme::Windows7,
+            Page::Services,
+            "taskotto-win7-services.png",
+        ),
+        (
+            Theme::Windows7,
+            Page::Performance,
+            "taskotto-win7-performance.png",
+        ),
+        (
+            Theme::Windows7,
+            Page::Networking,
+            "taskotto-win7-networking.png",
+        ),
+        (Theme::Windows7, Page::Users, "taskotto-win7-users.png"),
+        (
+            Theme::Windows7,
+            Page::Details,
+            "taskotto-win7-properties.png",
+        ),
+        (
             Theme::Windows10,
             Page::Processes,
             "taskotto-win10-processes.png",
@@ -115,6 +146,7 @@ fn generate_headless_ui_screenshots() {
             snapshot: Some(snapshot.clone()),
             history: History {
                 cpu: history.cpu.clone(),
+                cores: history.cores.clone(),
                 memory: history.memory.clone(),
                 received: history.received.clone(),
                 sent: history.sent.clone(),

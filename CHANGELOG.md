@@ -2,6 +2,14 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.9] — 2026-11-06
+
+- Added a separate, era-specific Windows 7-style task manager: original-drawn Aero chrome and six horizontal classic tabs (Applications, Processes, Services, Performance, Networking, Users).
+- Implemented a period-appropriate sortable white process report with classic-style headers, status strip, functional all-user toggle, menu search, and protected context/end actions; row widths respond to narrow windows.
+- Added bounded per-core CPU histories and Windows 7-style green CPU/blue memory charts, Linux physical-memory/swap/system statistics, real aggregate RX/TX history, per-UID Users table, and read-only asynchronous user service rows or explicit error states.
+- Reused the real New Task launcher for Applications, shared Linux process safety and live procfs data. No invented graphical window enumeration, Windows-only service PIDs, resource counters or platform icons.
+- Captured seven new genuine egui screenshots (including a floating selected-process properties sheet), now 21 total; condensed the README gallery into three representative historical rices and updated provenance/fidelity/QA documentation. Native X11/Wayland and reference-image comparison are still required before claiming 95% similarity.
+
 ## [1.0.0-rc.8] — 2026-11-06
 
 - Windows 10 task-manager rice now has all seven historical top tabs (Processes, Performance, App history, Startup, Users, Details, Services). The original uses horizontal tabs; a separate, clearly identified vertical sidebar can be selected in Preferences → Navigation.

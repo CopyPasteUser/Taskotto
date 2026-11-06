@@ -96,7 +96,7 @@ Taskotto is a **standalone, on-demand Rust system monitor and process manager** 
 
 ## 0.9 — Release candidate
 
-- [x] Buildable `1.0.0-rc.8` candidate with all-profile small/large headless layout and integration tests.
+- [x] Buildable `1.0.0-rc.9` candidate with all-profile small/large headless layout and integration tests.
 - [x] Contributor/security policies, dependency-update configuration and CI checks.
 - [x] Reproducible egui-rendered headless screenshots with real procfs measurements, documented provenance and visual inspection.
 - [x] Consistent network/disk comparison charts (both directions on one scale), early-history width regression coverage and readable navigation labels.
@@ -113,9 +113,10 @@ Taskotto is a **standalone, on-demand Rust system monitor and process manager** 
 - [ ] Native X11/Wayland screenshots and interaction walkthrough. *The headless captures do not satisfy this hardware gate.*
 - [ ] Complete hardware test checklist (`QA.md`) with recorded results.
 - [ ] Packaging/desktop integration acceptance.
-- [ ] CI green on the rc.8 merge and prerelease commit; review warnings, errors, license/dependencies.
+- [ ] CI green on the rc.9 merge and prerelease commit; review warnings, errors, license/dependencies.
 - [ ] Reference-based, native-resolution visual comparison and correction for XP Luna and Windows 10. *A literal 1:1 claim is not justified by headless renders or default font metrics.*
 - [x] Provide truthful Linux analogues for Windows 10 Startup/Services/App history without invented Windows-only data; optional future enhancements include startup enable/disable with recoverable backups and additional user service controls.
+- [x] RC9 Seven fidelity: standalone Windows 7 Aero-like task manager with six historical tabs and a floating process properties sheet, sortable compact process report, per-core green CPU and blue memory history, real networking/UID views, asynchronous read-only Linux service data and seven new real-egui screenshots. Maintain XP/Win10 behavior and document all Linux-specific differences.
 
 **Gate:** no P0/P1 defects, all regression tests passing and no misleading feature claims.
 

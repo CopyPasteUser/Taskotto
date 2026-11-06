@@ -15,7 +15,7 @@ The restricted capture environment currently exposes few processes and very
 little I/O; this is why some screenshots look sparse. They are not evidence of
 hardware compatibility or GUI performance.
 
-To regenerate all 14 images on Linux:
+To regenerate all 21 images on Linux:
 
 ```bash
 TASKOTTO_SCREENSHOT_DIR=assets/screenshots \
@@ -24,26 +24,42 @@ TASKOTTO_SCREENSHOT_DIR=assets/screenshots \
 
 The command samples real system activity for about four seconds and writes:
 
-1. `assets/screenshots/taskotto-win10-processes.png` — horizontal seven-tab navigation and process heatmap.
-2. `assets/screenshots/taskotto-win10-vertical.png` — custom optional vertical navigation (not the historical Windows 10 default).
-3. `assets/screenshots/taskotto-win10-performance.png` — CPU performance and metric navigator.
-4. `assets/screenshots/taskotto-win10-app-history.png` — current Linux process-lifetime CPU accounting, not persistent Windows app history.
-5. `assets/screenshots/taskotto-win10-startup.png` — XDG autostart entries and their configured state.
-6. `assets/screenshots/taskotto-win10-services.png` — asynchronous systemd user service status or explicit environment error/loading state.
-7. `assets/screenshots/taskotto-win10-users.png` — per-UID process grouping and resource totals.
-8. `assets/screenshots/taskotto-win10-details.png` — ungrouped Linux process details table.
-9. `assets/screenshots/taskotto-xp-luna-applications.png` — current-user process list; **not** a compositor window enumeration.
-10. `assets/screenshots/taskotto-xp-luna-new-task.png` — functional user-command launch dialog.
-11. `assets/screenshots/taskotto-xp-luna-processes.png` — classic process view.
-12. `assets/screenshots/taskotto-xp-luna-performance.png` — CPU/memory history.
-13. `assets/screenshots/taskotto-xp-luna-networking.png` — non-loopback receive/send trends.
-14. `assets/screenshots/taskotto-xp-luna-details.png` — process properties using live Linux fields.
+### Windows 7 (six historical tabs)
+
+- `assets/screenshots/taskotto-win7-applications.png` — current-user process approximation, not compositor window enumeration.
+- `assets/screenshots/taskotto-win7-processes.png` — Aero-era chrome, six tabs, compact sortable report and PID-safe process actions.
+- `assets/screenshots/taskotto-win7-services.png` — real read-only systemd **user** units or explicit unavailable/error state (as in restricted CI).
+- `assets/screenshots/taskotto-win7-performance.png` — original green CPU and blue memory histories with Linux CPU-core samples and memory statistics.
+- `assets/screenshots/taskotto-win7-networking.png` — real non-loopback receive/send trends, bytes/second not Windows link utilization.
+- `assets/screenshots/taskotto-win7-users.png` — per-UID process owner resource summary, not a session enumeration.
+- `assets/screenshots/taskotto-win7-properties.png` — selected-process inspection in a floating properties dialog, not an invented seventh tab.
+
+### Windows 10 (seven historical tabs, plus custom sidebar)
+
+- `assets/screenshots/taskotto-win10-processes.png` — horizontal seven-tab navigation and process heatmap.
+- `assets/screenshots/taskotto-win10-vertical.png` — custom optional vertical navigation (not the historical Windows 10 default).
+- `assets/screenshots/taskotto-win10-performance.png` — CPU performance and metric navigator.
+- `assets/screenshots/taskotto-win10-app-history.png` — current Linux process-lifetime CPU accounting, not persistent Windows app history.
+- `assets/screenshots/taskotto-win10-startup.png` — XDG autostart entries and their configured state.
+- `assets/screenshots/taskotto-win10-services.png` — asynchronous systemd user service status or explicit environment error/loading state.
+- `assets/screenshots/taskotto-win10-users.png` — per-UID process grouping and resource totals.
+- `assets/screenshots/taskotto-win10-details.png` — ungrouped Linux process details table.
+
+### XP Luna (five historical tabs)
+
+- `assets/screenshots/taskotto-xp-luna-applications.png` — current-user process list; **not** a compositor window enumeration.
+- `assets/screenshots/taskotto-xp-luna-new-task.png` — functional user-command launch dialog.
+- `assets/screenshots/taskotto-xp-luna-processes.png` — classic process view.
+- `assets/screenshots/taskotto-xp-luna-performance.png` — CPU/memory history.
+- `assets/screenshots/taskotto-xp-luna-networking.png` — non-loopback receive/send trends.
+- `assets/screenshots/taskotto-xp-luna-details.png` — process properties using live Linux fields.
 
 The old dark, Classic 98 and Seven gallery captures were removed in the RC7
 focused fidelity pass. Their original styles remain available in Taskotto.
 
 To regenerate only one rice's screenshots (and preserve the others), set
-`TASKOTTO_SCREENSHOT_FILTER=win10` or `TASKOTTO_SCREENSHOT_FILTER=xp-luna`
+`TASKOTTO_SCREENSHOT_FILTER=win7`, `TASKOTTO_SCREENSHOT_FILTER=win10`
+or `TASKOTTO_SCREENSHOT_FILTER=xp-luna`
 before the same command.
 
 Captures are pinned to 1280 × 800 pixels. Re-running on another machine will
