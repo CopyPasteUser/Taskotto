@@ -1,8 +1,14 @@
-# Taskotto 1.0.0-rc.21 — release candidate
+# Taskotto 1.0.0-rc.22 — release candidate
 
 **Date:** 2026-11-06 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
 Rust-only Linux process manager and system monitor. This is a **prerelease**, not a stable 1.0 certification.
+
+## Changes since rc.21
+
+- ChromeOS's custom task list now honors semantic RicePack colors for table, hover, selection, control and border, using the shared v1 color parser. Selected and dark table rows get readable foreground without changing default light/dark profiles.
+- Bundled a new `chromeos-nocturne.toml` example with a genuine headless egui capture, bringing the complete screenshot gallery to 42.
+- Other Windows-inspired rice clients and advanced user-defined layouts remain on the roadmap; native Mint/X11, KDE/Wayland and RiceBowl/labwc hardware testing still blocks a stable 1.0 tag.
 
 ## Changes since rc.20
 

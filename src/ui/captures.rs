@@ -170,6 +170,11 @@ fn generate_headless_ui_screenshots() {
         ),
         (
             Theme::Chromeos,
+            Page::Processes,
+            "taskotto-chromeos-nocturne-ricepack.png",
+        ),
+        (
+            Theme::Chromeos,
             Page::Performance,
             "taskotto-chromeos-performance.png",
         ),
@@ -241,6 +246,13 @@ fn generate_headless_ui_screenshots() {
             .expect("checked-in Nightshift RicePack must remain valid");
             pack.apply(&mut settings);
         }
+        if file.contains("nocturne-ricepack") {
+            let pack = crate::ricepack::RicePack::from_toml(include_str!(
+                "../../examples/ricepacks/chromeos-nocturne.toml"
+            ))
+            .expect("checked-in Nocturne RicePack must remain valid");
+            pack.apply(&mut settings);
+        }
         apply_theme(&ctx, &settings);
         let mut app = TaskottoApp {
             worker: Worker::start(10_000, ctx.clone()),
@@ -262,6 +274,7 @@ fn generate_headless_ui_screenshots() {
             selected: if file.contains("win98-close")
                 || file.contains("win98-processes")
                 || file.contains("chromeos-tasks")
+                || file.contains("nocturne-ricepack")
             {
                 snapshot
                     .processes

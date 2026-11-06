@@ -6,11 +6,11 @@
 
 A customizable process manager and system monitor written in **Rust**. Runs alone or alongside [RiceBowl](https://github.com/CopyPasteUser/Ricebowl) on **X11 and Wayland**.
 
-![License](https://img.shields.io/badge/license-MIT-blue) ![Rust](https://img.shields.io/badge/language-Rust-orange) ![Status](https://img.shields.io/badge/status-1.0%20RC21-yellow)
+![License](https://img.shields.io/badge/license-MIT-blue) ![Rust](https://img.shields.io/badge/language-Rust-orange) ![Status](https://img.shields.io/badge/status-1.0%20RC22-yellow)
 
 </div>
 
-> **Status:** `1.0.0-rc.21` — seven dedicated interfaces: Frutiger Aero, ChromeOS, Windows 98, XP Luna, Windows 7, Windows 10 and macOS Activity Monitor. **All eight profiles leave the window frame, title and window buttons to RiceBowl/the active window manager**; Taskotto draws only its content, menus and functional toolbars. Native GUI and resource-use acceptance are still outstanding. See [1.0 roadmap](ROADMAP.md), [future development roadmap](EXPANSION_ROADMAP.md) and [QA checklist](QA.md). This is **not yet stable 1.0**.
+> **Status:** `1.0.0-rc.22` — seven dedicated interfaces: Frutiger Aero, ChromeOS, Windows 98, XP Luna, Windows 7, Windows 10 and macOS Activity Monitor. **All eight profiles leave the window frame, title and window buttons to RiceBowl/the active window manager**; Taskotto draws only its content, menus and functional toolbars. Native GUI and resource-use acceptance are still outstanding. See [1.0 roadmap](ROADMAP.md), [future development roadmap](EXPANSION_ROADMAP.md) and [QA checklist](QA.md). This is **not yet stable 1.0**.
 
 ## Screenshots
 
@@ -25,7 +25,7 @@ A customizable process manager and system monitor written in **Rust**. Runs alon
 | [![macOS-inspired Activity Monitor CPU process list](assets/screenshots/taskotto-macos-cpu.png)](assets/screenshots/taskotto-macos-cpu.png) | [![Frutiger Aero CPU and memory performance dashboard](assets/screenshots/taskotto-frutiger-aero-performance.png)](assets/screenshots/taskotto-frutiger-aero-performance.png) |
 
 <details>
-<summary><strong>All screenshots (41)</strong> — expand to view every rice and every captured screen</summary>
+<summary><strong>All screenshots (42)</strong> — expand to view every rice and every captured screen</summary>
 
 ### Frutiger Aero
 
@@ -46,6 +46,8 @@ A customizable process manager and system monitor written in **Rust**. Runs alon
 | :---: | :---: |
 | **Task list** | **Performance** |
 | [![ChromeOS: Task list](assets/screenshots/taskotto-chromeos-tasks.png)](assets/screenshots/taskotto-chromeos-tasks.png) | [![ChromeOS: Performance](assets/screenshots/taskotto-chromeos-performance.png)](assets/screenshots/taskotto-chromeos-performance.png) |
+| **Nocturne RicePack · dark task table** | |
+| [![ChromeOS: Nocturne RicePack with dark process table, custom selection and semantic borders](assets/screenshots/taskotto-chromeos-nocturne-ricepack.png)](assets/screenshots/taskotto-chromeos-nocturne-ricepack.png) | |
 
 ### Windows 98
 
@@ -108,7 +110,7 @@ A customizable process manager and system monitor written in **Rust**. Runs alon
 
 </details>
 
-*All 41 images above are headless Taskotto egui renders using live Linux `/proc`; the capture environment exposes few processes. The editor, Aero Lagoon and Nightshift captures are actual renders using bundled RicePacks. These client-only renders intentionally omit RiceBowl's native window frame. [Capture provenance and reproduction](SCREENSHOTS.md) · [Fidelity boundaries](RICE_FIDELITY.md). Native X11/Wayland verification remains pending.*
+*All 42 images above are headless Taskotto egui renders using live Linux `/proc`; the capture environment exposes few processes. The editor, Aero Lagoon, Nightshift and Nocturne captures are actual renders using bundled RicePacks. These client-only renders intentionally omit RiceBowl's native window frame. [Capture provenance and reproduction](SCREENSHOTS.md) · [Fidelity boundaries](RICE_FIDELITY.md). Native X11/Wayland verification remains pending.*
 
 ## What works
 

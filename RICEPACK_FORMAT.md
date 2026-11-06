@@ -164,9 +164,10 @@ RicePacks cannot paint duplicate titlebars or alter window permissions.
 Component tokens apply to shared egui widget visuals; some historical rice
 drawings still contain intentionally hardcoded era-specific colors. Frutiger
 Aero's custom navigation, process list and chart panels consume these
-tokens, and macOS Activity Monitor's custom tabs and process table use the
-same shared parser. Try [Aero Lagoon](examples/ricepacks/aero-lagoon.toml) or
-[Nightshift](examples/ricepacks/macos-nightshift.toml) for contrasting original
+tokens, and macOS Activity Monitor and ChromeOS task tables use the shared
+parser. Try [Aero Lagoon](examples/ricepacks/aero-lagoon.toml),
+[Nightshift](examples/ricepacks/macos-nightshift.toml) or
+[Nocturne](examples/ricepacks/chromeos-nocturne.toml) for contrasting original
 designs without Rust edits. Complete per-widget
 token extraction across the remaining rices remains on P1. This contract does not yet support
 custom icons, fonts, free-form widget placement or user-defined data bindings.

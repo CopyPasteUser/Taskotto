@@ -1,6 +1,6 @@
 # Screenshot provenance and reproduction
 
-[**View all 41 screenshots in the expandable README gallery**](README.md#screenshots).
+[**View all 42 screenshots in the expandable README gallery**](README.md#screenshots).
 The gallery groups every image by rice, including the supplementary pages
 and alternate layouts; click any preview to see its full-resolution PNG.
 
@@ -23,7 +23,7 @@ The restricted capture environment currently exposes few processes and very
 little I/O; this is why some screenshots look sparse. They are not evidence of
 hardware compatibility or GUI performance.
 
-To regenerate all 41 images on Linux:
+To regenerate all 42 images on Linux:
 
 ```bash
 TASKOTTO_SCREENSHOT_DIR=assets/screenshots \
@@ -36,6 +36,7 @@ The command samples real system activity and writes:
 
 - `assets/screenshots/taskotto-chromeos-tasks.png` — compact ChromeOS-inspired Linux process list with live memory RSS, CPU, PID and a confirmation-protected End process action (disabled until selection); not a ChromeOS or Chromium native window.
 - `assets/screenshots/taskotto-chromeos-performance.png` — supplementary Linux CPU, RAM, disk and uptime metrics, reachable via the toolbar menu. It does not invent proprietary ChromeOS counters.
+- `assets/screenshots/taskotto-chromeos-nocturne-ricepack.png` — the original Nocturne RicePack v1 applied to the real ChromeOS-style task table, preserving accurate Linux `/proc` values with custom dark rows, selected/hover colors and borders.
 
 ### Frutiger Aero (original Y2K design)
 

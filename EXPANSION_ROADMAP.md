@@ -58,7 +58,9 @@ Development on later milestones may proceed while user-hardware QA is pending.
     table and performance graph containers consume semantic component colors.
   - [x] RC21: macOS Activity Monitor tabs/sidebar, table headers, hover/selected
     rows use shared semantic component tokens with high-contrast foreground.
-  - [ ] Continue extraction for the remaining five historical rice renderers,
+  - [x] RC22: ChromeOS's existing adaptive palette consumes the shared table,
+    hover, border, control and selection tokens with honest row contrast.
+  - [ ] Continue extraction for the remaining four Windows-inspired renderers,
     and expose intentionally drawn metric/chart sizes without recompilation.
 
 **Gate:** an AI-generated pack can be checked, previewed and applied without
@@ -147,10 +149,10 @@ lean, offline-capable and independent from RiceBowl.
 
 ## Work order
 
-1. **Delivered (RC14–21):** P1 format/loader/CLI, secure reference pack,
+1. **Delivered (RC14–22):** P1 format/loader/CLI, secure reference pack,
    headless export/check/re-import, live file reload and in-app library,
    session-only preview/revert/import/export, semantic widget tokens, an
-   explicit RiceBowl export fixture and Frutiger Aero/macOS custom-surface tokens.
+   explicit RiceBowl export fixture and Frutiger Aero/macOS/ChromeOS tokens.
 2. **Next:** P1 component-level UI token extraction. RiceBowl's separate JSON
    desktop pack still is not Taskotto TOML; the explicit RiceBowl exporter is
    the validated conversion boundary.
