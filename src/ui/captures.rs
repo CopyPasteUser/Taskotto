@@ -193,6 +193,16 @@ fn generate_headless_ui_screenshots() {
             Page::Preferences,
             "taskotto-frutiger-aero-ricepack-editor.png",
         ),
+        (
+            Theme::FrutigerAero,
+            Page::Processes,
+            "taskotto-frutiger-aero-lagoon-ricepack.png",
+        ),
+        (
+            Theme::FrutigerAero,
+            Page::Performance,
+            "taskotto-frutiger-aero-lagoon-performance.png",
+        ),
     ] {
         if let Ok(filter) = std::env::var("TASKOTTO_SCREENSHOT_FILTER")
             && !file.contains(&filter)
@@ -200,7 +210,7 @@ fn generate_headless_ui_screenshots() {
             continue;
         }
         let ctx = egui::Context::default();
-        let settings = Settings {
+        let mut settings = Settings {
             theme,
             refresh_ms: 10_000,
             layout_mode: if file.contains("vertical") || file.contains("aero-sidebar") {
@@ -212,6 +222,13 @@ fn generate_headless_ui_screenshots() {
             },
             ..Settings::default()
         };
+        if file.contains("lagoon-") {
+            let pack = crate::ricepack::RicePack::from_toml(include_str!(
+                "../../examples/ricepacks/aero-lagoon.toml"
+            ))
+            .expect("checked-in Aero Lagoon RicePack must remain valid");
+            pack.apply(&mut settings);
+        }
         apply_theme(&ctx, &settings);
         let mut app = TaskottoApp {
             worker: Worker::start(10_000, ctx.clone()),

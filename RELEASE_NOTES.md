@@ -1,8 +1,14 @@
-# Taskotto 1.0.0-rc.19 — release candidate
+# Taskotto 1.0.0-rc.20 — release candidate
 
 **Date:** 2026-11-06 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
 Rust-only Linux process manager and system monitor. This is a **prerelease**, not a stable 1.0 certification.
+
+## Changes since rc.19
+
+- Frutiger Aero custom-drawn navigation, process tables and chart surfaces now accept RicePack v1 semantic component colors rather than bypassing shared token settings. Missing tokens retain historical built-in colors.
+- Included the `examples/ricepacks/aero-lagoon.toml` palette with bright controls and a contrasting dark process table; added genuine egui/headless process and performance captures (40 screenshots total) and default-versus-custom token tests.
+- Documented visual and native interaction owners in `DESIGN.md` and `UX-CONTRACT.md`. No new dependency or permission is required; remaining rices still need equivalent token extraction, and native hardware QA remains a blocker for stable 1.0.
 
 ## Changes since rc.18
 

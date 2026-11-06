@@ -54,6 +54,10 @@ Development on later milestones may proceed while user-hardware QA is pending.
   validate them strictly and preserve them across preview/revert/export.
 - [ ] Separate all palette/size tokens from hardcoded rice widget styles;
   make component overrides available without recompilation.
+  - [x] RC20: Frutiger Aero custom tabs/sidebar, list rows, hover/selection,
+    table and performance graph containers consume semantic component colors.
+  - [ ] Continue extraction for the remaining six historical rice renderers,
+    and expose intentionally drawn metric/chart sizes without recompilation.
 
 **Gate:** an AI-generated pack can be checked, previewed and applied without
 Rust changes, while the legacy presets render and behave identically.
@@ -141,10 +145,10 @@ lean, offline-capable and independent from RiceBowl.
 
 ## Work order
 
-1. **Delivered (RC14–19):** P1 format/loader/CLI, secure reference pack,
+1. **Delivered (RC14–20):** P1 format/loader/CLI, secure reference pack,
    headless export/check/re-import, live file reload and in-app library,
-   session-only preview/revert/import/export, semantic widget tokens and a
-   cross-repository, versioned RiceBowl export fixture.
+   session-only preview/revert/import/export, semantic widget tokens, an
+   explicit RiceBowl export fixture and Frutiger Aero custom-surface tokens.
 2. **Next:** P1 component-level UI token extraction. RiceBowl's separate JSON
    desktop pack still is not Taskotto TOML; the explicit RiceBowl exporter is
    the validated conversion boundary.

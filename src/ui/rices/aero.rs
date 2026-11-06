@@ -2,6 +2,7 @@
 //! No OS artwork, simulated titlebar, window controls, fake counters, or
 //! background polling beyond Taskotto's existing Linux procfs worker.
 use super::*;
+use crate::theme::{parse_hex, readable_text};
 use egui::{Align2, FontId, Frame, Margin, Pos2, Rect, StrokeKind};
 
 const INK: Color32 = Color32::from_rgb(24, 74, 79);
@@ -10,6 +11,64 @@ const SKY: Color32 = Color32::from_rgb(42, 169, 220);
 const LEAF: Color32 = Color32::from_rgb(61, 174, 104);
 const AQUA: Color32 = Color32::from_rgb(26, 177, 168);
 const BORDER: Color32 = Color32::from_rgb(157, 212, 211);
+
+// The era-specific artwork stays original, but interactive client surfaces
+// consume the same optional RicePack v1 semantic tokens as egui widgets.
+// All None values preserve the existing built-in Frutiger Aero rendering.
+#[derive(Clone, Copy, Debug, Default)]
+struct AeroPalette {
+    control: Option<Color32>,
+    hover: Option<Color32>,
+    border: Option<Color32>,
+    table: Option<Color32>,
+    selection: Option<Color32>,
+}
+
+impl AeroPalette {
+    fn from_settings(settings: &Settings) -> Self {
+        let components = &settings.components;
+        Self {
+            control: components.control.as_deref().and_then(parse_hex),
+            hover: components.hover.as_deref().and_then(parse_hex),
+            border: components.border.as_deref().and_then(parse_hex),
+            table: components.table.as_deref().and_then(parse_hex),
+            selection: components.selection.as_deref().and_then(parse_hex),
+        }
+    }
+
+    fn control(self, fallback: Color32) -> Color32 {
+        self.control.unwrap_or(fallback)
+    }
+    fn hover(self, fallback: Color32) -> Color32 {
+        self.hover.unwrap_or(fallback)
+    }
+    fn border(self) -> Color32 {
+        self.border.unwrap_or(BORDER)
+    }
+    fn table(self, fallback: Color32) -> Color32 {
+        self.table.unwrap_or(fallback)
+    }
+    fn selection(self, fallback: Color32) -> Color32 {
+        self.selection.unwrap_or(fallback)
+    }
+    fn on_table(self) -> Color32 {
+        self.table.map(readable_text).unwrap_or(INK)
+    }
+    fn on_selection(self, fallback: Color32) -> Color32 {
+        if self.selection.is_some() {
+            readable_text(self.selection(fallback))
+        } else {
+            Color32::WHITE
+        }
+    }
+    fn on_control(self, fallback: Color32) -> Color32 {
+        if self.control.is_some() {
+            readable_text(self.control(fallback))
+        } else {
+            INK
+        }
+    }
+}
 
 const PAGES: [(Page, &str); 7] = [
     (Page::Processes, "Processes"),
@@ -23,6 +82,7 @@ const PAGES: [(Page, &str); 7] = [
 
 pub(super) fn topbar(app: &mut TaskottoApp, ctx: &egui::Context) {
     let accent = accent(app);
+    let palette = AeroPalette::from_settings(&app.settings);
     egui::TopBottomPanel::top("frutiger-aero-masthead")
         .frame(Frame::NONE)
         .show(ctx, |ui| {
@@ -51,9 +111,13 @@ pub(super) fn topbar(app: &mut TaskottoApp, ctx: &egui::Context) {
                     ui.add_space(17.0);
                     if ui
                         .add(
-                            egui::Button::new(RichText::new("↻  Refresh").strong().color(INK))
-                                .fill(Color32::from_rgb(235, 255, 253))
-                                .stroke(Stroke::new(1.0_f32, BORDER)),
+                            egui::Button::new(
+                                RichText::new("↻  Refresh")
+                                    .strong()
+                                    .color(palette.on_control(Color32::from_rgb(235, 255, 253))),
+                            )
+                            .fill(palette.control(Color32::from_rgb(235, 255, 253)))
+                            .stroke(Stroke::new(1.0_f32, palette.border())),
                         )
                         .on_hover_text("Read fresh Linux /proc data (F5)")
                         .clicked()
@@ -88,6 +152,7 @@ pub(super) fn topbar(app: &mut TaskottoApp, ctx: &egui::Context) {
 
 pub(super) fn navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
     let accent = accent(app);
+    let palette = AeroPalette::from_settings(&app.settings);
     egui::TopBottomPanel::top("frutiger-aero-tabs")
         .frame(
             Frame::NONE
@@ -107,21 +172,32 @@ pub(super) fn navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
                             RichText::new(label)
                                 .size(if available >= 790.0 { 13.5 } else { 12.0 })
                                 .strong()
-                                .color(if active { Color32::WHITE } else { INK }),
+                                .color(if active {
+                                    palette.on_selection(accent)
+                                } else {
+                                    palette.on_control(Color32::from_rgb(244, 255, 251))
+                                }),
                         )
                         .corner_radius(15.0)
                         .fill(if active {
-                            accent
+                            palette.selection(accent)
                         } else {
-                            Color32::from_rgb(244, 255, 251)
+                            palette.control(Color32::from_rgb(244, 255, 251))
                         })
-                        .stroke(Stroke::new(1.0_f32, if active { accent } else { BORDER })),
+                        .stroke(Stroke::new(
+                            1.0_f32,
+                            if active {
+                                palette.selection(accent)
+                            } else {
+                                palette.border()
+                            },
+                        )),
                     );
                     if !active && response.hovered() {
                         ui.painter().rect_stroke(
                             response.rect.shrink(1.0),
                             14.0,
-                            Stroke::new(1.0_f32, SKY),
+                            Stroke::new(1.0_f32, palette.hover(SKY)),
                             StrokeKind::Inside,
                         );
                     }
@@ -135,6 +211,7 @@ pub(super) fn navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
 
 pub(super) fn sidebar(app: &mut TaskottoApp, ctx: &egui::Context) {
     let accent = accent(app);
+    let palette = AeroPalette::from_settings(&app.settings);
     egui::SidePanel::left("frutiger-aero-side-tabs")
         .resizable(false)
         .exact_width(172.0)
@@ -154,14 +231,18 @@ pub(super) fn sidebar(app: &mut TaskottoApp, ctx: &egui::Context) {
                         [148.0, 37.0],
                         egui::Button::new(
                             RichText::new(label)
-                                .color(if active { Color32::WHITE } else { INK })
+                                .color(if active {
+                                    palette.on_selection(accent)
+                                } else {
+                                    palette.on_control(Color32::from_rgb(245, 255, 250))
+                                })
                                 .strong(),
                         )
                         .corner_radius(14.0)
                         .fill(if active {
-                            accent
+                            palette.selection(accent)
                         } else {
-                            Color32::from_rgb(245, 255, 250)
+                            palette.control(Color32::from_rgb(245, 255, 250))
                         }),
                     )
                     .clicked()
@@ -174,6 +255,7 @@ pub(super) fn sidebar(app: &mut TaskottoApp, ctx: &egui::Context) {
 }
 
 pub(super) fn statusbar(app: &TaskottoApp, ctx: &egui::Context) {
+    let palette = AeroPalette::from_settings(&app.settings);
     egui::TopBottomPanel::bottom("frutiger-aero-status")
         .frame(
             Frame::NONE
@@ -183,7 +265,7 @@ pub(super) fn statusbar(app: &TaskottoApp, ctx: &egui::Context) {
         .show(ctx, |ui| {
             ui.painter().line_segment(
                 [ui.max_rect().left_top(), ui.max_rect().right_top()],
-                Stroke::new(1.0_f32, BORDER),
+                Stroke::new(1.0_f32, palette.border()),
             );
             ui.horizontal_wrapped(|ui| {
                 ui.label(RichText::new("Live").strong().color(LEAF));
@@ -207,6 +289,7 @@ pub(super) fn statusbar(app: &TaskottoApp, ctx: &egui::Context) {
 
 pub(super) fn processes(app: &mut TaskottoApp, ui: &mut egui::Ui) {
     let accent = accent(app);
+    let palette = AeroPalette::from_settings(&app.settings);
     let cpu = app.snapshot.as_ref().map(|s| s.cpu_percent);
     let memory = app
         .snapshot
@@ -219,11 +302,12 @@ pub(super) fn processes(app: &mut TaskottoApp, ui: &mut egui::Ui) {
         cpu,
         memory,
         accent,
+        palette,
     );
     ui.add_space(13.0);
     egui::Frame::new()
-        .fill(Color32::from_rgb(247, 255, 253))
-        .stroke(Stroke::new(1.0_f32, BORDER))
+        .fill(palette.table(Color32::from_rgb(247, 255, 253)))
+        .stroke(Stroke::new(1.0_f32, palette.border()))
         .corner_radius(17.0)
         .inner_margin(egui::Margin::symmetric(15, 11))
         .show(ui, |ui| {
@@ -262,7 +346,10 @@ pub(super) fn processes(app: &mut TaskottoApp, ui: &mut egui::Ui) {
                     app.save_preferences(ui.ctx());
                 }
                 if ui
-                    .selectable_label(app.settings.tree_view, "Tree")
+                    .selectable_label(
+                        app.settings.tree_view,
+                        RichText::new("Tree").color(palette.on_table()),
+                    )
                     .on_hover_text("Group child processes under parents")
                     .clicked()
                 {
@@ -283,12 +370,13 @@ pub(super) fn processes(app: &mut TaskottoApp, ui: &mut egui::Ui) {
                 ui.label(
                     RichText::new(format!("{} processes in view", rows.len()))
                         .strong()
-                        .color(INK),
+                        .color(palette.on_table()),
                 );
                 ui.add_space(10.0);
                 if let Some(p) = app.selected_process() {
                     ui.label(
-                        RichText::new(format!("Selected: {} · PID {}", p.name, p.pid)).color(MUTED),
+                        RichText::new(format!("Selected: {} · PID {}", p.name, p.pid))
+                            .color(palette.on_table()),
                     );
                     if ui.button("Inspect ↗").clicked() {
                         app.page = Page::Details;
@@ -296,22 +384,33 @@ pub(super) fn processes(app: &mut TaskottoApp, ui: &mut egui::Ui) {
                     if ui
                         .add_enabled(
                             app.selected_process().is_some_and(can_signal_process),
-                            egui::Button::new("End task…").fill(Color32::from_rgb(245, 251, 247)),
+                            egui::Button::new("End task…")
+                                .fill(palette.control(Color32::from_rgb(245, 251, 247))),
                         )
                         .clicked()
                     {
                         app.queue_action(SignalAction::Terminate);
                     }
                 } else {
-                    ui.label(RichText::new("Select a row to inspect or manage it").color(MUTED));
+                    ui.label(
+                        RichText::new("Select a row to inspect or manage it")
+                            .color(palette.on_table()),
+                    );
                 }
             });
             ui.add_space(7.0);
             if rows.is_empty() {
                 ui.add_space(30.0);
                 ui.vertical_centered(|ui| {
-                    ui.label(RichText::new("No matching processes").strong().color(INK));
-                    ui.label("Try a different name, PID or filter.");
+                    ui.label(
+                        RichText::new("No matching processes")
+                            .strong()
+                            .color(palette.on_table()),
+                    );
+                    ui.label(
+                        RichText::new("Try a different name, PID or filter.")
+                            .color(palette.on_table()),
+                    );
                     if ui.button("Clear search").clicked() {
                         app.query.clear();
                     }
@@ -331,15 +430,15 @@ pub(super) fn processes(app: &mut TaskottoApp, ui: &mut egui::Ui) {
                     .max(130.0);
             ui.separator();
             ui.horizontal(|ui| {
-                head(ui, "PROCESS", name_width);
-                head(ui, "PID", pid_width);
-                head(ui, "CPU", cpu_width);
-                head(ui, "MEMORY", ram_width);
+                head(ui, "PROCESS", name_width, palette);
+                head(ui, "PID", pid_width, palette);
+                head(ui, "CPU", cpu_width, palette);
+                head(ui, "MEMORY", ram_width, palette);
                 if show_io {
-                    head(ui, "I/O", io_width);
+                    head(ui, "I/O", io_width, palette);
                 }
                 if show_user {
-                    head(ui, "USER", user_width);
+                    head(ui, "USER", user_width, palette);
                 }
             });
             ui.separator();
@@ -359,11 +458,11 @@ pub(super) fn processes(app: &mut TaskottoApp, ui: &mut egui::Ui) {
                         let selected = app.selected == Some((p.pid, p.start_ticks));
                         let index = range.start + offset;
                         let fill = if selected {
-                            Color32::from_rgb(205, 239, 229)
+                            palette.selection(Color32::from_rgb(205, 239, 229))
                         } else if index % 2 == 0 {
-                            Color32::from_rgb(241, 253, 249)
+                            palette.table(Color32::from_rgb(241, 253, 249))
                         } else {
-                            Color32::WHITE
+                            palette.table(Color32::WHITE)
                         };
                         Frame::NONE.fill(fill).corner_radius(7.0).show(ui, |ui| {
                             ui.horizontal(|ui| {
@@ -381,9 +480,9 @@ pub(super) fn processes(app: &mut TaskottoApp, ui: &mut egui::Ui) {
                                         name_rect,
                                         6.0,
                                         if selected {
-                                            Color32::from_rgb(182, 231, 216)
+                                            palette.selection(Color32::from_rgb(182, 231, 216))
                                         } else {
-                                            Color32::from_rgb(220, 246, 239)
+                                            palette.hover(Color32::from_rgb(220, 246, 239))
                                         },
                                     );
                                 }
@@ -418,14 +517,25 @@ pub(super) fn processes(app: &mut TaskottoApp, ui: &mut egui::Ui) {
                                     Align2::LEFT_CENTER,
                                     name,
                                     FontId::proportional(13.0),
-                                    INK,
+                                    if selected && palette.selection.is_some() {
+                                        palette.on_selection(accent)
+                                    } else if response.hovered() && palette.hover.is_some() {
+                                        readable_text(palette.hover(Color32::WHITE))
+                                    } else {
+                                        palette.on_table()
+                                    },
                                 );
                                 if response.on_hover_text(&p.command).clicked() {
                                     app.selected = Some((p.pid, p.start_ticks));
                                 }
-                                cell(ui, p.pid.to_string(), pid_width);
-                                cell(ui, format!("{:.1}%", p.cpu_percent), cpu_width);
-                                cell(ui, format::bytes(p.resident_bytes), ram_width);
+                                let row_text = if selected && palette.selection.is_some() {
+                                    palette.on_selection(accent)
+                                } else {
+                                    palette.on_table()
+                                };
+                                cell(ui, p.pid.to_string(), pid_width, row_text);
+                                cell(ui, format!("{:.1}%", p.cpu_percent), cpu_width, row_text);
+                                cell(ui, format::bytes(p.resident_bytes), ram_width, row_text);
                                 if show_io {
                                     cell(
                                         ui,
@@ -435,6 +545,7 @@ pub(super) fn processes(app: &mut TaskottoApp, ui: &mut egui::Ui) {
                                             "Unavailable".to_owned()
                                         },
                                         io_width,
+                                        row_text,
                                     );
                                 }
                                 if show_user {
@@ -445,6 +556,7 @@ pub(super) fn processes(app: &mut TaskottoApp, ui: &mut egui::Ui) {
                                             .cloned()
                                             .unwrap_or_else(|| p.user_id.to_string()),
                                         user_width,
+                                        row_text,
                                     );
                                 }
                             });
@@ -456,6 +568,7 @@ pub(super) fn processes(app: &mut TaskottoApp, ui: &mut egui::Ui) {
 
 pub(super) fn performance(app: &TaskottoApp, ui: &mut egui::Ui) {
     let accent = accent(app);
+    let palette = AeroPalette::from_settings(&app.settings);
     let Some(s) = &app.snapshot else {
         ui.spinner();
         ui.label("Waiting for live CPU and memory samples…");
@@ -468,6 +581,7 @@ pub(super) fn performance(app: &TaskottoApp, ui: &mut egui::Ui) {
         Some(s.cpu_percent),
         Some(s.memory.used_fraction() * 100.0),
         accent,
+        palette,
     );
     ui.add_space(15.0);
     egui::ScrollArea::vertical().show(ui, |ui| {
@@ -522,7 +636,7 @@ pub(super) fn performance(app: &TaskottoApp, ui: &mut egui::Ui) {
         if wide {
             ui.columns(2, |columns| {
                 for (index, panel) in panels.iter().enumerate() {
-                    chart_panel(&mut columns[index % 2], panel, 175.0);
+                    chart_panel(&mut columns[index % 2], panel, 175.0, palette);
                     if index < 2 {
                         columns[index % 2].add_space(12.0);
                     }
@@ -530,7 +644,7 @@ pub(super) fn performance(app: &TaskottoApp, ui: &mut egui::Ui) {
             });
         } else {
             for panel in &panels {
-                chart_panel(ui, panel, 156.0);
+                chart_panel(ui, panel, 156.0, palette);
                 ui.add_space(12.0);
             }
         }
@@ -554,6 +668,7 @@ pub(super) fn networking(app: &TaskottoApp, ui: &mut egui::Ui) {
         return;
     };
     let accent = accent(app);
+    let palette = AeroPalette::from_settings(&app.settings);
     hero(
         ui,
         "CONNECTED WORLD",
@@ -561,6 +676,7 @@ pub(super) fn networking(app: &TaskottoApp, ui: &mut egui::Ui) {
         None,
         None,
         accent,
+        palette,
     );
     ui.add_space(14.0);
     egui::ScrollArea::vertical().show(ui, |ui| {
@@ -571,7 +687,7 @@ pub(super) fn networking(app: &TaskottoApp, ui: &mut egui::Ui) {
             secondary: Some(&app.history.sent),
             max: graph_max(&app.history.received, &app.history.sent),
             colors: [SKY, LEAF],
-        }, 257.0);
+        }, 257.0, palette);
         ui.add_space(15.0);
         ui.horizontal_wrapped(|ui| {
             info_chip(ui, "RECEIVING", &format::rate(s.rates.received_per_second), SKY);
@@ -590,6 +706,7 @@ fn hero(
     cpu: Option<f32>,
     memory: Option<f32>,
     accent: Color32,
+    palette: AeroPalette,
 ) {
     let width = ui.available_width();
     let height = if width < 710.0 { 102.0 } else { 131.0 };
@@ -606,7 +723,12 @@ fn hero(
         },
         Color32::from_rgb(241, 255, 254),
     );
-    painter.rect_stroke(rect, 19.0, Stroke::new(1.0_f32, BORDER), StrokeKind::Inside);
+    painter.rect_stroke(
+        rect,
+        19.0,
+        Stroke::new(1.0_f32, palette.border()),
+        StrokeKind::Inside,
+    );
     let center = Pos2::new(rect.right() - 87.0, rect.center().y);
     // Translucent lens, offset highlights, and repeated bubbles are drawn
     // from vector primitives. No copied wallpaper or trademarked OS assets.
@@ -681,23 +803,36 @@ struct ChartPanel<'a> {
     colors: [Color32; 2],
 }
 
-fn chart_panel(ui: &mut egui::Ui, chart: &ChartPanel<'_>, chart_height: f32) {
+fn chart_panel(ui: &mut egui::Ui, chart: &ChartPanel<'_>, chart_height: f32, palette: AeroPalette) {
     Frame::new()
-        .fill(Color32::from_rgb(248, 255, 254))
-        .stroke(Stroke::new(1.0_f32, BORDER))
+        .fill(palette.table(Color32::from_rgb(248, 255, 254)))
+        .stroke(Stroke::new(1.0_f32, palette.border()))
         .corner_radius(15.0)
         .inner_margin(Margin::same(13))
         .show(ui, |ui| {
             ui.set_min_width((ui.available_width() - 5.0).max(190.0));
-            ui.label(RichText::new(chart.title).strong().size(13.0).color(INK));
-            ui.label(RichText::new(&chart.detail).size(12.0).color(MUTED));
+            ui.label(
+                RichText::new(chart.title)
+                    .strong()
+                    .size(13.0)
+                    .color(palette.on_table()),
+            );
+            ui.label(
+                RichText::new(&chart.detail)
+                    .size(12.0)
+                    .color(if palette.table.is_some() {
+                        palette.on_table()
+                    } else {
+                        MUTED
+                    }),
+            );
             ui.add_space(7.0);
             let (rect, _) = ui.allocate_exact_size(
                 egui::vec2(ui.available_width().max(1.0), chart_height),
                 Sense::hover(),
             );
             let painter = ui.painter();
-            painter.rect_filled(rect, 9.0, Color32::from_rgb(232, 251, 249));
+            painter.rect_filled(rect, 9.0, palette.table(Color32::from_rgb(232, 251, 249)));
             painter.rect_filled(
                 Rect::from_min_max(rect.min, Pos2::new(rect.right(), rect.center().y)),
                 egui::CornerRadius {
@@ -706,20 +841,26 @@ fn chart_panel(ui: &mut egui::Ui, chart: &ChartPanel<'_>, chart_height: f32) {
                     sw: 0,
                     se: 0,
                 },
-                Color32::from_rgb(244, 255, 255),
+                palette.table(Color32::from_rgb(244, 255, 255)),
             );
             for i in 1..4 {
                 let y = rect.top() + rect.height() * i as f32 / 4.0;
                 painter.line_segment(
                     [Pos2::new(rect.left(), y), Pos2::new(rect.right(), y)],
-                    Stroke::new(1.0_f32, Color32::from_rgb(204, 231, 227)),
+                    Stroke::new(
+                        1.0_f32,
+                        palette.border.unwrap_or(Color32::from_rgb(204, 231, 227)),
+                    ),
                 );
             }
             for i in 1..6 {
                 let x = rect.left() + rect.width() * i as f32 / 6.0;
                 painter.line_segment(
                     [Pos2::new(x, rect.top()), Pos2::new(x, rect.bottom())],
-                    Stroke::new(1.0_f32, Color32::from_rgb(220, 242, 238)),
+                    Stroke::new(
+                        1.0_f32,
+                        palette.border.unwrap_or(Color32::from_rgb(220, 242, 238)),
+                    ),
                 );
             }
             plot(
@@ -869,21 +1010,25 @@ fn info_chip(ui: &mut egui::Ui, title: &str, value: &str, color: Color32) {
         });
 }
 
-fn head(ui: &mut egui::Ui, label: &str, width: f32) {
+fn head(ui: &mut egui::Ui, label: &str, width: f32, palette: AeroPalette) {
     let (rect, _) = ui.allocate_exact_size(egui::vec2(width, 21.0), Sense::hover());
     ui.painter().text(
         rect.left_center() + egui::vec2(if label == "PROCESS" { 11.0 } else { 0.0 }, 0.0),
         Align2::LEFT_CENTER,
         label,
         FontId::proportional(11.0),
-        MUTED,
+        if palette.table.is_some() {
+            palette.on_table()
+        } else {
+            MUTED
+        },
     );
 }
 
-fn cell(ui: &mut egui::Ui, label: String, width: f32) {
+fn cell(ui: &mut egui::Ui, label: String, width: f32, ink: Color32) {
     ui.add_sized(
         [width, 28.0],
-        egui::Label::new(RichText::new(label).color(INK).size(12.5)),
+        egui::Label::new(RichText::new(label).color(ink).size(12.5)),
     );
 }
 
@@ -894,4 +1039,38 @@ fn blend(a: Color32, b: Color32, t: f32) -> Color32 {
         (a.g() as f32 * (1.0 - t) + b.g() as f32 * t) as u8,
         (a.b() as f32 * (1.0 - t) + b.b() as f32 * t) as u8,
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn semantic_tokens_preserve_default_and_recolor_custom_aero_surfaces() {
+        let base = AeroPalette::from_settings(&Settings::default());
+        assert_eq!(base.control(Color32::WHITE), Color32::WHITE);
+        assert_eq!(base.hover(SKY), SKY);
+        assert_eq!(base.border(), BORDER);
+        assert_eq!(base.table(Color32::WHITE), Color32::WHITE);
+        assert_eq!(base.selection(AQUA), AQUA);
+        assert_eq!(base.on_table(), INK);
+        assert_eq!(base.on_selection(AQUA), Color32::WHITE);
+
+        let mut settings = Settings::default();
+        settings.components.control = Some("#223344".into());
+        settings.components.hover = Some("#334455".into());
+        settings.components.border = Some("#445566".into());
+        settings.components.table = Some("#192A40".into());
+        settings.components.selection = Some("#F1F2F3".into());
+        let custom = AeroPalette::from_settings(&settings);
+        assert_eq!(
+            custom.control(Color32::WHITE),
+            Color32::from_rgb(34, 51, 68)
+        );
+        assert_eq!(custom.hover(SKY), Color32::from_rgb(51, 68, 85));
+        assert_eq!(custom.border(), Color32::from_rgb(68, 85, 102));
+        assert_eq!(custom.on_control(Color32::WHITE), Color32::WHITE);
+        assert_eq!(custom.on_table(), Color32::WHITE);
+        assert_eq!(custom.on_selection(AQUA), Color32::BLACK);
+    }
 }

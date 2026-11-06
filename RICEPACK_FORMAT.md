@@ -162,8 +162,11 @@ RicePacks cannot paint duplicate titlebars or alter window permissions.
 ## Roadmap boundary
 
 Component tokens apply to shared egui widget visuals; some historical rice
-drawings still contain intentionally hardcoded era-specific colors. Complete
-per-widget token extraction remains on P1. This contract does not yet support
+drawings still contain intentionally hardcoded era-specific colors. Frutiger
+Aero's custom navigation, process list and chart panels now consume these
+tokens too. Try the [Aero Lagoon example](examples/ricepacks/aero-lagoon.toml)
+for a contrasting original design without Rust edits. Complete per-widget
+token extraction across the remaining rices remains on P1. This contract does not yet support
 custom icons, fonts, free-form widget placement or user-defined data bindings.
 Those require a separate bounded
 layout schema, migration tests and visual QA under P1/P2, not unchecked TOML
