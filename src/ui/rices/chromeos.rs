@@ -332,7 +332,7 @@ pub(super) fn statusbar(app: &mut TaskottoApp, ctx: &egui::Context) {
             let line = ui.max_rect();
             ui.painter().line_segment(
                 [line.left_top(), line.right_top()],
-                Stroke::new(1.0, colors.line),
+                Stroke::new(1.0_f32, colors.line),
             );
             ui.horizontal(|ui| {
                 ui.label(
@@ -388,7 +388,7 @@ pub(super) fn processes(app: &mut TaskottoApp, ui: &mut egui::Ui) {
                     colors.paper
                 })
                 .stroke(if active {
-                    Stroke::new(1.0, colors.accent)
+                    Stroke::new(1.0_f32, colors.accent)
                 } else {
                     Stroke::NONE
                 })
@@ -604,7 +604,7 @@ fn metric_panel(
 ) {
     Frame::NONE
         .fill(colors.paper)
-        .stroke(Stroke::new(1.0, colors.line))
+        .stroke(Stroke::new(1.0_f32, colors.line))
         .corner_radius(12.0)
         .inner_margin(Margin::same(16))
         .show(ui, |ui| {
@@ -621,7 +621,7 @@ fn header(app: &mut TaskottoApp, ui: &mut egui::Ui, colors: &Palette, columns: &
     ui.painter().rect_filled(rect, 0.0, colors.paper);
     ui.painter().line_segment(
         [rect.left_bottom(), rect.right_bottom()],
-        Stroke::new(1.0, colors.line),
+        Stroke::new(1.0_f32, colors.line),
     );
     for (column, cell) in columns.rects(rect) {
         let label = if column.sort() == Some(app.settings.sort_by) {
@@ -651,7 +651,7 @@ fn header(app: &mut TaskottoApp, ui: &mut egui::Ui, colors: &Palette, columns: &
                 ui.painter().rect_stroke(
                     cell.shrink(2.0),
                     3.0,
-                    Stroke::new(2.0, colors.accent),
+                    Stroke::new(2.0_f32, colors.accent),
                     StrokeKind::Inside,
                 );
             }
@@ -690,7 +690,7 @@ fn row_ui(
             colors.selected
         } else if response.hovered() {
             colors.hover
-        } else if index % 2 == 0 {
+        } else if index.is_multiple_of(2) {
             colors.paper
         } else {
             mix(colors.paper, colors.surface, 0.12)
@@ -700,7 +700,7 @@ fn row_ui(
         ui.painter().rect_stroke(
             rect.shrink(1.5),
             3.0,
-            Stroke::new(2.0, colors.accent),
+            Stroke::new(2.0_f32, colors.accent),
             StrokeKind::Inside,
         );
     }
