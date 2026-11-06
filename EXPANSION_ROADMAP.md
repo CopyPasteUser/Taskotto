@@ -45,7 +45,7 @@ Development on later milestones may proceed while user-hardware QA is pending.
   re-importable and strictly validated TOML file, without GUI launch or config writes.
 - [x] Automatically reload changed valid RicePack files during GUI sessions,
   with an explicit warning and last-known-good fallback for broken edits.
-- [ ] Contract tests with a RiceBowl-created pack and a versioned integration
+- [x] Contract tests with a RiceBowl-created pack and a versioned integration
   fixture supplied by that repository.
 - [x] Add pack discovery, in-app visual preview and non-destructive
   import/export from the Taskotto UI.
@@ -141,12 +141,13 @@ lean, offline-capable and independent from RiceBowl.
 
 ## Work order
 
-1. **Delivered (RC14–18):** P1 format/loader/CLI, secure reference pack,
+1. **Delivered (RC14–19):** P1 format/loader/CLI, secure reference pack,
    headless export/check/re-import, live file reload and in-app library,
-   session-only preview/revert/import/export and initial semantic widget tokens.
-2. **Next:** P1 end-to-end RiceBowl interop contract/fixture and component-level
-   UI token extraction. RiceBowl's separate JSON desktop pack is not the same
-   schema as Taskotto's TOML design; do not pass it directly to the loader.
+   session-only preview/revert/import/export, semantic widget tokens and a
+   cross-repository, versioned RiceBowl export fixture.
+2. **Next:** P1 component-level UI token extraction. RiceBowl's separate JSON
+   desktop pack still is not Taskotto TOML; the explicit RiceBowl exporter is
+   the validated conversion boundary.
 3. **Then:** P2 data-bound layout schema; P3 real process controls; P4/P5
    optional telemetry backends; P6 diagnosis; P7 dashboards.
 4. **Throughout:** P0 device acceptance and P8 measured resource costs.

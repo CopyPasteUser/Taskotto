@@ -6,11 +6,11 @@
 
 A customizable process manager and system monitor written in **Rust**. Runs alone or alongside [RiceBowl](https://github.com/CopyPasteUser/Ricebowl) on **X11 and Wayland**.
 
-![License](https://img.shields.io/badge/license-MIT-blue) ![Rust](https://img.shields.io/badge/language-Rust-orange) ![Status](https://img.shields.io/badge/status-1.0%20RC18-yellow)
+![License](https://img.shields.io/badge/license-MIT-blue) ![Rust](https://img.shields.io/badge/language-Rust-orange) ![Status](https://img.shields.io/badge/status-1.0%20RC19-yellow)
 
 </div>
 
-> **Status:** `1.0.0-rc.18` — seven dedicated interfaces: Frutiger Aero, ChromeOS, Windows 98, XP Luna, Windows 7, Windows 10 and macOS Activity Monitor. **All eight profiles leave the window frame, title and window buttons to RiceBowl/the active window manager**; Taskotto draws only its content, menus and functional toolbars. Native GUI and resource-use acceptance are still outstanding. See [1.0 roadmap](ROADMAP.md), [future development roadmap](EXPANSION_ROADMAP.md) and [QA checklist](QA.md). This is **not yet stable 1.0**.
+> **Status:** `1.0.0-rc.19` — seven dedicated interfaces: Frutiger Aero, ChromeOS, Windows 98, XP Luna, Windows 7, Windows 10 and macOS Activity Monitor. **All eight profiles leave the window frame, title and window buttons to RiceBowl/the active window manager**; Taskotto draws only its content, menus and functional toolbars. Native GUI and resource-use acceptance are still outstanding. See [1.0 roadmap](ROADMAP.md), [future development roadmap](EXPANSION_ROADMAP.md) and [QA checklist](QA.md). This is **not yet stable 1.0**.
 
 ## Screenshots
 
@@ -179,6 +179,8 @@ RICEBOWL_RICE=windows7 taskotto
 The `--theme` flag overrides this environment variable. Launcher-selected themes are **session-only**: other preference changes do not overwrite the saved theme. Preferences live at `~/.config/taskotto/config.toml` or the XDG config location. No external service or theme assets are needed.
 
 To supply a versioned Taskotto design, set `RICEBOWL_TASKOTTO_RICEPACK=/absolute/path/taskotto-rice.toml` or use `--ricepack PATH`. RicePacks never execute code or overwrite saved appearance preferences; the v1 [schema and example](RICEPACK_FORMAT.md) describe the supported design tokens.
+
+RiceBowl can export a compatible, validated Taskotto RicePack directly from its desktop recipe: `ricebowl de taskotto-export --recipe classic --output /absolute/path/taskotto-rice.toml`. Then run `taskotto --ricepack /absolute/path/taskotto-rice.toml`. The [cross-repository v1 fixture](tests/fixtures/ricebowl-classic-v1.toml) is tested by Taskotto's parser and CLI; this bridge is explicitly opt-in and does not make RiceBowl a dependency.
 
 ### Custom design tokens
 

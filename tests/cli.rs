@@ -70,6 +70,18 @@ fn ricepack_can_be_validated_headlessly_and_invalid_files_are_rejected() {
     assert!(String::from_utf8_lossy(&invalid.stderr).contains("invalid RicePack"));
     let conflict = run(&["--ricepack", path, "--snapshot"]);
     assert!(!conflict.status.success());
+
+    let ricebowl_fixture = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/tests/fixtures/ricebowl-classic-v1.toml"
+    );
+    let interoperable = run(&["--check-ricepack", ricebowl_fixture]);
+    assert!(
+        interoperable.status.success(),
+        "{}",
+        String::from_utf8_lossy(&interoperable.stderr)
+    );
+    assert!(String::from_utf8_lossy(&interoperable.stdout).contains("RiceBowl"));
 }
 
 #[test]

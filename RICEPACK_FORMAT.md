@@ -100,6 +100,23 @@ For RiceBowl session integration:
 RICEBOWL_TASKOTTO_RICEPACK=/absolute/path/taskotto-rice.toml taskotto
 ```
 
+With a RiceBowl installation supporting the v1 bridge, export a concrete
+Taskotto design from an existing desktop recipe without writing to Taskotto's
+preferences:
+
+```bash
+ricebowl de taskotto-export --recipe classic --output /absolute/path/taskotto-rice.toml
+taskotto --check-ricepack /absolute/path/taskotto-rice.toml
+taskotto --ricepack /absolute/path/taskotto-rice.toml
+```
+
+RiceBowl's version-controlled
+[`taskotto-classic-v1.toml`](https://github.com/CopyPasteUser/Ricebowl/blob/main/tests/fixtures/taskotto-classic-v1.toml)
+and Taskotto's [matching integration fixture](tests/fixtures/ricebowl-classic-v1.toml)
+are compared as part of cross-repository development. The Taskotto integration
+test validates the fixture through the production parser and headless CLI.
+RiceBowl's JSON/ZIP desktop pack is never fed directly into this TOML parser.
+
 `TASKOTTO_RICEPACK` is also supported for non-RiceBowl launchers. Selection
 order: explicit `--ricepack` > `RICEBOWL_TASKOTTO_RICEPACK` >
 `TASKOTTO_RICEPACK`. An explicit `--theme` can override the pack's
