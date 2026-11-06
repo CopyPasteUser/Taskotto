@@ -96,11 +96,12 @@ Taskotto is a **standalone, on-demand Rust system monitor and process manager** 
 
 ## 0.9 — Release candidate
 
-- [x] Buildable `1.0.0-rc.5` candidate with all-profile small/large headless layout and integration tests.
+- [x] Buildable `1.0.0-rc.6` candidate with all-profile small/large headless layout and integration tests.
 - [x] Contributor/security policies, dependency-update configuration and CI checks.
 - [x] Reproducible egui-rendered headless screenshots with real procfs measurements, documented provenance and visual inspection.
 - [x] Consistent network/disk comparison charts (both directions on one scale), early-history width regression coverage and readable navigation labels.
 - [x] Deep, independent XP Luna and Windows 10 task-manager layouts with functional menus, controls, history views, accessible focus and four additional genuine headless screenshots.
+- [x] RC6 visual fidelity pass: classic white XP process pane and statistic groups, compact legacy chrome, hidden-until-requested search, softer Windows 10 history graph fill; fixed `/proc` thread count.
 - [x] Linux end-to-end child-signal test of all four signals, PID start-time mismatch and failure handling.
 - [x] Real CLI JSON/error handling and isolated XDG desktop install/reinstall integration tests.
 - [x] Atomic launcher/icon replacement, including regression against symlink-target overwrites.

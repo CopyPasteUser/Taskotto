@@ -644,7 +644,7 @@ impl TaskottoApp {
             egui::Grid::new("cores").num_columns(4).spacing([15.0, 7.0]).show(ui, |ui| {
                 for (index, usage) in snapshot.cores_percent.iter().enumerate() {
                     ui.vertical(|ui| {
-                        ui.label(format!("CPU {} · {:.0}%", index, usage));
+                        ui.label(format!("CPU {index} · {usage:.0}%"));
                         ui.add_sized([ui.available_width().clamp(80.0, 160.0), 13.0], egui::ProgressBar::new(usage / 100.0));
                     });
                     if (index + 1) % 4 == 0 { ui.end_row(); }

@@ -6,19 +6,19 @@
 
 A customizable process manager and system monitor written in **Rust**. Runs alone or alongside [RiceBowl](https://github.com/CopyPasteUser/Ricebowl) on **X11 and Wayland**.
 
-![License](https://img.shields.io/badge/license-MIT-blue) ![Rust](https://img.shields.io/badge/language-Rust-orange) ![Status](https://img.shields.io/badge/status-1.0%20RC5-yellow)
+![License](https://img.shields.io/badge/license-MIT-blue) ![Rust](https://img.shields.io/badge/language-Rust-orange) ![Status](https://img.shields.io/badge/status-1.0%20RC6-yellow)
 
 </div>
 
-> **Status:** `1.0.0-rc.5` — the 1.0 code scope and automated process/installer acceptance checks are implemented; final X11/Wayland GUI and resource-use acceptance remain. See [roadmap](ROADMAP.md) and [QA checklist](QA.md). This is **not yet stable 1.0**.
+> **Status:** `1.0.0-rc.6` — the 1.0 code scope and automated process/installer acceptance checks are implemented; final X11/Wayland GUI and resource-use acceptance remain. See [roadmap](ROADMAP.md) and [QA checklist](QA.md). This is **not yet stable 1.0**.
 
 ## Screenshots
 
-**Windows 10-inspired process view** — grouped processes, usage heatmap and familiar task-manager navigation.
+**Windows 10-inspired process view** — compact tabs, grouped live processes and a resource heatmap. `Ctrl+F` reveals the optional Linux process filter.
 
 ![Taskotto in the Windows 10-inspired rice](assets/screenshots/taskotto-win10-processes.png)
 
-**XP Luna-inspired performance view** — original blue/cream chrome and green history graphs.
+**XP Luna-inspired performance view** — recreated blue/cream chrome, black-and-green CPU/RAM history and classic system-statistics groups.
 
 ![Taskotto in the XP Luna-inspired rice](assets/screenshots/taskotto-xp-luna-performance.png)
 
@@ -44,7 +44,7 @@ A customizable process manager and system monitor written in **Rust**. Runs alon
 - **Processes:** searchable live list, CPU/RAM/I/O/PID/name sort, tree, user filter, process start/runtime and per-process I/O rates.
 - **Safe actions:** terminate, force kill, pause and resume with confirmation and PID-reuse protection via Linux `pidfd`.
 - **Performance:** CPU/core load, RAM/swap, network RX/TX and disk read/write rates, bounded comparative rolling graphs.
-- **Riceable:** 8 profiles, including distinct Windows 10-inspired and XP Luna-inspired task-manager layouts; custom colors, layout, spacing, fonts, table columns/row height, density and persistent TOML preferences.
+- **Riceable:** 8 profiles, including distinct, refined Windows 10-inspired and XP Luna-inspired task-manager layouts; custom colors, layout, spacing, fonts, table columns/row height, density and persistent TOML preferences.
 - **Independent:** no root service, no resident daemon, no RiceBowl or desktop-shell dependency.
 - **Headless:** `--snapshot --json` is available without a graphical session.
 

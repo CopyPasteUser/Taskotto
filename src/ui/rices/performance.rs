@@ -16,9 +16,9 @@ pub(super) fn page(app: &mut TaskottoApp, ui: &mut egui::Ui) {
 
 fn modern_performance(app: &mut TaskottoApp, ui: &mut egui::Ui) {
     let wide = ui.available_width() > 800.0;
-    ui.add_space(7.0);
+    ui.add_space(4.0);
     ui.heading(RichText::new("Performance").size(30.0));
-    ui.add_space(10.0);
+    ui.add_space(6.0);
     egui::ScrollArea::vertical().show(ui, |ui| {
         if wide {
             let room = ui.available_width();
@@ -194,7 +194,7 @@ fn focused_chart(app: &TaskottoApp, ui: &mut egui::Ui) {
             ui.label(RichText::new(summary).size(13.0).weak());
         });
     });
-    ui.add_space(7.0);
+    ui.add_space(4.0);
     let subtitle = match focus {
         PerformanceFocus::Cpu => "CPU utilization · percentage over time",
         PerformanceFocus::Memory => "Physical memory use · percentage over time",
@@ -202,6 +202,13 @@ fn focused_chart(app: &TaskottoApp, ui: &mut egui::Ui) {
         PerformanceFocus::Network => "Received and transmitted throughput · bytes per second",
     };
     ui.label(RichText::new(subtitle).small().weak());
+    ui.add_space(3.0);
+    ui.horizontal(|ui| {
+        ui.label(RichText::new("100%").size(10.0).weak());
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            ui.label(RichText::new("Live · rolling history").size(10.0).weak());
+        });
+    });
     let rect = graph_rect(
         ui,
         260.0,
@@ -224,7 +231,13 @@ fn focused_chart(app: &TaskottoApp, ui: &mut egui::Ui) {
     } else {
         plot_lines(ui, rect.shrink(2.0), &[(first, color)], scale, false);
     }
-    ui.add_space(15.0);
+    ui.horizontal(|ui| {
+        ui.label(RichText::new("Oldest sample").size(10.0).weak());
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            ui.label(RichText::new("0").size(10.0).weak());
+        });
+    });
+    ui.add_space(11.0);
     match focus {
         PerformanceFocus::Cpu => {
             ui.horizontal_wrapped(|ui| {
@@ -233,29 +246,20 @@ fn focused_chart(app: &TaskottoApp, ui: &mut egui::Ui) {
                 metric(ui, "Processes", snapshot.processes.len().to_string());
                 metric(ui, "Up time", format::duration(snapshot.uptime_seconds));
             });
-            ui.add_space(20.0);
-            ui.label("Logical processor utilization");
-            let available = ui.available_width();
-            let columns = ((available / 145.0).floor() as usize).clamp(1, 6);
-            let bar_width =
-                ((available - (columns - 1) as f32 * 12.0) / columns as f32).clamp(82.0, 130.0);
-            egui::Grid::new("win10-logical-cores")
-                .num_columns(columns)
-                .spacing([12.0, 10.0])
-                .show(ui, |ui| {
-                    for (index, usage) in snapshot.cores_percent.iter().enumerate() {
-                        ui.vertical(|ui| {
-                            ui.label(RichText::new(format!("CPU {index}   {:.0}%", usage)).small());
-                            ui.add_sized(
-                                [bar_width, 13.0],
-                                egui::ProgressBar::new((usage / 100.0).clamp(0.0, 1.0)),
-                            );
-                        });
-                        if (index + 1).is_multiple_of(columns) {
-                            ui.end_row();
-                        }
-                    }
-                });
+            ui.add_space(14.0);
+            ui.separator();
+            ui.label(
+                RichText::new("Logical processors · current load")
+                    .size(12.0)
+                    .weak(),
+            );
+            // A row of labeled readings is accurate without pretending that a
+            // single sample is a per-core *history* chart.
+            ui.horizontal_wrapped(|ui| {
+                for (index, usage) in snapshot.cores_percent.iter().enumerate() {
+                    ui.label(RichText::new(format!("CPU {index}: {usage:.0}%")).size(11.0));
+                }
+            });
         }
         PerformanceFocus::Memory => {
             ui.horizontal_wrapped(|ui| {
@@ -323,8 +327,7 @@ fn metric(ui: &mut egui::Ui, label: &str, value: String) {
 
 fn xp_performance(app: &TaskottoApp, ui: &mut egui::Ui) {
     let snapshot = app.snapshot.as_ref().expect("checked by page");
-    ui.label(RichText::new("Performance").size(14.0).strong());
-    ui.add_space(7.0);
+    ui.add_space(2.0);
     egui::ScrollArea::vertical().show(ui, |ui| {
         xp_graph(
             ui,
@@ -333,77 +336,120 @@ fn xp_performance(app: &TaskottoApp, ui: &mut egui::Ui) {
             &app.history.cpu,
             100.0,
         );
-        ui.add_space(12.0);
+        ui.add_space(11.0);
         xp_graph(
             ui,
-            "Physical Memory Usage",
+            "PF Usage (RAM)",
             snapshot.memory.used_fraction() * 100.0,
             &app.history.memory,
             100.0,
         );
-        ui.add_space(14.0);
-        egui::Frame::group(ui.style())
-            .fill(Color32::from_rgb(245, 243, 230))
-            .show(ui, |ui| {
-                ui.horizontal_wrapped(|ui| {
-                    metric(ui, "Processes", snapshot.processes.len().to_string());
-                    metric(ui, "CPU", format!("{:.1}%", snapshot.cpu_percent));
-                    metric(
-                        ui,
-                        "Physical Memory",
-                        format!(
-                            "{} / {}",
-                            format::bytes(snapshot.memory.used()),
-                            format::bytes(snapshot.memory.total)
-                        ),
-                    );
-                    metric(
-                        ui,
-                        "Swap",
-                        format!(
-                            "{} / {}",
-                            format::bytes(
-                                snapshot
-                                    .memory
-                                    .swap_total
-                                    .saturating_sub(snapshot.memory.swap_free)
-                            ),
-                            format::bytes(snapshot.memory.swap_total)
-                        ),
-                    );
-                    metric(ui, "Up time", format::duration(snapshot.uptime_seconds));
-                });
+        ui.add_space(17.0);
+        let groups = [
+            (
+                "Totals",
+                [
+                    ("Processes", snapshot.processes.len().to_string()),
+                    (
+                        "Threads",
+                        snapshot
+                            .processes
+                            .iter()
+                            .map(|p| p.threads as u64)
+                            .sum::<u64>()
+                            .to_string(),
+                    ),
+                    ("Up time", format::duration(snapshot.uptime_seconds)),
+                ],
+            ),
+            (
+                "Physical Memory (K)",
+                [
+                    ("Total", (snapshot.memory.total / 1024).to_string()),
+                    ("Available", (snapshot.memory.available / 1024).to_string()),
+                    ("In use", (snapshot.memory.used() / 1024).to_string()),
+                ],
+            ),
+            (
+                "Swap (K)",
+                [
+                    ("Total", (snapshot.memory.swap_total / 1024).to_string()),
+                    ("Available", (snapshot.memory.swap_free / 1024).to_string()),
+                    (
+                        "In use",
+                        (snapshot
+                            .memory
+                            .swap_total
+                            .saturating_sub(snapshot.memory.swap_free)
+                            / 1024)
+                            .to_string(),
+                    ),
+                ],
+            ),
+        ];
+        if ui.available_width() >= 680.0 {
+            ui.columns(3, |columns| {
+                for (column, (title, values)) in columns.iter_mut().zip(&groups) {
+                    xp_stat_group(column, title, values);
+                }
             });
+        } else {
+            for (title, values) in &groups {
+                xp_stat_group(ui, title, values);
+                ui.add_space(6.0);
+            }
+        }
     });
 }
 
+fn xp_stat_group(ui: &mut egui::Ui, title: &str, values: &[(&str, String)]) {
+    ui.label(RichText::new(title).size(12.0).strong());
+    egui::Frame::new()
+        .stroke(Stroke::new(1.0, Color32::from_rgb(166, 162, 145)))
+        .fill(Color32::from_rgb(245, 243, 231))
+        .inner_margin(egui::Margin::same(7))
+        .show(ui, |ui| {
+            ui.set_min_width(ui.available_width().max(100.0) - 16.0);
+            for (label, value) in values {
+                ui.horizontal(|ui| {
+                    ui.label(RichText::new(*label).size(11.0));
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        ui.label(RichText::new(value).size(11.0));
+                    });
+                });
+            }
+        });
+}
+
 fn xp_graph(ui: &mut egui::Ui, title: &str, fraction: f32, history: &VecDeque<f32>, scale: f32) {
-    ui.label(RichText::new(title).size(13.0).strong());
     ui.horizontal_top(|ui| {
-        let (bar, _) = ui.allocate_exact_size(egui::vec2(96.0, 154.0), Sense::hover());
-        let frame = Color32::from_rgb(106, 105, 98);
-        ui.painter()
-            .rect_filled(bar, 0.0, Color32::from_rgb(2, 12, 5));
-        ui.painter()
-            .rect_stroke(bar, 0.0, Stroke::new(2.0_f32, frame), StrokeKind::Inside);
-        let filled = bar.height() * (fraction / 100.0).clamp(0.0, 1.0);
-        if filled > 5.0 {
-            ui.painter().rect_filled(
-                Rect::from_min_max(
-                    egui::pos2(bar.left() + 5.0, bar.bottom() - filled),
-                    egui::pos2(bar.right() - 5.0, bar.bottom() - 5.0),
-                ),
-                0.0,
-                Color32::from_rgb(57, 212, 64),
+        ui.vertical(|ui| {
+            ui.label(RichText::new(title).size(12.0).strong());
+            let (bar, _) = ui.allocate_exact_size(egui::vec2(103.0, 117.0), Sense::hover());
+            let frame = Color32::from_rgb(106, 105, 98);
+            ui.painter()
+                .rect_filled(bar, 0.0, Color32::from_rgb(2, 12, 5));
+            ui.painter()
+                .rect_stroke(bar, 0.0, Stroke::new(2.0, frame), StrokeKind::Inside);
+            let filled = (bar.height() - 10.0) * (fraction / 100.0).clamp(0.0, 1.0);
+            if filled > 1.0 {
+                ui.painter().rect_filled(
+                    Rect::from_min_max(
+                        egui::pos2(bar.left() + 5.0, bar.bottom() - 5.0 - filled),
+                        egui::pos2(bar.right() - 5.0, bar.bottom() - 5.0),
+                    ),
+                    0.0,
+                    Color32::from_rgb(57, 212, 64),
+                );
+            }
+            ui.painter().text(
+                bar.center(),
+                Align2::CENTER_CENTER,
+                format!("{fraction:.0}%"),
+                FontId::proportional(18.0),
+                Color32::from_rgb(160, 255, 160),
             );
-        }
-        ui.painter().text(
-            bar.center(),
-            Align2::CENTER_CENTER,
-            format!("{fraction:.0}%"),
-            FontId::proportional(18.0),
-            Color32::from_rgb(160, 255, 160),
-        );
+        });
         ui.vertical(|ui| {
             ui.label(
                 RichText::new(format!("{title} History"))
@@ -412,7 +458,7 @@ fn xp_graph(ui: &mut egui::Ui, title: &str, fraction: f32, history: &VecDeque<f3
             );
             let rect = graph_rect(
                 ui,
-                133.0,
+                117.0,
                 Color32::from_rgb(0, 15, 3),
                 Color32::from_rgb(21, 92, 27),
             );
@@ -457,14 +503,30 @@ fn plot_lines(
     rect: Rect,
     series: &[(&VecDeque<f32>, Color32)],
     max: f32,
-    _classic: bool,
+    classic: bool,
 ) {
     for &(history, color) in series {
         if history.len() >= 2 {
-            ui.painter().add(egui::Shape::line(
-                chart_points(history, rect, max.max(1.0)),
-                Stroke::new(1.7_f32, color),
-            ));
+            let points = chart_points(history, rect, max.max(1.0));
+            if !classic {
+                // Build a translucent area from convex segments, not a
+                // non-convex polygon spanning the entire history.
+                let fill = Color32::from_rgba_unmultiplied(color.r(), color.g(), color.b(), 32);
+                for pair in points.windows(2) {
+                    ui.painter().add(egui::Shape::convex_polygon(
+                        vec![
+                            egui::pos2(pair[0].x, rect.bottom()),
+                            pair[0],
+                            pair[1],
+                            egui::pos2(pair[1].x, rect.bottom()),
+                        ],
+                        fill,
+                        Stroke::NONE,
+                    ));
+                }
+            }
+            ui.painter()
+                .add(egui::Shape::line(points, Stroke::new(1.7_f32, color)));
         }
     }
 }
