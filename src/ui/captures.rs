@@ -71,6 +71,11 @@ fn generate_headless_ui_screenshots() {
         ),
         (
             Theme::Windows7,
+            Page::Processes,
+            "taskotto-win7-dusk-ricepack.png",
+        ),
+        (
+            Theme::Windows7,
             Page::Services,
             "taskotto-win7-services.png",
         ),
@@ -253,6 +258,13 @@ fn generate_headless_ui_screenshots() {
             .expect("checked-in Nocturne RicePack must remain valid");
             pack.apply(&mut settings);
         }
+        if file.contains("dusk-ricepack") {
+            let pack = crate::ricepack::RicePack::from_toml(include_str!(
+                "../../examples/ricepacks/win7-dusk.toml"
+            ))
+            .expect("checked-in Dusk RicePack must remain valid");
+            pack.apply(&mut settings);
+        }
         apply_theme(&ctx, &settings);
         let mut app = TaskottoApp {
             worker: Worker::start(10_000, ctx.clone()),
@@ -275,6 +287,7 @@ fn generate_headless_ui_screenshots() {
                 || file.contains("win98-processes")
                 || file.contains("chromeos-tasks")
                 || file.contains("nocturne-ricepack")
+                || file.contains("dusk-ricepack")
             {
                 snapshot
                     .processes

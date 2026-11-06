@@ -1,8 +1,14 @@
-# Taskotto 1.0.0-rc.22 — release candidate
+# Taskotto 1.0.0-rc.23 — release candidate
 
 **Date:** 2026-11-06 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
 Rust-only Linux process manager and system monitor. This is a **prerelease**, not a stable 1.0 certification.
+
+## Changes since rc.22
+
+- Windows 7 custom task-manager navigation and Applications/Processes tables now honor the shared RicePack control, table, hover, selection and border colors. Without overrides, historical layouts and palette remain unchanged.
+- Added an original Dusk design pack and a live-egui screenshot of the dark selected process table (43 gallery captures). The Services/Users plain grids continue using their existing readable background.
+- Windows 98, XP Luna and Windows 10 component extraction, advanced layouts and native desktop hardware acceptance remain open; stable 1.0 is not certified.
 
 ## Changes since rc.21
 

@@ -1,6 +1,6 @@
 # Screenshot provenance and reproduction
 
-[**View all 42 screenshots in the expandable README gallery**](README.md#screenshots).
+[**View all 43 screenshots in the expandable README gallery**](README.md#screenshots).
 The gallery groups every image by rice, including the supplementary pages
 and alternate layouts; click any preview to see its full-resolution PNG.
 
@@ -23,7 +23,7 @@ The restricted capture environment currently exposes few processes and very
 little I/O; this is why some screenshots look sparse. They are not evidence of
 hardware compatibility or GUI performance.
 
-To regenerate all 42 images on Linux:
+To regenerate all 43 images on Linux:
 
 ```bash
 TASKOTTO_SCREENSHOT_DIR=assets/screenshots \
@@ -69,6 +69,7 @@ The command samples real system activity and writes:
 
 - `assets/screenshots/taskotto-win7-applications.png` — current-user process approximation, not compositor window enumeration.
 - `assets/screenshots/taskotto-win7-processes.png` — Aero-era chrome, six tabs, compact sortable report and PID-safe process actions.
+- `assets/screenshots/taskotto-win7-dusk-ricepack.png` — the original Dusk RicePack v1 applied to Windows 7's custom-drawn tabs and process report, with contrasting controls, dark table cells, row hover and selected PID; underlying Linux values are live.
 - `assets/screenshots/taskotto-win7-services.png` — real read-only systemd **user** units or explicit unavailable/error state (as in restricted CI).
 - `assets/screenshots/taskotto-win7-performance.png` — original green CPU and blue memory histories with Linux CPU-core samples and memory statistics.
 - `assets/screenshots/taskotto-win7-networking.png` — real non-loopback receive/send trends, bytes/second not Windows link utilization.
