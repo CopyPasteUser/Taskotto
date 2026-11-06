@@ -1,6 +1,7 @@
 //! Asset-free macOS Activity Monitor-inspired client. The Linux sampler is
 //! authoritative: unavailable macOS-only metrics are labeled, never simulated.
 use super::*;
+use crate::theme::ComponentPaint;
 use egui::{Align2, FontId, Frame, Margin, StrokeKind};
 use std::collections::VecDeque;
 
@@ -123,6 +124,7 @@ pub(super) fn topbar(app: &mut TaskottoApp, ctx: &egui::Context) {
 }
 
 pub(super) fn navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
+    let paint = ComponentPaint::from_settings(&app.settings);
     egui::TopBottomPanel::top("mac-activity-segments")
         .frame(
             Frame::NONE
@@ -137,19 +139,26 @@ pub(super) fn navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
                 ui.add_space((ui.available_width() - total).max(0.0) / 2.0);
                 for (page, name, _) in TABS {
                     let active = app.page == page;
-                    let button = egui::Button::new(RichText::new(name).size(12.5).color(INK))
+                    let normal_fill = Color32::from_rgb(226, 230, 236);
+                    let active_fill = WHITE;
+                    let button =
+                        egui::Button::new(RichText::new(name).size(12.5).color(if active {
+                            paint.on_selection(active_fill, INK)
+                        } else {
+                            paint.on_control(normal_fill, INK)
+                        }))
                         .corner_radius(0)
                         .fill(if active {
-                            WHITE
+                            paint.selection(active_fill)
                         } else {
-                            Color32::from_rgb(226, 230, 236)
+                            paint.control(normal_fill)
                         })
-                        .stroke(Stroke::new(1.0_f32, BORDER));
+                        .stroke(Stroke::new(1.0_f32, paint.border(BORDER)));
                     let response = ui.add_sized([width, 30.0], button);
                     if active {
                         ui.painter().line_segment(
                             [response.rect.left_bottom(), response.rect.right_bottom()],
-                            Stroke::new(2.0_f32, BLUE),
+                            Stroke::new(2.0_f32, paint.border(BLUE)),
                         );
                     }
                     if response.clicked() {
@@ -161,6 +170,7 @@ pub(super) fn navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
 }
 
 pub(super) fn vertical_navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
+    let paint = ComponentPaint::from_settings(&app.settings);
     egui::SidePanel::left("mac-custom-sidebar")
         .resizable(false)
         .exact_width(147.0)
@@ -174,10 +184,22 @@ pub(super) fn vertical_navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
             ui.add_space(7.0);
             for (page, name, _) in TABS {
                 let active = app.page == page;
-                if ui
-                    .add_sized([128.0, 33.0], egui::Button::new(name).selected(active))
-                    .clicked()
-                {
+                let button = if paint.control.is_some() || paint.selection.is_some() {
+                    egui::Button::new(RichText::new(name).color(if active {
+                        paint.on_selection(BLUE, WHITE)
+                    } else {
+                        paint.on_control(TOOLBAR, INK)
+                    }))
+                    .fill(if active {
+                        paint.selection(BLUE)
+                    } else {
+                        paint.control(TOOLBAR)
+                    })
+                    .selected(active)
+                } else {
+                    egui::Button::new(name).selected(active)
+                };
+                if ui.add_sized([128.0, 33.0], button).clicked() {
                     app.page = page;
                 }
                 ui.add_space(2.0);
@@ -432,16 +454,17 @@ fn cell(
     row: usize,
     selected: bool,
     height: f32,
+    paint: ComponentPaint,
 ) -> egui::Response {
     let (rect, response) = ui.allocate_exact_size(egui::vec2(width, height), Sense::click());
     let background = if selected {
-        Color32::from_rgb(47, 119, 212)
+        paint.selection(Color32::from_rgb(47, 119, 212))
     } else if response.hovered() {
-        Color32::from_rgb(231, 240, 253)
+        paint.hover(Color32::from_rgb(231, 240, 253))
     } else if row.is_multiple_of(2) {
-        WHITE
+        paint.table(WHITE)
     } else {
-        Color32::from_rgb(247, 248, 250)
+        paint.table(Color32::from_rgb(247, 248, 250))
     };
     ui.painter().rect_filled(rect, 0.0, background);
     ui.painter().with_clip_rect(rect.shrink(4.0)).text(
@@ -449,13 +472,19 @@ fn cell(
         Align2::LEFT_CENTER,
         text,
         FontId::proportional(12.3),
-        if selected { WHITE } else { INK },
+        if selected {
+            paint.on_selection(Color32::from_rgb(47, 119, 212), WHITE)
+        } else if response.hovered() && paint.hover.is_some() {
+            crate::theme::readable_text(background)
+        } else {
+            paint.on_table(INK)
+        },
     );
     if response.has_focus() {
         ui.painter().rect_stroke(
             rect.shrink(1.0),
             0.0,
-            Stroke::new(1.3_f32, if selected { WHITE } else { BLUE }),
+            Stroke::new(1.3_f32, if selected { WHITE } else { paint.border(BLUE) }),
             StrokeKind::Inside,
         );
     }
@@ -512,6 +541,7 @@ fn column_value(column: Column, process: &Process, app: &TaskottoApp) -> String 
 }
 
 pub(super) fn process_table(app: &mut TaskottoApp, ui: &mut egui::Ui, focus: Focus) {
+    let paint = ComponentPaint::from_settings(&app.settings);
     let Some(_) = &app.snapshot else {
         ui.spinner();
         ui.label("Reading live Linux processes…");
@@ -535,8 +565,8 @@ pub(super) fn process_table(app: &mut TaskottoApp, ui: &mut egui::Ui, focus: Foc
     };
     let height = (ui.available_height() - 26.0).max(60.0);
     Frame::NONE
-        .fill(WHITE)
-        .stroke(Stroke::new(1.0_f32, BORDER))
+        .fill(paint.table(WHITE))
+        .stroke(Stroke::new(1.0_f32, paint.border(BORDER)))
         .show(ui, |ui| {
             ui.set_min_height(height);
             let width = (ui.available_width() - 13.0).max(395.0);
@@ -555,22 +585,29 @@ pub(super) fn process_table(app: &mut TaskottoApp, ui: &mut egui::Ui, focus: Foc
                     };
                     let (rect, response) =
                         ui.allocate_exact_size(egui::vec2(width, 27.0), Sense::click());
-                    ui.painter()
-                        .rect_filled(rect, 0.0, Color32::from_rgb(243, 245, 248));
+                    ui.painter().rect_filled(
+                        rect,
+                        0.0,
+                        paint.table(Color32::from_rgb(243, 245, 248)),
+                    );
                     ui.painter().line_segment(
                         [rect.left_bottom(), rect.right_bottom()],
-                        Stroke::new(1.0_f32, BORDER),
+                        Stroke::new(1.0_f32, paint.border(BORDER)),
                     );
                     ui.painter().line_segment(
                         [rect.right_top(), rect.right_bottom()],
-                        Stroke::new(0.7_f32, BORDER),
+                        Stroke::new(0.7_f32, paint.border(BORDER)),
                     );
                     ui.painter().with_clip_rect(rect.shrink(4.0)).text(
                         rect.left_center() + egui::vec2(9.0, 0.0),
                         Align2::LEFT_CENTER,
                         title,
                         FontId::proportional(11.5),
-                        MUTED,
+                        if paint.table.is_some() {
+                            paint.on_table(INK)
+                        } else {
+                            MUTED
+                        },
                     );
                     if response.clicked()
                         && let Some(sort) = kind.sort()
@@ -588,7 +625,10 @@ pub(super) fn process_table(app: &mut TaskottoApp, ui: &mut egui::Ui, focus: Foc
             if rows.is_empty() {
                 ui.add_space(34.0);
                 ui.vertical_centered(|ui| {
-                    ui.label("No processes match the current search or filter.");
+                    ui.label(
+                        RichText::new("No processes match the current search or filter.")
+                            .color(paint.on_table(INK)),
+                    );
                     if ui.button("Clear search").clicked() {
                         app.query.clear();
                     }
@@ -608,7 +648,8 @@ pub(super) fn process_table(app: &mut TaskottoApp, ui: &mut egui::Ui, focus: Foc
                             ui.spacing_mut().item_spacing.x = 0.0;
                             for &(kind, width) in &specs {
                                 let value = column_value(kind, process, app);
-                                let cell_response = cell(ui, &value, width, index, selected, row_h);
+                                let cell_response =
+                                    cell(ui, &value, width, index, selected, row_h, paint);
                                 if kind == Column::Name
                                     || cell_response.clicked()
                                     || cell_response.double_clicked()

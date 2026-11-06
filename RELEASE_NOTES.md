@@ -1,8 +1,14 @@
-# Taskotto 1.0.0-rc.20 — release candidate
+# Taskotto 1.0.0-rc.21 — release candidate
 
 **Date:** 2026-11-06 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
 Rust-only Linux process manager and system monitor. This is a **prerelease**, not a stable 1.0 certification.
+
+## Changes since rc.20
+
+- Shared one validated `ComponentPaint` parser between Frutiger Aero and macOS Activity Monitor's custom client widgets, keeping their historical no-override appearance unchanged.
+- Activity Monitor now honors RicePack component tokens on navigation, table headers, hover/selection and process rows with contrast-safe text. The original Nightshift example and authentic egui screenshot bring the total gallery to 41.
+- P1 still includes the remaining rice widget styles and richer sizing/layout foundations; stable 1.0 remains gated on native Mint/X11, KDE/Wayland and RiceBowl/labwc QA.
 
 ## Changes since rc.19
 

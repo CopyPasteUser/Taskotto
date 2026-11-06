@@ -1,0 +1,14 @@
+format_version = 1
+name = "Nightshift: Activity Monitor"
+base_theme = "macos"
+
+[appearance]
+accent = "#684AC9"
+navigation = "top-tabs"
+
+[components]
+control = "#DAE6FA"
+hover = "#B7D1F9"
+border = "#728AA8"
+table = "#202A3B"
+selection = "#5B3DB5"

@@ -6,11 +6,11 @@
 
 A customizable process manager and system monitor written in **Rust**. Runs alone or alongside [RiceBowl](https://github.com/CopyPasteUser/Ricebowl) on **X11 and Wayland**.
 
-![License](https://img.shields.io/badge/license-MIT-blue) ![Rust](https://img.shields.io/badge/language-Rust-orange) ![Status](https://img.shields.io/badge/status-1.0%20RC20-yellow)
+![License](https://img.shields.io/badge/license-MIT-blue) ![Rust](https://img.shields.io/badge/language-Rust-orange) ![Status](https://img.shields.io/badge/status-1.0%20RC21-yellow)
 
 </div>
 
-> **Status:** `1.0.0-rc.20` — seven dedicated interfaces: Frutiger Aero, ChromeOS, Windows 98, XP Luna, Windows 7, Windows 10 and macOS Activity Monitor. **All eight profiles leave the window frame, title and window buttons to RiceBowl/the active window manager**; Taskotto draws only its content, menus and functional toolbars. Native GUI and resource-use acceptance are still outstanding. See [1.0 roadmap](ROADMAP.md), [future development roadmap](EXPANSION_ROADMAP.md) and [QA checklist](QA.md). This is **not yet stable 1.0**.
+> **Status:** `1.0.0-rc.21` — seven dedicated interfaces: Frutiger Aero, ChromeOS, Windows 98, XP Luna, Windows 7, Windows 10 and macOS Activity Monitor. **All eight profiles leave the window frame, title and window buttons to RiceBowl/the active window manager**; Taskotto draws only its content, menus and functional toolbars. Native GUI and resource-use acceptance are still outstanding. See [1.0 roadmap](ROADMAP.md), [future development roadmap](EXPANSION_ROADMAP.md) and [QA checklist](QA.md). This is **not yet stable 1.0**.
 
 ## Screenshots
 
@@ -25,7 +25,7 @@ A customizable process manager and system monitor written in **Rust**. Runs alon
 | [![macOS-inspired Activity Monitor CPU process list](assets/screenshots/taskotto-macos-cpu.png)](assets/screenshots/taskotto-macos-cpu.png) | [![Frutiger Aero CPU and memory performance dashboard](assets/screenshots/taskotto-frutiger-aero-performance.png)](assets/screenshots/taskotto-frutiger-aero-performance.png) |
 
 <details>
-<summary><strong>All screenshots (40)</strong> — expand to view every rice and every captured screen</summary>
+<summary><strong>All screenshots (41)</strong> — expand to view every rice and every captured screen</summary>
 
 ### Frutiger Aero
 
@@ -103,10 +103,12 @@ A customizable process manager and system monitor written in **Rust**. Runs alon
 | [![macOS Activity Monitor: Energy](assets/screenshots/taskotto-macos-energy.png)](assets/screenshots/taskotto-macos-energy.png) | [![macOS Activity Monitor: Disk](assets/screenshots/taskotto-macos-disk.png)](assets/screenshots/taskotto-macos-disk.png) |
 | **Network** | **Process info** |
 | [![macOS Activity Monitor: Network](assets/screenshots/taskotto-macos-network.png)](assets/screenshots/taskotto-macos-network.png) | [![macOS Activity Monitor: Process info](assets/screenshots/taskotto-macos-info.png)](assets/screenshots/taskotto-macos-info.png) |
+| **Nightshift RicePack · custom process table** | |
+| [![macOS Activity Monitor: Nightshift custom RicePack recolors process table and selection](assets/screenshots/taskotto-macos-nightshift-ricepack.png)](assets/screenshots/taskotto-macos-nightshift-ricepack.png) | |
 
 </details>
 
-*All 40 images above are headless Taskotto egui renders using live Linux `/proc`; the capture environment exposes few processes. The rc.18 editor capture and rc.20 Aero Lagoon process/chart views are actual renders using bundled RicePacks. These client-only renders intentionally omit RiceBowl's native window frame. [Capture provenance and reproduction](SCREENSHOTS.md) · [Fidelity boundaries](RICE_FIDELITY.md). Native X11/Wayland verification remains pending.*
+*All 41 images above are headless Taskotto egui renders using live Linux `/proc`; the capture environment exposes few processes. The editor, Aero Lagoon and Nightshift captures are actual renders using bundled RicePacks. These client-only renders intentionally omit RiceBowl's native window frame. [Capture provenance and reproduction](SCREENSHOTS.md) · [Fidelity boundaries](RICE_FIDELITY.md). Native X11/Wayland verification remains pending.*
 
 ## What works
 
