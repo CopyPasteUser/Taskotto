@@ -36,8 +36,28 @@ fn generate_headless_ui_screenshots() {
         ),
         (
             Theme::Windows10,
+            Page::Processes,
+            "taskotto-win10-vertical.png",
+        ),
+        (
+            Theme::Windows10,
             Page::Performance,
             "taskotto-win10-performance.png",
+        ),
+        (
+            Theme::Windows10,
+            Page::AppHistory,
+            "taskotto-win10-app-history.png",
+        ),
+        (
+            Theme::Windows10,
+            Page::Startup,
+            "taskotto-win10-startup.png",
+        ),
+        (
+            Theme::Windows10,
+            Page::Services,
+            "taskotto-win10-services.png",
         ),
         (Theme::Windows10, Page::Users, "taskotto-win10-users.png"),
         (
@@ -49,6 +69,11 @@ fn generate_headless_ui_screenshots() {
             Theme::XpLuna,
             Page::Applications,
             "taskotto-xp-luna-applications.png",
+        ),
+        (
+            Theme::XpLuna,
+            Page::Applications,
+            "taskotto-xp-luna-new-task.png",
         ),
         (
             Theme::XpLuna,
@@ -76,6 +101,11 @@ fn generate_headless_ui_screenshots() {
         let settings = Settings {
             theme,
             refresh_ms: 10_000,
+            layout_mode: if file.contains("vertical") {
+                LayoutMode::Sidebar
+            } else {
+                LayoutMode::TopTabs
+            },
             ..Settings::default()
         };
         apply_theme(&ctx, &settings);
@@ -107,7 +137,12 @@ fn generate_headless_ui_screenshots() {
             theme_text_input: String::new(),
             my_uid: unsafe { libc::geteuid() },
             users: load_users(),
+            system_pages: rices::SystemPages::default(),
+            new_task: NewTaskDialog::default(),
         };
+        if file.contains("new-task") {
+            app.new_task.open = true;
+        }
         let input = egui::RawInput {
             screen_rect: Some(egui::Rect::from_min_size(
                 egui::Pos2::ZERO,
@@ -124,6 +159,12 @@ fn generate_headless_ui_screenshots() {
             let output = ctx.run(input.clone(), |ctx| {
                 app.draw_contents(ctx);
             });
+            if page == Page::Services && frame == 0 {
+                // The real systemctl query runs asynchronously; give the test
+                // capture a bounded opportunity to show its actual result or
+                // permission/error state instead of the initial spinner.
+                thread::sleep(Duration::from_millis(350));
+            }
             pixels = Some(
                 paint_egui(&ctx, output, &mut textures, frame == 2)
                     .expect("rasterize original egui primitives"),

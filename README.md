@@ -6,11 +6,11 @@
 
 A customizable process manager and system monitor written in **Rust**. Runs alone or alongside [RiceBowl](https://github.com/CopyPasteUser/Ricebowl) on **X11 and Wayland**.
 
-![License](https://img.shields.io/badge/license-MIT-blue) ![Rust](https://img.shields.io/badge/language-Rust-orange) ![Status](https://img.shields.io/badge/status-1.0%20RC7-yellow)
+![License](https://img.shields.io/badge/license-MIT-blue) ![Rust](https://img.shields.io/badge/language-Rust-orange) ![Status](https://img.shields.io/badge/status-1.0%20RC8-yellow)
 
 </div>
 
-> **Status:** `1.0.0-rc.7` — live Linux process monitoring and the XP/Windows 10-inspired views are functional. Native X11/Wayland GUI and resource-use acceptance are still outstanding. See [roadmap](ROADMAP.md) and [QA checklist](QA.md). This is **not yet stable 1.0**.
+> **Status:** `1.0.0-rc.8` — deeper XP/Windows 10 task-manager interactions, seven data-backed Windows 10 tabs, and an optional vertical navigation. Native GUI and resource-use acceptance are still outstanding. See [roadmap](ROADMAP.md) and [QA checklist](QA.md). This is **not yet stable 1.0**.
 
 ## Screenshots
 
@@ -23,32 +23,33 @@ A customizable process manager and system monitor written in **Rust**. Runs alon
 ![Taskotto in the XP Luna-inspired rice](assets/screenshots/taskotto-xp-luna-performance.png)
 
 <details>
-<summary>Explore 7 more Windows 10 and XP Luna views</summary>
+<summary>More genuine Windows 10 and XP Luna screenshots</summary>
 
 ![Windows 10-inspired performance page](assets/screenshots/taskotto-win10-performance.png)
 
-![Windows 10-inspired users page with live owner group](assets/screenshots/taskotto-win10-users.png)
+![Optional Windows 10-inspired vertical navigation](assets/screenshots/taskotto-win10-vertical.png)
 
-![Windows 10-inspired detailed process list](assets/screenshots/taskotto-win10-details.png)
+![Windows 10-inspired Linux startup entries](assets/screenshots/taskotto-win10-startup.png)
+
+![Windows 10-inspired users page with live owner group](assets/screenshots/taskotto-win10-users.png)
 
 ![XP Luna-inspired applications-style page](assets/screenshots/taskotto-xp-luna-applications.png)
 
-![XP Luna-inspired process list](assets/screenshots/taskotto-xp-luna-processes.png)
-
 ![XP Luna-inspired networking graphs](assets/screenshots/taskotto-xp-luna-networking.png)
 
-![XP Luna-inspired process properties](assets/screenshots/taskotto-xp-luna-details.png)
+![XP Luna-inspired New Task dialog](assets/screenshots/taskotto-xp-luna-new-task.png)
 
 </details>
 
-*All nine images are real Taskotto egui renders with live Linux `/proc` readings, captured headlessly. The isolated environment exposes few processes. Native X11/Wayland window captures are pending; visual fidelity is not yet pixel-verified. [Capture details](SCREENSHOTS.md) · [Fidelity boundaries](RICE_FIDELITY.md).*
+*All images are real Taskotto egui renders using live Linux `/proc` and available desktop configuration; the capture environment exposes few processes. [All 14 captures and reproduction details](SCREENSHOTS.md) · [Fidelity boundaries](RICE_FIDELITY.md). Native X11/Wayland and pixel-accuracy verification remain pending.*
 
 ## What works
 
 - **Processes:** searchable live list, CPU/RAM/I/O/PID/name sort, tree, user filter, process start/runtime and per-process I/O rates.
 - **Safe actions:** terminate, force kill, pause and resume with confirmation and PID-reuse protection via Linux `pidfd`.
 - **Performance:** CPU/core load, RAM/swap, network RX/TX and disk read/write rates, bounded comparative rolling graphs.
-- **Riceable:** 8 profiles, with functional Windows 10-inspired Users/Details and XP Luna-inspired Applications/Networking/Users pages; custom colors, layout, spacing, fonts, table columns/row height, density and persistent TOML preferences.
+- **Riceable:** 8 profiles, with seven Windows 10-inspired task-manager tabs, XP Luna's five classic tabs, and original responsive styles. Windows 10's period-accurate tabs remain horizontal by default; **Preferences → Navigation → Sidebar** enables a custom vertical view. Custom colors, fonts, table density and persistent TOML preferences remain supported.
+- **Desktop features:** user-local XDG autostart list (read-only), live user systemd services (read-only if available), process-lifetime CPU accounting, and an XP-style **New Task** command dialog running with ordinary user permissions.
 - **Independent:** no root service, no resident daemon, no RiceBowl or desktop-shell dependency.
 - **Headless:** `--snapshot --json` is available without a graphical session.
 

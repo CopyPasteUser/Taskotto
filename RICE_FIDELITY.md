@@ -38,6 +38,10 @@ and fonts are **not** copied or bundled.
   high-contrast graph without inventing link speeds or adapter identities.
 - Users groups Linux processes by UID; selected-process Properties uses compact
   period-style sections with live identification, CPU, memory, and I/O fields.
+- XP Applications now has a working **New Task** dialog through the File menu
+  and bottom action row. It launches explicitly entered commands as the current
+  Linux user; Windows-style **Switch To** remains disabled until a compositor
+  integration can reliably identify and activate the selected window.
 
 ## Windows 10
 
@@ -56,16 +60,25 @@ and fonts are **not** copied or bundled.
 - The Users tab groups processes by Linux UID with expandable rows, actual
   per-owner CPU and RSS sums, and an inspect action. The Details tab shows an
   ungrouped list of live processes instead of reusing a generic properties pane.
+- The familiar **seven horizontal tabs** now include App history, Startup and
+  Services. The implementations are clearly labeled Linux equivalents:
+  process-lifetime CPU totals for running processes; XDG desktop-session
+  autostart entries; and asynchronously fetched systemd **user** service status.
+  Startup and Services are read-only; genuine Windows app-history persistence,
+  startup-impact estimates and Windows service controls are not claimed.
+- **Sidebar** is a separate customizable vertical variant, available through
+  Settings → Navigation. This satisfies an alternate layout preference but is
+  deliberately **not** presented as Windows 10's historical default.
 
 ## Intentional differences and verification
 
 - The compositor/window manager owns the **native window frame** on X11 and
   Wayland. The in-client bars are styled headers, not replacement decorations
   or simulated OS window buttons.
-- Windows 10 exposes five data-backed tabs (Processes, Performance, Users,
-  Details, Settings); the original's App history/Startup/Services have no
-  equivalent yet. XP exposes its five historical tabs, with Settings and a
-  selected-process Properties screen reachable via menus/process actions.
+- Windows 10 exposes seven data-backed tabs; the original Windows APIs and
+  historic App history accounting do not directly exist on Linux. XP exposes
+  its five historical tabs, with Settings and selected-process Properties
+  reachable through menus and process actions.
 - Linux cannot provide Windows process categories, application-history
   accounting or window ownership across all Wayland compositors from procfs
   alone. We label substitutes instead of silently misrepresenting them.
@@ -79,5 +92,5 @@ and fonts are **not** copied or bundled.
 - Headless screenshot renders prove actual egui layout/paint commands and real
   procfs values, **not native desktop output**. [QA.md](QA.md) retains the Mint
   X11, KDE Wayland and labwc visual/keyboard/performance sign-off gates.
-- The README gallery contains nine current XP/Windows 10 captures only; old
+- The README gallery and provenance describe 14 current XP/Windows 10 captures; old
   generic-theme renders were removed, while the other six rice presets remain.

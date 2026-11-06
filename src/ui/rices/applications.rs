@@ -94,7 +94,13 @@ pub(super) fn page(app: &mut TaskottoApp, ui: &mut egui::Ui) {
             }
         });
     ui.add_space(5.0);
-    ui.horizontal(|ui| {
+    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+        if ui.button("New Task…").clicked() {
+            app.new_task.open = true;
+            app.new_task.error = None;
+        }
+        ui.add_enabled(false, egui::Button::new("Switch To"))
+            .on_disabled_hover_text("Window activation needs a compositor-specific integration.");
         if ui
             .add_enabled(
                 app.selected_process().is_some(),
@@ -107,7 +113,7 @@ pub(super) fn page(app: &mut TaskottoApp, ui: &mut egui::Ui) {
         if ui
             .add_enabled(
                 app.selected_process().is_some_and(can_signal_process),
-                egui::Button::new("End Task…"),
+                egui::Button::new("End Task"),
             )
             .clicked()
         {

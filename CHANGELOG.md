@@ -2,6 +2,15 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.8] — 2026-11-06
+
+- Windows 10 task-manager rice now has all seven historical top tabs (Processes, Performance, App history, Startup, Users, Details, Services). The original uses horizontal tabs; a separate, clearly identified vertical sidebar can be selected in Preferences → Navigation.
+- Implemented truthful Linux-backed substitutes: live process-lifetime CPU time (not permanent Windows app history), XDG autostart desktop entries with user-over-system override precedence, and asynchronous read-only systemd user service status with explicit failure states.
+- XP Luna's File menu and Applications page now offer a working New Task dialog that executes explicitly entered shell input under current user permissions. The unsupported cross-compositor Switch To action is visibly unavailable.
+- Polished XP Applications action-button placement, Windows 10 current-process history table alignment, read-only service/startup states, and sidebar active/focus visuals.
+- Extended reproducible headless egui gallery to fourteen screenshots, with the custom vertical variant and an XP New Task dialog. Added XDG specification, CPU-time and systemd parsing tests and narrow/wide navigation regression coverage.
+- Native X11/Wayland and reference-image pixel comparisons are still required before any quantifiable historical accuracy claim or stable 1.0 release.
+
 ## [1.0.0-rc.7] — 2026-11-06
 
 - XP Luna now uses all five historically recognizable tabs. The new Applications screen explicitly lists the current user's Linux processes rather than pretending to know open Wayland windows; Networking graphs live non-loopback RX/TX traffic and Users groups real processes by UID.
