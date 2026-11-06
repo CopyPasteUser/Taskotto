@@ -130,6 +130,9 @@ fn run() -> Result<(), String> {
     let classic98 = settings.theme == Theme::Windows98;
     let options = eframe::NativeOptions {
         viewport: eframe::egui::ViewportBuilder::default()
+            // Request native decorations for every theme. RiceBowl/labwc (or
+            // the active window manager) owns the frame and window buttons.
+            .with_decorations(true)
             .with_inner_size(if classic98 {
                 [650.0, 450.0]
             } else {

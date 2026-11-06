@@ -1,15 +1,21 @@
-# Taskotto 1.0.0-rc.12 — release candidate
+# Taskotto 1.0.0-rc.13 — release candidate
 
 **Date:** 2026-11-06 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
 Rust-only Linux process manager and system monitor. This is a **prerelease**, not a stable 1.0 certification.
 
-## Changes since rc.11
+## Changes since rc.12
+
+- Removed the in-client simulated XP Luna, Windows 7 Aero and Windows 10 title strips, icons and duplicate captions. These were not native window decoration, so they caused duplicate app bars when RiceBowl/labwc supplied the real window frame. File/Options/View/Help menus and actual navigation stay intact.
+- Explicitly request native decorations on the eframe window for **every** rice; window caption, border, button arrangement and colors remain the responsibility of RiceBowl/the user's window manager. The macOS activity toolbar no longer repeats the app caption; ChromeOS and Frutiger Aero retain real application toolbars/masthead content, and Windows 98 remains a compact client without a fake window frame.
+- Added regression coverage for the compact historical menu bars and regenerated all 37 real egui/procfs client screenshots. Headless screenshots do **not** include the compositor-provided outer window decoration; native verification remains an open acceptance gate.
+
+## Earlier changes since rc.11 (rc.12)
 
 - ChromeOS also graduates from a color preset to a dedicated table-first task-manager UI: responsive task/memory/CPU/PID/disk I/O report with live search, sorting, user filters, selection, confirmation-backed End process and an overflow menu leading to real Linux tools. Chrome-only per-process network/private-memory figures are deliberately not fabricated.
 - Frutiger Aero is now a fully independent seventh-destination client UI rather than a color preset: original aqua/sky gradient, bubble-mark masthead, polished pill navigation or optional sidebar, glossy system-health gauges, live process report and four live charts.
 - Search, persistent sorting, tree mode, process inspection and confirmed End Task remain backed by existing real Linux procfs/PID-safe signaling. Physical memory, aggregate CPU, block-device I/O and non-loopback RX/TX display measured values; network figures are never attributed to individual PIDs.
-- Six reproducible live-egui screenshots (37 total: two ChromeOS, four Aero), 650×420/1280×800 and responsive navigation layout tests, zero proprietary assets and no extra window decorations; native X11/Wayland hardware QA remains pending.
+- Six reproducible live-egui screenshots (37 total: two ChromeOS, four Aero), 650×420/1280×800 and responsive navigation layout tests, zero proprietary assets; native X11/Wayland hardware QA remains pending.
 
 ## Earlier changes since rc.10 (rc.11)
 

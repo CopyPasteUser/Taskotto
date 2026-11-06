@@ -2,6 +2,12 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.13] — 2026-11-06
+
+- Fixed duplicate top-level window chrome across the eight rice presets: the XP Luna, Windows 7 and Windows 10 client no longer draw an extra application title strip. Native title, borders and min/max/close buttons belong to RiceBowl/the active window manager.
+- Explicitly enabled window-manager decorations in the native viewport. Removed the redundant app-icon/title group from the macOS toolbar; retained real menu items, buttons, search, navigation, the ChromeOS toolbar and Frutiger Aero's content masthead.
+- Added a historical-client menu-height regression test. Refreshed all 37 actual headless egui/procfs screenshots; the compositor's native frame is not present in these reproducible client captures. Physical labwc, X11 and KDE Wayland verification is still required for the stable release.
+
 ## [1.0.0-rc.12] — 2026-11-06
 
 - Promoted ChromeOS from a generic color preset to a dedicated, table-first task-manager client with search, owner filters, sorting, keyboard focus, Linux-backed memory/CPU/PID/disk I/O, selection, process inspection and confirmation-protected End process.

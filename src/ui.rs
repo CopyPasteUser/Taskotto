@@ -1642,6 +1642,52 @@ mod tests {
     }
 
     #[test]
+    fn historical_windows_rices_do_not_draw_duplicate_window_captions() {
+        let ctx = egui::Context::default();
+        let mut app = TaskottoApp {
+            worker: Worker::start(10_000, ctx.clone()),
+            settings: Settings::default(),
+            snapshot: None,
+            history: History::default(),
+            page: Page::Processes,
+            performance_focus: PerformanceFocus::Cpu,
+            query: String::new(),
+            focus_search: false,
+            selected: None,
+            pending: None,
+            notification: None,
+            theme_accent_input: String::new(),
+            theme_surface_input: String::new(),
+            theme_text_input: String::new(),
+            my_uid: 1000,
+            users: HashMap::new(),
+            system_pages: rices::SystemPages::default(),
+            new_task: NewTaskDialog::default(),
+            mac_info_open: false,
+        };
+        for theme in [Theme::XpLuna, Theme::Windows7, Theme::Windows10] {
+            app.settings.theme = theme;
+            apply_theme(&ctx, &app.settings);
+            let input = egui::RawInput {
+                screen_rect: Some(egui::Rect::from_min_size(
+                    egui::Pos2::ZERO,
+                    Vec2::new(1100.0, 720.0),
+                )),
+                ..Default::default()
+            };
+            let mut menu_bottom = 0.0;
+            let _ = ctx.run(input, |ctx| {
+                rices::topbar(&mut app, ctx);
+                menu_bottom = ctx.available_rect().top();
+            });
+            assert!(
+                menu_bottom < 33.0,
+                "{theme:?} consumed {menu_bottom}px above its menu: +                 the window caption must come from RiceBowl/the WM"
+            );
+        }
+    }
+
+    #[test]
     fn frutiger_aero_live_pages_render_at_two_sizes_and_both_navigations() {
         let ctx = egui::Context::default();
         let snapshot = Snapshot {
