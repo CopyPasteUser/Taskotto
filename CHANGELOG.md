@@ -2,6 +2,12 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.22] — 2026-11-06
+
+- Connected ChromeOS's existing light/dark adaptive theme to shared RicePack component tokens for control, hover, border, table and selection. Dynamic table text uses contrast-aware colors while toolbar, metric panels and Linux statistics preserve their existing semantics.
+- Added a true headless egui process-list capture for the original Nocturne pack (42 screenshots total), with regression coverage for default theme preservation and customized semantic colors.
+- Continued P1 renderer extraction without new runtime dependencies or proprietary OS assets; Windows-inspired renderers and real-device hardware QA remain outstanding.
+
 ## [1.0.0-rc.21] — 2026-11-06
 
 - Extracted a shared, no-dependency `ComponentPaint` resolver for validated semantic RicePack colors, retaining Frutiger Aero's previous output and avoiding per-rice duplicate parsers.

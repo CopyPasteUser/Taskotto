@@ -5,15 +5,20 @@
 //! procfs does not provide that measurement, so the analogous optional column
 //! here is explicitly *disk I/O*, never a made-up network figure.
 use super::*;
+use crate::theme::{ComponentPaint, readable_text};
 use egui::{Align2, FontId, Frame, Margin, Rect, StrokeKind};
 
 const MUTED: Color32 = Color32::from_rgb(94, 105, 121);
 const LINE: Color32 = Color32::from_rgb(223, 227, 234);
 
 struct Palette {
+    components: ComponentPaint,
     accent: Color32,
     surface: Color32,
     paper: Color32,
+    table: Color32,
+    table_ink: Color32,
+    table_muted: Color32,
     ink: Color32,
     muted: Color32,
     line: Color32,
@@ -23,7 +28,12 @@ struct Palette {
 
 impl Palette {
     fn new(app: &TaskottoApp) -> Self {
-        let style = ThemeStyle::from_settings(&app.settings);
+        Self::from_settings(&app.settings)
+    }
+
+    fn from_settings(settings: &Settings) -> Self {
+        let style = ThemeStyle::from_settings(settings);
+        let components = ComponentPaint::from_settings(settings);
         let paper = if style.dark {
             mix(style.surface, Color32::WHITE, 0.07)
         } else {
@@ -35,19 +45,36 @@ impl Palette {
         } else {
             MUTED
         };
+        let table = components.table(paper);
         Self {
+            components,
             accent: style.accent,
             surface: style.surface,
             paper,
+            table,
+            table_ink: components.on_table(ink),
+            table_muted: if components.table.is_some() {
+                mix(readable_text(table), table, 0.26)
+            } else {
+                muted
+            },
             ink,
             muted,
-            line: if style.dark {
+            line: components.border(if style.dark {
                 mix(paper, ink, 0.23)
             } else {
                 LINE
-            },
-            selected: mix(paper, style.accent, if style.dark { 0.24 } else { 0.14 }),
-            hover: mix(paper, style.accent, if style.dark { 0.13 } else { 0.055 }),
+            }),
+            selected: components.selection(mix(
+                paper,
+                style.accent,
+                if style.dark { 0.24 } else { 0.14 },
+            )),
+            hover: components.hover(mix(
+                paper,
+                style.accent,
+                if style.dark { 0.13 } else { 0.055 },
+            )),
         }
     }
 }
@@ -135,7 +162,14 @@ pub(super) fn topbar(app: &mut TaskottoApp, ctx: &egui::Context) {
                 let current = app.page;
                 if current != Page::Processes
                     && ui
-                        .add(egui::Button::new("‹  Tasks").fill(colors.surface))
+                        .add(
+                            egui::Button::new(
+                                RichText::new("‹  Tasks").color(
+                                    colors.components.on_control(colors.surface, colors.ink),
+                                ),
+                            )
+                            .fill(colors.components.control(colors.surface)),
+                        )
                         .on_hover_text("Return to the task list")
                         .clicked()
                 {
@@ -378,14 +412,14 @@ pub(super) fn processes(app: &mut TaskottoApp, ui: &mut egui::Ui) {
             let active = app.settings.only_my_processes == mine;
             let response = ui.add(
                 egui::Button::new(RichText::new(title).color(if active {
-                    colors.ink
+                    colors.components.on_selection(colors.selected, colors.ink)
                 } else {
-                    colors.muted
+                    colors.components.on_control(colors.paper, colors.muted)
                 }))
                 .fill(if active {
                     colors.selected
                 } else {
-                    colors.paper
+                    colors.components.control(colors.paper)
                 })
                 .stroke(if active {
                     Stroke::new(1.0_f32, colors.accent)
@@ -420,7 +454,7 @@ pub(super) fn processes(app: &mut TaskottoApp, ui: &mut egui::Ui) {
             });
     let content_height = ui.available_height().max(140.0);
     Frame::NONE
-        .fill(colors.paper)
+        .fill(colors.table)
         .inner_margin(Margin::symmetric(12, 0))
         .show(ui, |ui| {
             ui.set_min_height(content_height);
@@ -431,11 +465,12 @@ pub(super) fn processes(app: &mut TaskottoApp, ui: &mut egui::Ui) {
                 ui.vertical_centered(|ui| {
                     ui.label(
                         RichText::new("No matching tasks")
-                            .color(colors.ink)
+                            .color(colors.table_ink)
                             .strong(),
                     );
                     ui.label(
-                        RichText::new("Try a different search or filter.").color(colors.muted),
+                        RichText::new("Try a different search or filter.")
+                            .color(colors.table_muted),
                     );
                     if !app.query.is_empty() && ui.button("Clear search").clicked() {
                         app.query.clear();
@@ -618,7 +653,7 @@ fn metric_panel(
 
 fn header(app: &mut TaskottoApp, ui: &mut egui::Ui, colors: &Palette, columns: &Columns) {
     let (rect, _) = ui.allocate_exact_size(egui::vec2(columns.width, 37.0), Sense::hover());
-    ui.painter().rect_filled(rect, 0.0, colors.paper);
+    ui.painter().rect_filled(rect, 0.0, colors.table);
     ui.painter().line_segment(
         [rect.left_bottom(), rect.right_bottom()],
         Stroke::new(1.0_f32, colors.line),
@@ -637,7 +672,7 @@ fn header(app: &mut TaskottoApp, ui: &mut egui::Ui, colors: &Palette, columns: &
             ui,
             cell,
             &label,
-            colors.muted,
+            colors.table_muted,
             app.settings.font_scale * 12.0,
             false,
         );
@@ -691,7 +726,9 @@ fn row_ui(
         } else if response.hovered() {
             colors.hover
         } else if index.is_multiple_of(2) {
-            colors.paper
+            colors.table
+        } else if colors.components.table.is_some() {
+            mix(colors.table, colors.table_ink, 0.04)
         } else {
             mix(colors.paper, colors.surface, 0.12)
         },
@@ -721,15 +758,20 @@ fn row_ui(
                 .cloned()
                 .unwrap_or_else(|| process.user_id.to_string()),
         };
+        let ink = if selected && colors.components.selection.is_some() {
+            readable_text(colors.selected)
+        } else if response.hovered() && colors.components.hover.is_some() {
+            readable_text(colors.hover)
+        } else if column == Column::Task {
+            colors.table_ink
+        } else {
+            colors.table_muted
+        };
         paint_cell(
             ui,
             cell,
             &content,
-            if column == Column::Task {
-                colors.ink
-            } else {
-                colors.muted
-            },
+            ink,
             app.settings.font_scale * 13.0,
             column == Column::Task,
         );
@@ -791,6 +833,30 @@ fn mix(a: Color32, b: Color32, amount: f32) -> Color32 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn palette_preserves_chromeos_defaults_and_supports_custom_dark_tables() {
+        let settings = Settings {
+            theme: Theme::Chromeos,
+            ..Settings::default()
+        };
+        let original = Palette::from_settings(&settings);
+        assert_eq!(original.table, original.paper);
+        assert_eq!(original.table_ink, original.ink);
+        assert_eq!(original.table_muted, original.muted);
+
+        let mut custom = settings;
+        custom.components.table = Some("#1B2939".into());
+        custom.components.border = Some("#A1B4C6".into());
+        custom.components.hover = Some("#E8F5F8".into());
+        custom.components.selection = Some("#5631A9".into());
+        let palette = Palette::from_settings(&custom);
+        assert_eq!(palette.table, Color32::from_rgb(27, 41, 57));
+        assert_eq!(palette.table_ink, Color32::WHITE);
+        assert_eq!(palette.line, Color32::from_rgb(161, 180, 198));
+        assert_eq!(palette.hover, Color32::from_rgb(232, 245, 248));
+        assert_eq!(palette.selected, Color32::from_rgb(86, 49, 169));
+    }
 
     #[test]
     fn columns_fit_small_and_large_windows_without_fabricated_network() {

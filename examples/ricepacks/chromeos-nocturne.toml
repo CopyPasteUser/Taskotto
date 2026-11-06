@@ -1,0 +1,14 @@
+format_version = 1
+name = "Nocturne: ChromeOS task table"
+base_theme = "chromeos"
+
+[appearance]
+accent = "#714FD4"
+navigation = "auto"
+
+[components]
+control = "#E9F2FF"
+hover = "#D4ECEE"
+border = "#819BB9"
+table = "#1B2939"
+selection = "#5631A9"
