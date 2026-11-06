@@ -41,6 +41,8 @@ Development on later milestones may proceed while user-hardware QA is pending.
 - [x] Cap pack input size, reject malformed/unknown/unsupported fields,
   preserve existing user config and avoid any executable pack content.
 - [x] Ship an original demonstration pack, tests and [format specification](RICEPACK_FORMAT.md).
+- [x] Export saved appearance via `--export-ricepack FILE` to a new, safe,
+  re-importable and strictly validated TOML file, without GUI launch or config writes.
 - [ ] Contract tests with a RiceBowl-created pack and a versioned integration
   fixture supplied by that repository.
 - [ ] Add pack discovery, live preview, hot reload and non-destructive
@@ -134,7 +136,8 @@ lean, offline-capable and independent from RiceBowl.
 
 ## Work order
 
-1. **Now (RC14):** deliver P1 format/loader/CLI and a secure reference pack.
+1. **Delivered (RC14–15):** P1 format/loader/CLI, secure reference pack and
+   headless export/check/re-import design workflow.
 2. **Next:** P1 end-to-end RiceBowl interop, preview, hot reload and UI token
    extraction. The runtime should remain backwards-compatible while this grows.
 3. **Then:** P2 data-bound layout schema; P3 real process controls; P4/P5

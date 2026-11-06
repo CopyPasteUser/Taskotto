@@ -13,6 +13,7 @@ USAGE
   taskotto [--theme NAME] [--ricepack PATH] [--refresh-ms N]
   taskotto --snapshot [--json]
   taskotto --check-ricepack PATH
+  taskotto --export-ricepack PATH
   taskotto --install-desktop
   taskotto --help | --version
 
@@ -22,6 +23,7 @@ OPTIONS
   --refresh-ms N     Sampling period in milliseconds (500–10000)
   --ricepack PATH    Apply a session-only Taskotto RicePack TOML design
   --check-ricepack PATH   Validate a RicePack without opening a GUI
+  --export-ricepack PATH  Save current design to a new RicePack TOML file
   --snapshot         Print a one-time unprivileged system snapshot and exit
   --install-desktop  Add a user-local application menu entry and icon
   --json             Emit machine-readable JSON with --snapshot
@@ -50,6 +52,7 @@ fn run() -> Result<(), String> {
     let mut refresh_ms = None;
     let mut ricepack_path: Option<PathBuf> = None;
     let mut check_ricepack_path: Option<PathBuf> = None;
+    let mut export_ricepack_path: Option<PathBuf> = None;
     let mut args = env::args().skip(1);
     while let Some(argument) = args.next() {
         match argument.as_str() {
@@ -72,6 +75,12 @@ fn run() -> Result<(), String> {
                     args.next().ok_or("--check-ricepack requires a file path")?,
                 ));
             }
+            "--export-ricepack" => {
+                export_ricepack_path = Some(PathBuf::from(
+                    args.next()
+                        .ok_or("--export-ricepack requires a file path")?,
+                ));
+            }
             "--install-desktop" => install_desktop = true,
             "--json" => json = true,
             "--theme" => {
@@ -92,6 +101,25 @@ fn run() -> Result<(), String> {
     }
     if json && !snapshot {
         return Err("--json requires --snapshot".to_string());
+    }
+    if let Some(path) = export_ricepack_path {
+        if snapshot
+            || json
+            || install_desktop
+            || forced_theme.is_some()
+            || ricepack_path.is_some()
+            || check_ricepack_path.is_some()
+            || refresh_ms.is_some()
+        {
+            return Err("--export-ricepack must be used on its own".to_owned());
+        }
+        let settings =
+            Settings::load().map_err(|err| format!("cannot load saved preferences: {err}"))?;
+        let pack = RicePack::from_settings(&settings);
+        pack.write_new(&path)
+            .map_err(|err| format!("cannot export RicePack {}: {err}", path.display()))?;
+        println!("Exported RicePack: {} ({})", pack.name, path.display());
+        return Ok(());
     }
     if let Some(path) = check_ricepack_path {
         if snapshot
