@@ -2,6 +2,7 @@
 //! languages. They share the existing procfs sampler, process actions, and
 //! settings; only drawing/navigation is specialized.
 
+mod aero;
 mod applications;
 mod chrome;
 mod chromeos;
@@ -26,11 +27,15 @@ pub(super) fn supports(theme: Theme) -> bool {
             | Theme::Windows7
             | Theme::Windows10
             | Theme::Chromeos
+            | Theme::FrutigerAero
             | Theme::Macos
     )
 }
 
 pub(super) fn topbar(app: &mut TaskottoApp, ctx: &egui::Context) {
+    if app.settings.theme == Theme::FrutigerAero {
+        return aero::topbar(app, ctx);
+    }
     if app.settings.theme == Theme::Windows98 {
         return;
     }
@@ -51,6 +56,9 @@ pub(super) fn classic98_navigation(app: &mut TaskottoApp, ui: &mut egui::Ui) {
 }
 
 pub(super) fn navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
+    if app.settings.theme == Theme::FrutigerAero {
+        return aero::navigation(app, ctx);
+    }
     if app.settings.theme == Theme::Windows98 {
         return;
     }
@@ -67,6 +75,9 @@ pub(super) fn navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
 }
 
 pub(super) fn vertical_navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
+    if app.settings.theme == Theme::FrutigerAero {
+        return aero::sidebar(app, ctx);
+    }
     if app.settings.theme == Theme::Macos {
         return macos::vertical_navigation(app, ctx);
     }
@@ -77,6 +88,9 @@ pub(super) fn vertical_navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
 }
 
 pub(super) fn statusbar(app: &mut TaskottoApp, ctx: &egui::Context) {
+    if app.settings.theme == Theme::FrutigerAero {
+        return aero::statusbar(app, ctx);
+    }
     if app.settings.theme == Theme::Windows98 {
         return classic98::statusbar(app, ctx);
     }
@@ -93,6 +107,9 @@ pub(super) fn statusbar(app: &mut TaskottoApp, ctx: &egui::Context) {
 }
 
 pub(super) fn processes(app: &mut TaskottoApp, ui: &mut egui::Ui) {
+    if app.settings.theme == Theme::FrutigerAero {
+        return aero::processes(app, ui);
+    }
     if app.settings.theme == Theme::Windows98 {
         return classic98::processes(app, ui);
     }
@@ -109,6 +126,9 @@ pub(super) fn processes(app: &mut TaskottoApp, ui: &mut egui::Ui) {
 }
 
 pub(super) fn performance(app: &mut TaskottoApp, ui: &mut egui::Ui) {
+    if app.settings.theme == Theme::FrutigerAero {
+        return aero::performance(app, ui);
+    }
     if app.settings.theme == Theme::Chromeos {
         return chromeos::performance(app, ui);
     }
@@ -122,6 +142,9 @@ pub(super) fn performance(app: &mut TaskottoApp, ui: &mut egui::Ui) {
 }
 
 pub(super) fn networking(app: &mut TaskottoApp, ui: &mut egui::Ui) {
+    if app.settings.theme == Theme::FrutigerAero {
+        return aero::networking(app, ui);
+    }
     if app.settings.theme == Theme::Chromeos {
         return chromeos::networking(app, ui);
     }

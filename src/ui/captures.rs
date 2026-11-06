@@ -168,6 +168,26 @@ fn generate_headless_ui_screenshots() {
             Page::Performance,
             "taskotto-chromeos-performance.png",
         ),
+        (
+            Theme::FrutigerAero,
+            Page::Processes,
+            "taskotto-frutiger-aero-processes.png",
+        ),
+        (
+            Theme::FrutigerAero,
+            Page::Processes,
+            "taskotto-frutiger-aero-sidebar.png",
+        ),
+        (
+            Theme::FrutigerAero,
+            Page::Performance,
+            "taskotto-frutiger-aero-performance.png",
+        ),
+        (
+            Theme::FrutigerAero,
+            Page::Networking,
+            "taskotto-frutiger-aero-network.png",
+        ),
     ] {
         if let Ok(filter) = std::env::var("TASKOTTO_SCREENSHOT_FILTER")
             && !file.contains(&filter)
@@ -178,7 +198,7 @@ fn generate_headless_ui_screenshots() {
         let settings = Settings {
             theme,
             refresh_ms: 10_000,
-            layout_mode: if file.contains("vertical") {
+            layout_mode: if file.contains("vertical") || file.contains("aero-sidebar") {
                 LayoutMode::Sidebar
             } else if theme == Theme::Chromeos {
                 LayoutMode::Auto
