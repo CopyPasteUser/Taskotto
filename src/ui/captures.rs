@@ -122,6 +122,12 @@ fn generate_headless_ui_screenshots() {
             "taskotto-xp-luna-networking.png",
         ),
         (Theme::XpLuna, Page::Details, "taskotto-xp-luna-details.png"),
+        (Theme::Macos, Page::Processes, "taskotto-macos-cpu.png"),
+        (Theme::Macos, Page::Performance, "taskotto-macos-memory.png"),
+        (Theme::Macos, Page::MacEnergy, "taskotto-macos-energy.png"),
+        (Theme::Macos, Page::MacDisk, "taskotto-macos-disk.png"),
+        (Theme::Macos, Page::Networking, "taskotto-macos-network.png"),
+        (Theme::Macos, Page::Processes, "taskotto-macos-info.png"),
     ] {
         if let Ok(filter) = std::env::var("TASKOTTO_SCREENSHOT_FILTER")
             && !file.contains(&filter)
@@ -157,7 +163,7 @@ fn generate_headless_ui_screenshots() {
             performance_focus: PerformanceFocus::Cpu,
             query: String::new(),
             focus_search: false,
-            selected: if page == Page::Details {
+            selected: if page == Page::Details || file.contains("macos-info") {
                 snapshot.processes.first().map(|p| (p.pid, p.start_ticks))
             } else {
                 None
@@ -171,6 +177,7 @@ fn generate_headless_ui_screenshots() {
             users: load_users(),
             system_pages: rices::SystemPages::default(),
             new_task: NewTaskDialog::default(),
+            mac_info_open: file.contains("macos-info"),
         };
         if file.contains("new-task") {
             app.new_task.open = true;

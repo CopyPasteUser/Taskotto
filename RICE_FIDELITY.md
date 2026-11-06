@@ -1,4 +1,4 @@
-# Windows 7 / Windows 10 / XP Luna task-manager rice fidelity
+# macOS / Windows 7 / Windows 10 / XP Luna task-manager rice fidelity
 
 Taskotto is Linux system software. The goal is **recognizable task-manager
 interaction and visual hierarchy**, not a falsely branded Windows program.
@@ -16,9 +16,43 @@ Only original vector-style drawing and standard egui controls are used.
   [Windows 7 configuration study guide](https://ugvet.ug.edu.ge/storage/books/June2021/TvtRE8oiIEpI6VnL9jM8.pdf).
 - Functional Windows task-manager concepts:
   [Microsoft Learn](https://learn.microsoft.com/en-us/troubleshoot/windows-server/support-tools/support-tools-task-manager).
+- Apple's [Activity Monitor process overview](https://support.apple.com/guide/activity-monitor/view-information-about-processes-actmntr1001/mac),
+  [CPU](https://support.apple.com/guide/activity-monitor/view-cpu-activity-actmntr43452/mac),
+  [memory](https://support.apple.com/guide/activity-monitor/view-memory-usage-actmntr1004/mac),
+  [disk](https://support.apple.com/guide/activity-monitor/view-disk-activity-actmntr1005/mac), and
+  [energy](https://support.apple.com/guide/activity-monitor/view-energy-consumption-actmntr43697/mac) views.
 
 These are design references; their screenshots, icons, product logos, textures
 and fonts are **not** copied or bundled.
+
+## macOS Activity Monitor
+
+- Dedicated light, neutral Activity Monitor-inspired UI rather than the generic
+  Taskotto theme: an original activity-wave mark, compact toolbar with **Stop**,
+  **Info**, functional **View** menu and a persistent **Search processes** field.
+- Five familiar segments in their original order: **CPU, Memory, Energy, Disk,
+  Network**, displayed as horizontal tabs by default. Explicitly choosing a
+  sidebar is a Taskotto customization, not a claim about Apple's default.
+- Sortable, alternating-row process tables with clickable column headers,
+  live filtering, safe PID-aware Stop/Quit/Force Quit actions, details on
+  double-click or context menu, and process inspection in a separate sheet.
+- Responsive CPU columns include process name, % CPU, threads and PID;
+  available space adds CPU Time and user. Memory uses real resident RSS and
+  virtual memory (not macOS app/private or compressed memory). The Disk table
+  shows actual permission-limited process read/write counters and I/O rate
+  columns at larger widths, displaying **N/A** when `/proc/PID/io` is denied.
+- The bottom panel keeps historical **live rolling activity** and summaries
+  for the selected tab; labels identify Linux-native units/scopes.
+- **Energy Impact is not available** in portable Linux `/proc`. The Energy tab
+  explicitly reports sampled per-process %CPU as an *activity proxy*, not
+  macOS energy scores, watts, battery effects or App Nap state.
+- **Per-process network traffic is unavailable** from the baseline Linux
+  sampler. The Network tab deliberately shows true non-loopback aggregate
+  receive/send rates without inventing per-PID values. Virtual interfaces may
+  double-count traffic.
+- Screen proportions, system title bar, control rendering, typography and
+  proprietary macOS OS APIs differ; do not claim 1:1 or 95% pixel parity
+  without paired native reference and X11/Wayland verification.
 
 ## Windows 7
 
@@ -128,6 +162,6 @@ and fonts are **not** copied or bundled.
 - Headless screenshot renders prove actual egui layout/paint commands and real
   procfs values, **not native desktop output**. [QA.md](QA.md) retains the Mint
   X11, KDE Wayland and labwc visual/keyboard/performance sign-off gates.
-- The README gallery and provenance describe 21 current Seven/XP/Windows 10
+- The README gallery and provenance describe 27 current Mac/Seven/XP/Windows 10
   captures; old generic-theme renders were removed, while all eight rice
   presets remain available.

@@ -109,6 +109,15 @@ impl ThemeStyle {
                 visuals.widgets.hovered.bg_fill = Color32::from_rgb(218, 236, 247);
                 visuals.widgets.active.bg_fill = self.accent;
             }
+            Theme::Macos => {
+                visuals.extreme_bg_color = Color32::WHITE;
+                visuals.faint_bg_color = Color32::from_rgb(246, 247, 249);
+                visuals.widgets.inactive.bg_fill = Color32::from_rgb(244, 245, 248);
+                visuals.widgets.inactive.bg_stroke.color = Color32::from_rgb(187, 192, 203);
+                visuals.widgets.noninteractive.bg_stroke.color = Color32::from_rgb(218, 221, 226);
+                visuals.widgets.hovered.bg_fill = Color32::from_rgb(229, 236, 250);
+                visuals.widgets.active.bg_fill = self.accent;
+            }
             _ => {}
         }
         let rounding = egui::CornerRadius::same(self.rounding);

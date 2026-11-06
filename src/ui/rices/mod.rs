@@ -1,10 +1,11 @@
-//! Standalone Taskotto views inspired by three historical task-manager design
+//! Standalone Taskotto views inspired by historical task-manager design
 //! languages. They share the existing procfs sampler, process actions, and
 //! settings; only drawing/navigation is specialized.
 
 mod applications;
 mod chrome;
 mod details;
+mod macos;
 mod performance;
 mod process;
 mod seven;
@@ -16,10 +17,16 @@ pub(super) use system::SystemPages;
 use super::*;
 
 pub(super) fn supports(theme: Theme) -> bool {
-    matches!(theme, Theme::XpLuna | Theme::Windows7 | Theme::Windows10)
+    matches!(
+        theme,
+        Theme::XpLuna | Theme::Windows7 | Theme::Windows10 | Theme::Macos
+    )
 }
 
 pub(super) fn topbar(app: &mut TaskottoApp, ctx: &egui::Context) {
+    if app.settings.theme == Theme::Macos {
+        return macos::topbar(app, ctx);
+    }
     if app.settings.theme == Theme::Windows7 {
         return seven::topbar(app, ctx);
     }
@@ -27,6 +34,9 @@ pub(super) fn topbar(app: &mut TaskottoApp, ctx: &egui::Context) {
 }
 
 pub(super) fn navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
+    if app.settings.theme == Theme::Macos {
+        return macos::navigation(app, ctx);
+    }
     if app.settings.theme == Theme::Windows7 {
         return seven::navigation(app, ctx);
     }
@@ -34,10 +44,16 @@ pub(super) fn navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
 }
 
 pub(super) fn vertical_navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
+    if app.settings.theme == Theme::Macos {
+        return macos::vertical_navigation(app, ctx);
+    }
     chrome::vertical_navigation(app, ctx);
 }
 
 pub(super) fn statusbar(app: &mut TaskottoApp, ctx: &egui::Context) {
+    if app.settings.theme == Theme::Macos {
+        return macos::statusbar(app, ctx);
+    }
     if app.settings.theme == Theme::Windows7 {
         return seven::statusbar(app, ctx);
     }
@@ -45,6 +61,9 @@ pub(super) fn statusbar(app: &mut TaskottoApp, ctx: &egui::Context) {
 }
 
 pub(super) fn processes(app: &mut TaskottoApp, ui: &mut egui::Ui) {
+    if app.settings.theme == Theme::Macos {
+        return macos::process_table(app, ui, macos::Focus::Cpu);
+    }
     if app.settings.theme == Theme::Windows7 {
         return seven::processes(app, ui);
     }
@@ -52,6 +71,9 @@ pub(super) fn processes(app: &mut TaskottoApp, ui: &mut egui::Ui) {
 }
 
 pub(super) fn performance(app: &mut TaskottoApp, ui: &mut egui::Ui) {
+    if app.settings.theme == Theme::Macos {
+        return macos::process_table(app, ui, macos::Focus::Memory);
+    }
     if app.settings.theme == Theme::Windows7 {
         return seven::performance(app, ui);
     }
@@ -59,6 +81,9 @@ pub(super) fn performance(app: &mut TaskottoApp, ui: &mut egui::Ui) {
 }
 
 pub(super) fn networking(app: &mut TaskottoApp, ui: &mut egui::Ui) {
+    if app.settings.theme == Theme::Macos {
+        return macos::network_page(app, ui);
+    }
     if app.settings.theme == Theme::Windows7 {
         return seven::networking(app, ui);
     }
@@ -100,6 +125,18 @@ pub(super) fn services(app: &mut TaskottoApp, ui: &mut egui::Ui) {
 
 pub(super) fn seven_properties_dialog(app: &mut TaskottoApp, ctx: &egui::Context) {
     seven::properties_dialog(app, ctx);
+}
+
+pub(super) fn mac_energy(app: &mut TaskottoApp, ui: &mut egui::Ui) {
+    macos::process_table(app, ui, macos::Focus::Energy);
+}
+
+pub(super) fn mac_disk(app: &mut TaskottoApp, ui: &mut egui::Ui) {
+    macos::process_table(app, ui, macos::Focus::Disk);
+}
+
+pub(super) fn mac_info_dialog(app: &mut TaskottoApp, ctx: &egui::Context) {
+    macos::info_dialog(app, ctx);
 }
 
 fn is_xp(app: &TaskottoApp) -> bool {

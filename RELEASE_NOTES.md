@@ -1,10 +1,17 @@
-# Taskotto 1.0.0-rc.9 — release candidate
+# Taskotto 1.0.0-rc.10 — release candidate
 
 **Date:** 2026-11-06 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
 Rust-only Linux process manager and system monitor. This is a **prerelease**, not a stable 1.0 certification.
 
-## Changes since rc.8
+## Changes since rc.9
+
+- The macOS preset now has an independent, light Activity Monitor-inspired layout: original mini activity-mark, Stop/Info/View toolbar, live search, five historical horizontal segments (CPU, Memory, Energy, Disk, Network), sortable dense report, per-process context menu and an actual selected-process Info dialog.
+- Context-specific bottom statistics and rolling CPU/memory/disk/network charts reflect live Linux samples. Memory columns show resident/virtual usage; Disk exposes permission-checked `/proc/PID/io` with explicit N/A; Energy reports genuine process CPU as an explicitly labeled activity proxy since the proprietary macOS Energy Impact and App Nap measurements cannot be derived from procfs. Network remains system-wide, not fabricated per PID.
+- Added custom-sidebar support, column-fit regression tests for narrow and wide windows, five-page/two-layout process+info headless UI tests and six genuine procfs-driven screenshots. The compact README now leads with four dedicated presets and documents all 27 focused captures.
+- Native X11/Wayland testing and paired visual comparisons against a licensed macOS installation remain open; **95% or 1:1 pixel accuracy is not claimed**.
+
+## Earlier changes since rc.8 (rc.9)
 
 - Windows 7 now has its own task-manager UI, rather than inheriting the generic Taskotto sidebar/cards: a bright, original Aero-like header, classic File/Options/View/Help menu, six period-correct horizontal tabs, thin raised borders and a system status strip.
 - Implemented the six usable Windows 7-style tabs: Applications (current-user process approximation and working New Task), Processes (compact sortable report, column selection and safe process actions), Services (nonblocking, read-only systemd user units with explicit errors), Performance (per-logical-core history plus CPU/RAM usage and live memory/swap/thread statistics), Networking (real aggregate RX/TX rates), and Users (real UID group summaries).
