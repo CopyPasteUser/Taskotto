@@ -192,10 +192,12 @@ fn run() -> Result<(), String> {
     let pack_path = ricepack_path
         .or_else(|| env::var_os("RICEBOWL_TASKOTTO_RICEPACK").map(PathBuf::from))
         .or_else(|| env::var_os("TASKOTTO_RICEPACK").map(PathBuf::from));
+    let mut active_pack = None;
     if let Some(path) = pack_path {
         let pack = RicePack::load(&path)
             .map_err(|err| format!("invalid RicePack {}: {err}", path.display()))?;
         pack.apply(&mut settings);
+        active_pack = Some((path, pack));
     }
     let selected_theme = forced_theme.or_else(|| {
         if settings.launch_ricepack_name.is_some() {
@@ -233,7 +235,15 @@ fn run() -> Result<(), String> {
     eframe::run_native(
         "Taskotto",
         options,
-        Box::new(move |context| Ok(Box::new(TaskottoApp::new(context, settings, warning)))),
+        Box::new(move |context| {
+            let app = TaskottoApp::new(context, settings, warning);
+            let app = if let Some((path, pack)) = active_pack {
+                app.watch_ricepack(path, pack, forced_theme)
+            } else {
+                app
+            };
+            Ok(Box::new(app))
+        }),
     )
     .map_err(|err| format!("GUI startup failed: {err}"))
 }

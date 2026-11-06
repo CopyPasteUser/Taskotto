@@ -253,6 +253,7 @@ fn generate_headless_ui_screenshots() {
             system_pages: rices::SystemPages::default(),
             new_task: NewTaskDialog::default(),
             mac_info_open: file.contains("macos-info"),
+            ricepack_watcher: None,
         };
         if file.contains("new-task") {
             app.new_task.open = true;

@@ -3,15 +3,17 @@ use crate::{
     config::{Density, LayoutMode, Settings, SortBy, Theme, is_hex_color},
     format,
     monitor::{Monitor, Process, Snapshot},
+    ricepack::RicePack,
     theme::ThemeStyle,
 };
 use eframe::egui::{self, Color32, RichText, Sense, Stroke, Vec2};
 use std::{
     collections::{HashMap, HashSet, VecDeque},
     io,
+    path::PathBuf,
     sync::mpsc::{self, Receiver, Sender, TrySendError},
     thread::{self, JoinHandle},
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -151,6 +153,14 @@ struct ProcessRow {
     depth: usize,
 }
 
+struct RicePackWatcher {
+    path: PathBuf,
+    applied: RicePack,
+    forced_theme: Option<Theme>,
+    next_check: Instant,
+    last_error: Option<String>,
+}
+
 pub struct TaskottoApp {
     settings: Settings,
     worker: Worker,
@@ -171,6 +181,7 @@ pub struct TaskottoApp {
     system_pages: rices::SystemPages,
     new_task: NewTaskDialog,
     mac_info_open: bool,
+    ricepack_watcher: Option<RicePackWatcher>,
 }
 
 #[derive(Default)]
@@ -238,7 +249,74 @@ impl TaskottoApp {
             system_pages: rices::SystemPages::default(),
             new_task: NewTaskDialog::default(),
             mac_info_open: false,
+            ricepack_watcher: None,
         }
+    }
+
+    /// Watch only an explicitly launched RicePack. Regular Taskotto sessions
+    /// retain their sampler-driven, timer-free idle behavior.
+    pub fn watch_ricepack(
+        mut self,
+        path: PathBuf,
+        applied: RicePack,
+        forced_theme: Option<Theme>,
+    ) -> Self {
+        self.ricepack_watcher = Some(RicePackWatcher {
+            path,
+            applied,
+            forced_theme,
+            next_check: Instant::now() + Duration::from_secs(2),
+            last_error: None,
+        });
+        self
+    }
+
+    fn maybe_reload_ricepack(&mut self, ctx: &egui::Context) {
+        let Some(watcher) = self.ricepack_watcher.as_mut() else {
+            return;
+        };
+        let now = Instant::now();
+        if now < watcher.next_check {
+            ctx.request_repaint_after(watcher.next_check.duration_since(now));
+            return;
+        }
+        watcher.next_check = now + Duration::from_secs(2);
+        ctx.request_repaint_after(Duration::from_secs(2));
+        let pack = match RicePack::load(&watcher.path) {
+            Ok(pack) => pack,
+            Err(err) => {
+                let message =
+                    format!("RicePack reload failed (keeping the last valid design): {err}");
+                if watcher.last_error.as_deref() != Some(message.as_str()) {
+                    self.notification = Some(message.clone());
+                    watcher.last_error = Some(message);
+                }
+                return;
+            }
+        };
+        watcher.last_error = None;
+        if pack == watcher.applied {
+            return;
+        }
+        let old_theme = self.settings.theme;
+        self.settings.reset_ricepack_appearance();
+        pack.apply(&mut self.settings);
+        if let Some(theme) = watcher.forced_theme {
+            self.settings.theme = theme;
+        }
+        self.theme_accent_input = self.settings.accent_hex.clone().unwrap_or_default();
+        self.theme_surface_input = self.settings.surface_hex.clone().unwrap_or_default();
+        self.theme_text_input = self.settings.text_hex.clone().unwrap_or_default();
+        if self.settings.theme != old_theme {
+            if self.settings.theme == Theme::Windows98 {
+                self.page = Page::Applications;
+            } else if self.page == Page::Applications {
+                self.page = Page::Processes;
+            }
+        }
+        apply_theme(ctx, &self.settings);
+        self.notification = Some(format!("Reloaded RicePack: {}", pack.name));
+        watcher.applied = pack;
     }
 
     fn accept_snapshots(&mut self) {
@@ -927,6 +1005,16 @@ impl TaskottoApp {
                 ))
                 .small(),
             );
+            if let Some(watcher) = &self.ricepack_watcher {
+                ui.label(
+                    RichText::new(format!(
+                        "Watching {} for changes (about every 2 seconds)",
+                        watcher.path.display()
+                    ))
+                    .small()
+                    .weak(),
+                );
+            }
         }
         ui.add_space(if xp { 8.0 } else { 14.0 });
         let mut changed = false;
@@ -1245,6 +1333,7 @@ impl TaskottoApp {
 impl eframe::App for TaskottoApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         self.accept_snapshots();
+        self.maybe_reload_ricepack(ctx);
         ctx.input(|input| {
             if input.key_pressed(egui::Key::F5) {
                 let _ = self.worker.commands.send(Command::Refresh);
@@ -1266,7 +1355,7 @@ impl eframe::App for TaskottoApp {
             }
         });
         self.draw_contents(ctx);
-        // The sampler wakes the GUI when new data exists. No idle render timer.
+        // The sampler wakes the GUI. Only live RicePack sessions use a 2s check.
     }
 }
 
@@ -1587,6 +1676,7 @@ mod tests {
             system_pages: rices::SystemPages::default(),
             new_task: NewTaskDialog::default(),
             mac_info_open: false,
+            ricepack_watcher: None,
         };
         let input = egui::RawInput {
             screen_rect: Some(egui::Rect::from_min_size(
@@ -1603,6 +1693,106 @@ mod tests {
                 app.preferences_page(ui);
             });
         });
+    }
+
+    #[test]
+    fn live_ricepack_reload_keeps_last_valid_pack_and_restores_missing_tokens() {
+        use std::time::{SystemTime, UNIX_EPOCH};
+        let path = std::env::temp_dir().join(format!(
+            "taskotto-live-ricepack-{}-{}.toml",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let initial =
+            RicePack::from_toml(include_str!("../examples/ricepacks/sea-glass.toml")).unwrap();
+        std::fs::write(&path, include_str!("../examples/ricepacks/sea-glass.toml")).unwrap();
+        let ctx = egui::Context::default();
+        let mut saved = Settings {
+            theme: Theme::Windows7,
+            accent_hex: Some("#456789".to_owned()),
+            refresh_ms: 4_000,
+            ..Settings::default()
+        };
+        initial.apply(&mut saved);
+        let mut app = TaskottoApp {
+            worker: Worker::start(10_000, ctx.clone()),
+            settings: saved,
+            snapshot: None,
+            history: History::default(),
+            page: Page::Processes,
+            performance_focus: PerformanceFocus::Cpu,
+            query: String::new(),
+            focus_search: false,
+            selected: None,
+            pending: None,
+            notification: None,
+            theme_accent_input: String::new(),
+            theme_surface_input: String::new(),
+            theme_text_input: String::new(),
+            my_uid: 1000,
+            users: HashMap::new(),
+            system_pages: rices::SystemPages::default(),
+            new_task: NewTaskDialog::default(),
+            mac_info_open: false,
+            ricepack_watcher: Some(RicePackWatcher {
+                path: path.clone(),
+                applied: initial,
+                forced_theme: None,
+                next_check: Instant::now(),
+                last_error: None,
+            }),
+        };
+
+        std::fs::write(&path, "format_version = 1\n[broken\n").unwrap();
+        app.maybe_reload_ricepack(&ctx);
+        assert_eq!(app.settings.theme, Theme::FrutigerAero);
+        assert_eq!(app.settings.accent_hex.as_deref(), Some("#159DA4"));
+        assert!(
+            app.notification
+                .as_deref()
+                .unwrap()
+                .contains("reload failed")
+        );
+
+        std::fs::write(
+            &path,
+            "format_version = 1\nname = 'New Look'\nbase_theme = 'windows98'\n",
+        )
+        .unwrap();
+        app.ricepack_watcher.as_mut().unwrap().next_check = Instant::now();
+        app.maybe_reload_ricepack(&ctx);
+        assert_eq!(app.settings.theme, Theme::Windows98);
+        assert_eq!(app.settings.accent_hex.as_deref(), Some("#456789"));
+        assert_eq!(app.settings.refresh_ms, 4_000);
+        assert_eq!(app.page, Page::Applications);
+        assert_eq!(
+            app.settings.launch_ricepack_name.as_deref(),
+            Some("New Look")
+        );
+        assert!(
+            app.notification
+                .as_deref()
+                .unwrap()
+                .contains("Reloaded RicePack")
+        );
+
+        app.ricepack_watcher.as_mut().unwrap().forced_theme = Some(Theme::Windows10);
+        app.ricepack_watcher.as_mut().unwrap().next_check = Instant::now();
+        std::fs::write(
+            &path,
+            "format_version = 1\nname = 'Another Look'\nbase_theme = 'macos'\n",
+        )
+        .unwrap();
+        app.maybe_reload_ricepack(&ctx);
+        assert_eq!(app.settings.theme, Theme::Windows10);
+        assert_eq!(app.page, Page::Processes);
+
+        app.settings.reset_ricepack_appearance();
+        assert_eq!(app.settings.theme, Theme::Windows7);
+        std::fs::remove_file(path).unwrap();
     }
 
     #[test]
@@ -1629,6 +1819,7 @@ mod tests {
             system_pages: rices::SystemPages::default(),
             new_task: NewTaskDialog::default(),
             mac_info_open: false,
+            ricepack_watcher: None,
         };
         for theme in Theme::ALL {
             for dimensions in [(650.0, 420.0), (1440.0, 900.0)] {
@@ -1672,6 +1863,7 @@ mod tests {
             system_pages: rices::SystemPages::default(),
             new_task: NewTaskDialog::default(),
             mac_info_open: false,
+            ricepack_watcher: None,
         };
         for theme in [Theme::XpLuna, Theme::Windows7, Theme::Windows10] {
             app.settings.theme = theme;
@@ -1749,6 +1941,7 @@ mod tests {
             system_pages: rices::SystemPages::default(),
             new_task: NewTaskDialog::default(),
             mac_info_open: false,
+            ricepack_watcher: None,
         };
         assert_eq!(app.processes().len(), 1);
         app.query = "not-there".into();
@@ -1829,6 +2022,7 @@ mod tests {
             system_pages: rices::SystemPages::default(),
             new_task: NewTaskDialog::default(),
             mac_info_open: false,
+            ricepack_watcher: None,
         };
         for layout in [LayoutMode::TopTabs, LayoutMode::Sidebar] {
             app.settings.layout_mode = layout;
@@ -1908,6 +2102,7 @@ mod tests {
             system_pages: rices::SystemPages::default(),
             new_task: NewTaskDialog::default(),
             mac_info_open: false,
+            ricepack_watcher: None,
         };
         for theme in [
             Theme::Windows98,

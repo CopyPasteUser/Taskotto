@@ -1,8 +1,14 @@
-# Taskotto 1.0.0-rc.15 — release candidate
+# Taskotto 1.0.0-rc.16 — release candidate
 
 **Date:** 2026-11-06 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
 Rust-only Linux process manager and system monitor. This is a **prerelease**, not a stable 1.0 certification.
+
+## Changes since rc.15
+
+- GUI sessions started with `--ricepack` or a RicePack environment variable automatically check for edited pack files about every two seconds. Valid design changes appear without restarting the app.
+- Incomplete or invalid edits keep the last valid design visible and produce a nonfatal warning, then recover when the file becomes valid again. A removed override falls back to the user's prior saved appearance, and `--theme` precedence is retained.
+- No additional idle polling is added when Taskotto is started without a RicePack. Existing historical client screens, screenshots and compositor-owned window decorations remain unchanged.
 
 ## Changes since rc.14
 
