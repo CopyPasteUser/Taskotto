@@ -14,12 +14,21 @@ use std::{
     time::Duration,
 };
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 enum Page {
     Processes,
     Performance,
     Details,
     Preferences,
+}
+
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+enum PerformanceFocus {
+    #[default]
+    Cpu,
+    Memory,
+    Disk,
+    Network,
 }
 
 enum Command {
@@ -130,6 +139,7 @@ pub struct TaskottoApp {
     snapshot: Option<Snapshot>,
     history: History,
     page: Page,
+    performance_focus: PerformanceFocus,
     query: String,
     focus_search: bool,
     selected: Option<(i32, u64)>,
@@ -158,6 +168,7 @@ impl TaskottoApp {
             snapshot: None,
             history: History::default(),
             page: Page::Processes,
+            performance_focus: PerformanceFocus::Cpu,
             query: String::new(),
             focus_search: false,
             selected: None,
@@ -206,6 +217,10 @@ impl TaskottoApp {
 
     fn queue_action(&mut self, action: SignalAction) {
         if let Some(process) = self.selected_process().cloned() {
+            if !can_signal_process(&process) {
+                self.notification = Some("Taskotto refuses to signal PID 1 or itself".to_owned());
+                return;
+            }
             self.pending = Some(PendingAction {
                 target: process,
                 action,
@@ -313,6 +328,10 @@ impl TaskottoApp {
     }
 
     fn topbar(&mut self, ctx: &egui::Context) {
+        if rices::supports(self.settings.theme) {
+            rices::topbar(self, ctx);
+            return;
+        }
         egui::TopBottomPanel::top("topbar").show(ctx, |ui| {
             ui.add_space(9.0);
             ui.horizontal(|ui| {
@@ -347,6 +366,12 @@ impl TaskottoApp {
     }
 
     fn nav(&mut self, ctx: &egui::Context) {
+        if rices::supports(self.settings.theme)
+            && self.settings.layout_mode.resolve(self.settings.theme) == LayoutMode::TopTabs
+        {
+            rices::navigation(self, ctx);
+            return;
+        }
         if self.settings.layout_mode.resolve(self.settings.theme) == LayoutMode::TopTabs {
             egui::TopBottomPanel::top("navigation-tabs").show(ctx, |ui| {
                 ui.horizontal_wrapped(|ui| {
@@ -404,6 +429,10 @@ impl TaskottoApp {
     }
 
     fn processes_page(&mut self, ui: &mut egui::Ui) {
+        if rices::supports(self.settings.theme) {
+            rices::processes(self, ui);
+            return;
+        }
         ui.horizontal(|ui| {
             ui.heading("Processes");
             if let Some(snapshot) = &self.snapshot {
@@ -572,7 +601,13 @@ impl TaskottoApp {
                 if ui.button("Details").clicked() {
                     self.page = Page::Details;
                 }
-                if ui.button("Terminate…").clicked() {
+                if ui
+                    .add_enabled(
+                        self.selected_process().is_some_and(can_signal_process),
+                        egui::Button::new("Terminate…"),
+                    )
+                    .clicked()
+                {
                     self.queue_action(SignalAction::Terminate);
                 }
             } else {
@@ -582,6 +617,10 @@ impl TaskottoApp {
     }
 
     fn performance_page(&mut self, ui: &mut egui::Ui) {
+        if rices::supports(self.settings.theme) {
+            rices::performance(self, ui);
+            return;
+        }
         ui.heading("Performance");
         ui.label(RichText::new("Live system activity · last 120 samples").weak());
         ui.add_space(12.0);
@@ -714,7 +753,13 @@ impl TaskottoApp {
                 SignalAction::Continue,
                 SignalAction::ForceKill,
             ] {
-                if ui.button(action.label()).clicked() {
+                if ui
+                    .add_enabled(
+                        can_signal_process(&process),
+                        egui::Button::new(action.label()),
+                    )
+                    .clicked()
+                {
                     self.queue_action(action);
                 }
             }
@@ -898,6 +943,42 @@ impl TaskottoApp {
             self.pending = None;
         }
     }
+
+    fn draw_contents(&mut self, ctx: &egui::Context) {
+        self.topbar(ctx);
+        self.nav(ctx);
+        if rices::supports(self.settings.theme) {
+            rices::statusbar(self, ctx);
+        }
+        egui::CentralPanel::default().show(ctx, |ui| {
+            ui.add_space(if rices::supports(self.settings.theme) {
+                3.0
+            } else {
+                14.0
+            });
+            if let Some(message) = self.notification.clone() {
+                ui.horizontal_wrapped(|ui| {
+                    let warning_color = if rices::supports(self.settings.theme) {
+                        Color32::from_rgb(155, 69, 16)
+                    } else {
+                        Color32::from_rgb(226, 147, 74)
+                    };
+                    ui.colored_label(warning_color, message);
+                    if ui.small_button("Dismiss ×").clicked() {
+                        self.notification = None;
+                    }
+                });
+                ui.separator();
+            }
+            match self.page {
+                Page::Processes => self.processes_page(ui),
+                Page::Performance => self.performance_page(ui),
+                Page::Details => self.details_page(ui),
+                Page::Preferences => self.preferences_page(ui),
+            }
+        });
+        self.confirmation_dialog(ctx);
+    }
 }
 
 impl eframe::App for TaskottoApp {
@@ -915,27 +996,7 @@ impl eframe::App for TaskottoApp {
                 self.query.clear();
             }
         });
-        self.topbar(ctx);
-        self.nav(ctx);
-        egui::CentralPanel::default().show(ctx, |ui| {
-            ui.add_space(14.0);
-            if let Some(message) = self.notification.clone() {
-                ui.horizontal_wrapped(|ui| {
-                    ui.colored_label(Color32::from_rgb(226, 147, 74), message);
-                    if ui.small_button("Dismiss ×").clicked() {
-                        self.notification = None;
-                    }
-                });
-                ui.separator();
-            }
-            match self.page {
-                Page::Processes => self.processes_page(ui),
-                Page::Performance => self.performance_page(ui),
-                Page::Details => self.details_page(ui),
-                Page::Preferences => self.preferences_page(ui),
-            }
-        });
-        self.confirmation_dialog(ctx);
+        self.draw_contents(ctx);
         // The sampler wakes the GUI when new data exists. No idle render timer.
     }
 }
@@ -966,6 +1027,10 @@ fn append_tree(
 
 fn is_kernel_thread(process: &Process) -> bool {
     process.pid == 2 || process.parent_pid == 2
+}
+
+fn can_signal_process(process: &Process) -> bool {
+    process.pid > 1 && process.pid != std::process::id() as i32
 }
 
 fn process_io_rate(process: &Process) -> u64 {
@@ -1070,6 +1135,7 @@ fn apply_theme(ctx: &egui::Context, settings: &Settings) {
 
 #[cfg(test)]
 mod captures;
+mod rices;
 
 #[cfg(test)]
 mod tests {
@@ -1083,6 +1149,22 @@ mod tests {
             format_process_io(false, 0, true),
             "Unavailable (permissions)"
         );
+    }
+
+    #[test]
+    fn protected_pids_are_not_actionable_in_rice_controls() {
+        assert!(!can_signal_process(&Process {
+            pid: 1,
+            ..Process::default()
+        }));
+        assert!(!can_signal_process(&Process {
+            pid: std::process::id() as i32,
+            ..Process::default()
+        }));
+        assert!(can_signal_process(&Process {
+            pid: i32::MAX,
+            ..Process::default()
+        }));
     }
 
     #[test]
@@ -1199,6 +1281,7 @@ mod tests {
             }),
             history: History::default(),
             page: Page::Processes,
+            performance_focus: PerformanceFocus::Cpu,
             query: String::new(),
             focus_search: false,
             selected: None,
@@ -1237,6 +1320,7 @@ mod tests {
             snapshot: None,
             history: History::default(),
             page: Page::Processes,
+            performance_focus: PerformanceFocus::Cpu,
             query: String::new(),
             focus_search: false,
             selected: None,
@@ -1261,12 +1345,84 @@ mod tests {
                     ..Default::default()
                 };
                 let _ = ctx.run(input, |ctx| {
-                    app.topbar(ctx);
-                    app.nav(ctx);
-                    egui::CentralPanel::default().show(ctx, |ui| {
-                        app.processes_page(ui);
-                    });
+                    app.draw_contents(ctx);
                 });
+            }
+        }
+    }
+
+    #[test]
+    fn win10_and_xp_real_data_pages_layout_at_minimum_and_desktop_sizes() {
+        let ctx = egui::Context::default();
+        let settings = Settings::default();
+        let mut app = TaskottoApp {
+            worker: Worker::start(10_000, ctx.clone()),
+            settings,
+            snapshot: Some(Snapshot {
+                cpu_percent: 23.0,
+                cores_percent: (0..24).map(|index| index as f32).collect(),
+                memory: crate::monitor::Memory {
+                    total: 16 * 1024 * 1024 * 1024,
+                    available: 9 * 1024 * 1024 * 1024,
+                    swap_total: 0,
+                    swap_free: 0,
+                },
+                rates: Default::default(),
+                uptime_seconds: 10_000.0,
+                processes: vec![Process {
+                    pid: 3300,
+                    parent_pid: 1,
+                    name: "example-worker".into(),
+                    command: "/usr/bin/example-worker --test".into(),
+                    resident_bytes: 90 * 1024 * 1024,
+                    cpu_percent: 23.0,
+                    ..Process::default()
+                }],
+                logical_cpus: 24,
+            }),
+            history: History::default(),
+            page: Page::Processes,
+            performance_focus: PerformanceFocus::Cpu,
+            query: String::new(),
+            focus_search: false,
+            selected: None,
+            pending: None,
+            notification: None,
+            theme_accent_input: String::new(),
+            theme_surface_input: String::new(),
+            theme_text_input: String::new(),
+            my_uid: 1000,
+            users: HashMap::new(),
+        };
+        for theme in [Theme::XpLuna, Theme::Windows10] {
+            app.settings.theme = theme;
+            apply_theme(&ctx, &app.settings);
+            for page in [Page::Processes, Page::Performance] {
+                app.page = page;
+                for focus in [
+                    PerformanceFocus::Cpu,
+                    PerformanceFocus::Memory,
+                    PerformanceFocus::Disk,
+                    PerformanceFocus::Network,
+                ] {
+                    app.performance_focus = focus;
+                    for (width, height) in [(650.0, 420.0), (1280.0, 800.0)] {
+                        let output = ctx.run(
+                            egui::RawInput {
+                                screen_rect: Some(egui::Rect::from_min_size(
+                                    egui::Pos2::ZERO,
+                                    Vec2::new(width, height),
+                                )),
+                                ..Default::default()
+                            },
+                            |ctx| app.draw_contents(ctx),
+                        );
+                        assert!(
+                            !output.shapes.is_empty(),
+                            "missing {theme:?} {page:?} paint commands"
+                        );
+                    }
+                }
             }
         }
     }

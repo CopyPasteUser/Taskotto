@@ -2555,7 +2555,7 @@ dependencies = [
 
 [[package]]
 name = "taskotto"
-version = "1.0.0-rc.3"
+version = "1.0.0-rc.4"
 dependencies = [
  "eframe",
  "libc",

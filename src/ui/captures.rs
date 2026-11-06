@@ -40,7 +40,32 @@ fn generate_headless_ui_screenshots() {
             Page::Performance,
             "taskotto-seven-performance.png",
         ),
+        (
+            Theme::Windows10,
+            Page::Processes,
+            "taskotto-win10-processes.png",
+        ),
+        (
+            Theme::Windows10,
+            Page::Performance,
+            "taskotto-win10-performance.png",
+        ),
+        (
+            Theme::XpLuna,
+            Page::Processes,
+            "taskotto-xp-luna-processes.png",
+        ),
+        (
+            Theme::XpLuna,
+            Page::Performance,
+            "taskotto-xp-luna-performance.png",
+        ),
     ] {
+        if let Ok(filter) = std::env::var("TASKOTTO_SCREENSHOT_FILTER")
+            && !file.contains(&filter)
+        {
+            continue;
+        }
         let ctx = egui::Context::default();
         let settings = Settings {
             theme,
@@ -61,6 +86,7 @@ fn generate_headless_ui_screenshots() {
                 disk_write: history.disk_write.clone(),
             },
             page,
+            performance_focus: PerformanceFocus::Cpu,
             query: String::new(),
             focus_search: false,
             selected: None,
@@ -86,17 +112,7 @@ fn generate_headless_ui_screenshots() {
         // matches the settled native GUI layout; retain incremental atlas data.
         for frame in 0..3 {
             let output = ctx.run(input.clone(), |ctx| {
-                app.topbar(ctx);
-                app.nav(ctx);
-                egui::CentralPanel::default().show(ctx, |ui| {
-                    ui.add_space(14.0);
-                    match page {
-                        Page::Processes => app.processes_page(ui),
-                        Page::Performance => app.performance_page(ui),
-                        Page::Details => app.details_page(ui),
-                        Page::Preferences => app.preferences_page(ui),
-                    }
-                });
+                app.draw_contents(ctx);
             });
             pixels = Some(
                 paint_egui(&ctx, output, &mut textures, frame == 2)

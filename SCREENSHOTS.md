@@ -13,7 +13,7 @@ The restricted capture environment currently exposes few processes and very
 little I/O; this is why some screenshots look sparse. They are not evidence of
 hardware compatibility or GUI performance.
 
-To regenerate the three images on Linux:
+To regenerate all seven images on Linux:
 
 ```bash
 TASKOTTO_SCREENSHOT_DIR=assets/screenshots \
@@ -25,6 +25,14 @@ The command samples real system activity for about four seconds and writes:
 1. `assets/screenshots/taskotto-seven-performance.png` — Windows 7-inspired performance view.
 2. `assets/screenshots/taskotto-processes-dark.png` — dark profile process list.
 3. `assets/screenshots/taskotto-classic98.png` — Classic 98 process list.
+4. `assets/screenshots/taskotto-win10-processes.png` — Windows 10-inspired process view with live-process grouping and heatmap.
+5. `assets/screenshots/taskotto-win10-performance.png` — Windows 10-inspired CPU performance page with metric navigation.
+6. `assets/screenshots/taskotto-xp-luna-processes.png` — XP Luna-inspired process view.
+7. `assets/screenshots/taskotto-xp-luna-performance.png` — XP Luna-inspired CPU/memory history.
+
+To regenerate only one rice's screenshots (and preserve the others), set
+`TASKOTTO_SCREENSHOT_FILTER=win10` or `TASKOTTO_SCREENSHOT_FILTER=xp-luna`
+before the same command.
 
 Captures are pinned to 1280 × 800 pixels. Re-running on another machine will
 change displayed processes, readings and potentially the image hashes. Inspect

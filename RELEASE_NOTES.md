@@ -1,10 +1,19 @@
-# Taskotto 1.0.0-rc.3 — release candidate
+# Taskotto 1.0.0-rc.4 — release candidate
 
 **Date:** 2026-11-06 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
 Rust-only Linux process manager and system monitor. This is a **prerelease**, not a stable 1.0 certification.
 
-## Changes since rc.2
+## Changes since rc.3
+
+- Dedicated XP Luna task-manager UI: original blue title gradient, raised beige tabs, white process table, persistent status strip and classic green-on-black CPU/RAM usage history.
+- Dedicated Windows 10-inspired UI: white task-manager chrome, menus and tabs, CPU/memory table heatmap, truthful user/system process groups and a four-way CPU/memory/disk/network performance navigator.
+- Menus, row/column sorting, process context actions and End Process/End task use existing real Taskotto features; all signals still require confirmation and pidfd safety checks.
+- Four new inspected headless screenshots using authentic egui commands and actual procfs samples, plus focused color/overflow/layout regressions.
+- Local stripped x86_64 Linux executable: **10,892,048 bytes** (`stat -c %s target/release/taskotto`, RC4 build). This is file size, not idle RAM.
+- Window decorations remain under the Linux window manager/compositor; custom UI does not ship Windows logos, task-manager binaries or proprietary artwork. See [RICE_FIDELITY.md](RICE_FIDELITY.md).
+
+## Earlier changes (rc.2 → rc.3)
 
 - Network receive/transmit and block read/write now share comparable, dual-color charts with gridlines and scaling labels; short histories span the full chart width.
 - Removed navigation and sort-label symbols that were rendered as missing-font boxes with the built-in egui font.
