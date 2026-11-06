@@ -4,6 +4,7 @@
 
 mod applications;
 mod chrome;
+mod classic98;
 mod details;
 mod macos;
 mod performance;
@@ -19,11 +20,14 @@ use super::*;
 pub(super) fn supports(theme: Theme) -> bool {
     matches!(
         theme,
-        Theme::XpLuna | Theme::Windows7 | Theme::Windows10 | Theme::Macos
+        Theme::Windows98 | Theme::XpLuna | Theme::Windows7 | Theme::Windows10 | Theme::Macos
     )
 }
 
 pub(super) fn topbar(app: &mut TaskottoApp, ctx: &egui::Context) {
+    if app.settings.theme == Theme::Windows98 {
+        return;
+    }
     if app.settings.theme == Theme::Macos {
         return macos::topbar(app, ctx);
     }
@@ -33,7 +37,14 @@ pub(super) fn topbar(app: &mut TaskottoApp, ctx: &egui::Context) {
     chrome::topbar(app, ctx);
 }
 
+pub(super) fn classic98_navigation(app: &mut TaskottoApp, ui: &mut egui::Ui) {
+    classic98::navigation(app, ui);
+}
+
 pub(super) fn navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
+    if app.settings.theme == Theme::Windows98 {
+        return;
+    }
     if app.settings.theme == Theme::Macos {
         return macos::navigation(app, ctx);
     }
@@ -51,6 +62,9 @@ pub(super) fn vertical_navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
 }
 
 pub(super) fn statusbar(app: &mut TaskottoApp, ctx: &egui::Context) {
+    if app.settings.theme == Theme::Windows98 {
+        return classic98::statusbar(app, ctx);
+    }
     if app.settings.theme == Theme::Macos {
         return macos::statusbar(app, ctx);
     }
@@ -61,6 +75,9 @@ pub(super) fn statusbar(app: &mut TaskottoApp, ctx: &egui::Context) {
 }
 
 pub(super) fn processes(app: &mut TaskottoApp, ui: &mut egui::Ui) {
+    if app.settings.theme == Theme::Windows98 {
+        return classic98::processes(app, ui);
+    }
     if app.settings.theme == Theme::Macos {
         return macos::process_table(app, ui, macos::Focus::Cpu);
     }
@@ -102,6 +119,9 @@ pub(super) fn xp_details(app: &mut TaskottoApp, ui: &mut egui::Ui) {
 }
 
 pub(super) fn applications(app: &mut TaskottoApp, ui: &mut egui::Ui) {
+    if app.settings.theme == Theme::Windows98 {
+        return classic98::close_program(app, ui);
+    }
     if app.settings.theme == Theme::Windows7 {
         return seven::applications(app, ui);
     }

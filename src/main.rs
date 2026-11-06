@@ -127,10 +127,19 @@ fn run() -> Result<(), String> {
     if let Some(ms) = refresh_ms {
         settings.refresh_ms = ms;
     }
+    let classic98 = settings.theme == Theme::Windows98;
     let options = eframe::NativeOptions {
         viewport: eframe::egui::ViewportBuilder::default()
-            .with_inner_size([1100.0, 720.0])
-            .with_min_inner_size([650.0, 420.0])
+            .with_inner_size(if classic98 {
+                [650.0, 450.0]
+            } else {
+                [1100.0, 720.0]
+            })
+            .with_min_inner_size(if classic98 {
+                [490.0, 340.0]
+            } else {
+                [650.0, 420.0]
+            })
             .with_app_id("io.github.copypasteuser.taskotto"),
         ..Default::default()
     };

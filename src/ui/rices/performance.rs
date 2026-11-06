@@ -7,7 +7,7 @@ pub(super) fn page(app: &mut TaskottoApp, ui: &mut egui::Ui) {
         ui.label("Reading system performance…");
         return;
     }
-    if is_xp(app) {
+    if matches!(app.settings.theme, Theme::Windows98 | Theme::XpLuna) {
         xp_performance(app, ui);
     } else {
         modern_performance(app, ui);

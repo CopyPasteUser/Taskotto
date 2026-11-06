@@ -5,8 +5,9 @@ executes its real egui navigation, modal and rice-specific pages, then
 rasterizes the resulting egui triangle meshes and font atlas to PNG. Process
 names and resource values come from live Linux `/proc` samples; autostart and
 service information comes from real XDG files and an optional systemd user
-query. There are no hand-drawn components, synthetic process entries or
-proprietary OS graphics.
+query. The test briefly starts and reaps a real unprivileged `sleep` process so
+the sparse CI environment has an actionable row to show. There are no hand-drawn
+components, synthetic process entries or proprietary OS graphics.
 
 The renderer is **headless and test-only** (the `png` crate is a dev-dependency).
 It is not a native GPU/desktop screenshot: there is no X11/Wayland window frame,
@@ -15,7 +16,7 @@ The restricted capture environment currently exposes few processes and very
 little I/O; this is why some screenshots look sparse. They are not evidence of
 hardware compatibility or GUI performance.
 
-To regenerate all 27 images on Linux:
+To regenerate all 31 images on Linux:
 
 ```bash
 TASKOTTO_SCREENSHOT_DIR=assets/screenshots \
@@ -23,6 +24,13 @@ TASKOTTO_SCREENSHOT_DIR=assets/screenshots \
 ```
 
 The command samples real system activity for about four seconds and writes:
+
+### Windows 98 (Close Program and optional advanced tools)
+
+- `assets/screenshots/taskotto-win98-close-program.png` — authentic compact dialog layout, white inset list of current-user Linux processes, 3D controls and confirmation-backed End Task.
+- `assets/screenshots/taskotto-win98-new-task.png` — user-entered New Task command dialog; no elevation or background service.
+- `assets/screenshots/taskotto-win98-processes.png` — optional classic process report with real PID/CPU/RSS data, search, sorting and safe actions.
+- `assets/screenshots/taskotto-win98-performance.png` — real Linux CPU/memory history in classic high-contrast graphs.
 
 ### macOS Activity Monitor (five views and process information)
 
@@ -63,15 +71,17 @@ The command samples real system activity for about four seconds and writes:
 - `assets/screenshots/taskotto-xp-luna-networking.png` — non-loopback receive/send trends.
 - `assets/screenshots/taskotto-xp-luna-details.png` — process properties using live Linux fields.
 
-The old dark, Classic 98 and Seven gallery captures were removed in the RC7
-focused fidelity pass. Their original styles remain available in Taskotto.
+The obsolete generic dark/Classic 98 gallery captures were removed in RC7;
+RC11 adds four fresh, independently rendered Classic 98 views.
 
 To regenerate only one rice's screenshots (and preserve the others), set
 `TASKOTTO_SCREENSHOT_FILTER=win7`, `TASKOTTO_SCREENSHOT_FILTER=win10`,
-`TASKOTTO_SCREENSHOT_FILTER=xp-luna` or `TASKOTTO_SCREENSHOT_FILTER=macos`
+`TASKOTTO_SCREENSHOT_FILTER=xp-luna`, `TASKOTTO_SCREENSHOT_FILTER=win98`
+or `TASKOTTO_SCREENSHOT_FILTER=macos`
 before the same command.
 
-Captures are pinned to 1280 × 800 pixels. Re-running on another machine will
+Classic 98 captures are rendered at the actual 650 × 450 default viewport;
+other captures remain 1280 × 800 pixels. Re-running on another machine will
 change displayed processes, readings and potentially the image hashes. Inspect
 the resulting images before committing them; do not imply they are native
 screenshots. Capture real X11, KDE Wayland and labwc windows as part of the

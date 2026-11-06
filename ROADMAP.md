@@ -96,7 +96,7 @@ Taskotto is a **standalone, on-demand Rust system monitor and process manager** 
 
 ## 0.9 — Release candidate
 
-- [x] Buildable `1.0.0-rc.10` candidate with all-profile small/large headless layout and integration tests.
+- [x] Buildable `1.0.0-rc.11` candidate with all-profile small/large headless layout and integration tests.
 - [x] Contributor/security policies, dependency-update configuration and CI checks.
 - [x] Reproducible egui-rendered headless screenshots with real procfs measurements, documented provenance and visual inspection.
 - [x] Consistent network/disk comparison charts (both directions on one scale), early-history width regression coverage and readable navigation labels.
@@ -118,6 +118,7 @@ Taskotto is a **standalone, on-demand Rust system monitor and process manager** 
 - [x] Provide truthful Linux analogues for Windows 10 Startup/Services/App history without invented Windows-only data; optional future enhancements include startup enable/disable with recoverable backups and additional user service controls.
 - [x] RC9 Seven fidelity: standalone Windows 7 Aero-like task manager with six historical tabs and a floating process properties sheet, sortable compact process report, per-core green CPU and blue memory history, real networking/UID views, asynchronous read-only Linux service data and seven new real-egui screenshots. Maintain XP/Win10 behavior and document all Linux-specific differences.
 - [x] RC10 macOS fidelity: independent Activity Monitor-inspired toolbar, process search/info/actions, five horizontal views (CPU, Memory, Energy, Disk, Network), real per-process CPU/RSS/disk fields, context-dependent rolling histories, explicit energy-as-CPU proxy and honest aggregate-only networking. Six new genuine egui/procfs scenes, responsive table width tests and two-size/five-tab/two-navigation GUI-layout regressions.
+- [x] RC11 Windows 98 fidelity: authentic compact Close Program default client with raised/sunken Win9x controls and no duplicate window decoration. Linux-native current-user process list and End Task confirmation; real New Task/Refresh/Close actions, expandable Tools navigation with classic sortable process report, and four reproducible live-data captures.
 - [ ] Side-by-side native macOS Activity Monitor reference comparison on user hardware, including font, row density, inspector, window chrome and accessibility; headless Linux renders cannot justify a numerical similarity claim.
 
 **Gate:** no P0/P1 defects, all regression tests passing and no misleading feature claims.
