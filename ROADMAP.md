@@ -45,6 +45,7 @@ Taskotto is a **standalone, on-demand Rust system monitor and process manager** 
 ## 0.4 — Ricing foundation
 
 - [x] Independent theme presets for Classic 98, Luna, Seven, Modern 10, Aero, Chrome and Mac.
+- [x] Replace Chrome's generic preset screen with a dedicated ChromeOS-inspired sortable process table, safe actions, contextual tools and no duplicate window decoration; native appearance acceptance remains open.
 - [x] Compact and comfortable density.
 - [x] Data-driven colors/typography/spacing/corners, responsive table columns/row heights, layout variants and persisted TOML settings.
 - [x] Theme selection via `--theme` and opt-in RiceBowl environment contract.

@@ -2,6 +2,12 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## Unreleased — ChromeOS Task Manager
+
+- Promoted ChromeOS from a generic color preset to a dedicated, table-first task-manager client with search, owner filters, sorting, keyboard focus, Linux-backed memory/CPU/PID/disk I/O, selection, process inspection and confirmation-protected End process.
+- Added a compact overflow menu for the remaining Linux tools and optional custom navigation, plus responsive supplemental CPU/memory/disk/network views. Window frames remain owned by the compositor/RiceBowl.
+- Added real-egui screenshot scenarios and layout coverage for the new rice. ChromeOS-only private memory and per-PID network data are not invented. Native X11/Wayland fidelity and performance acceptance remain outstanding.
+
 ## [1.0.0-rc.11] — 2026-11-06
 
 - Gave Classic 98 a standalone Close Program client rather than the generic Taskotto theme: compact gray 3D controls, a sunken white program list, dark-blue selection and no duplicate RiceBowl-managed external window decorations.

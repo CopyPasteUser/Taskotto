@@ -16,7 +16,7 @@ The restricted capture environment currently exposes few processes and very
 little I/O; this is why some screenshots look sparse. They are not evidence of
 hardware compatibility or GUI performance.
 
-To regenerate all 31 images on Linux:
+To regenerate all 33 images on Linux:
 
 ```bash
 TASKOTTO_SCREENSHOT_DIR=assets/screenshots \
@@ -24,6 +24,11 @@ TASKOTTO_SCREENSHOT_DIR=assets/screenshots \
 ```
 
 The command samples real system activity for about four seconds and writes:
+
+### ChromeOS Task manager (primary task table and supplementary tools)
+
+- `assets/screenshots/taskotto-chromeos-tasks.png` — compact ChromeOS-inspired Linux process list with live memory RSS, CPU, PID and a confirmation-protected End process action (disabled until selection); not a ChromeOS or Chromium native window.
+- `assets/screenshots/taskotto-chromeos-performance.png` — supplementary Linux CPU, RAM, disk and uptime metrics, reachable via the toolbar menu. It does not invent proprietary ChromeOS counters.
 
 ### Windows 98 (Close Program and optional advanced tools)
 
@@ -76,7 +81,8 @@ RC11 adds four fresh, independently rendered Classic 98 views.
 
 To regenerate only one rice's screenshots (and preserve the others), set
 `TASKOTTO_SCREENSHOT_FILTER=win7`, `TASKOTTO_SCREENSHOT_FILTER=win10`,
-`TASKOTTO_SCREENSHOT_FILTER=xp-luna`, `TASKOTTO_SCREENSHOT_FILTER=win98`
+`TASKOTTO_SCREENSHOT_FILTER=xp-luna`, `TASKOTTO_SCREENSHOT_FILTER=win98`,
+`TASKOTTO_SCREENSHOT_FILTER=chromeos`
 or `TASKOTTO_SCREENSHOT_FILTER=macos`
 before the same command.
 

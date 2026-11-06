@@ -1,4 +1,4 @@
-# Windows 98 / XP Luna / Windows 7 / Windows 10 / macOS rice fidelity
+# Windows 98 / XP Luna / Windows 7 / Windows 10 / ChromeOS / macOS rice fidelity
 
 Taskotto is Linux system software. The goal is **recognizable task-manager
 interaction and visual hierarchy**, not a falsely branded Windows program.
@@ -21,9 +21,19 @@ Only original vector-style drawing and standard egui controls are used.
   [memory](https://support.apple.com/guide/activity-monitor/view-memory-usage-actmntr1004/mac),
   [disk](https://support.apple.com/guide/activity-monitor/view-disk-activity-actmntr1005/mac), and
   [energy](https://support.apple.com/guide/activity-monitor/view-energy-consumption-actmntr43697/mac) views.
+- Google's [Chromebook Task Manager shortcut and guidance](https://support.google.com/chromebook/answer/6309225?hl=en) and [Chrome process management](https://support.google.com/chrome/answer/2391819?hl=en) for table-first process inspection and End process behavior.
 
 These are design references; their screenshots, icons, product logos, textures
 and fonts are **not** copied or bundled.
+
+## ChromeOS Task manager
+
+- A dedicated, minimalist browser-style client area, without duplicating the compositor/RiceBowl window frame, close buttons or a Google logo. The standard **Auto** layout is a single task table; optional sidebar/top tabs are explicit Taskotto preferences.
+- Persistent search, **All tasks / My tasks** filter, sortable Task / Memory footprint / CPU / Process ID headers, and responsive optional Disk I/O and User columns. Task names and ownership come from Linux `/proc`, not an imagined mapping to browser tabs, extensions or Android applications.
+- Per-process memory means Linux **resident set size (RSS)**, not Chrome's proprietary private memory accounting. Chrome's per-process Network figure is unavailable from portable Linux `/proc`, so the optional column is transparently *Disk I/O*; missing permission is shown as N/A instead of zero. The supplementary Network tool shows correctly labeled **system-wide** RX/TX activity.
+- Selection, hover, focus and context actions work; double-click shows process details. The blue End process button is unavailable until a permitted process is selected, then runs through the existing confirmation and pidfd safety gate.
+- An overflow menu keeps Performance, Network, Users, Details, Applications, App history, Startup, Services, filters, refresh rate, New Task and settings accessible without crowding the primary pane.
+- Appearance is a ChromeOS-inspired interpretation rather than a pixel-perfect verified release. The default egui font and Linux compositor differ; native visuals and keyboard testing remain necessary before claiming fidelity.
 
 ## Windows 98 Close Program
 

@@ -158,6 +158,16 @@ fn generate_headless_ui_screenshots() {
         (Theme::Macos, Page::MacDisk, "taskotto-macos-disk.png"),
         (Theme::Macos, Page::Networking, "taskotto-macos-network.png"),
         (Theme::Macos, Page::Processes, "taskotto-macos-info.png"),
+        (
+            Theme::Chromeos,
+            Page::Processes,
+            "taskotto-chromeos-tasks.png",
+        ),
+        (
+            Theme::Chromeos,
+            Page::Performance,
+            "taskotto-chromeos-performance.png",
+        ),
     ] {
         if let Ok(filter) = std::env::var("TASKOTTO_SCREENSHOT_FILTER")
             && !file.contains(&filter)
@@ -170,6 +180,8 @@ fn generate_headless_ui_screenshots() {
             refresh_ms: 10_000,
             layout_mode: if file.contains("vertical") {
                 LayoutMode::Sidebar
+            } else if theme == Theme::Chromeos {
+                LayoutMode::Auto
             } else {
                 LayoutMode::TopTabs
             },
@@ -193,7 +205,10 @@ fn generate_headless_ui_screenshots() {
             performance_focus: PerformanceFocus::Cpu,
             query: String::new(),
             focus_search: false,
-            selected: if file.contains("win98-close") || file.contains("win98-processes") {
+            selected: if file.contains("win98-close")
+                || file.contains("win98-processes")
+                || file.contains("chromeos-tasks")
+            {
                 snapshot
                     .processes
                     .iter()

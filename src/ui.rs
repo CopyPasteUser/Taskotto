@@ -295,18 +295,7 @@ impl TaskottoApp {
         let mut matches: Vec<Process> = snapshot
             .processes
             .iter()
-            .filter(|p| {
-                (self.settings.show_kernel_threads || !is_kernel_thread(p))
-                    && (!self.settings.only_my_processes || p.user_id == self.my_uid)
-                    && (query.is_empty()
-                        || p.name.to_lowercase().contains(&query)
-                        || p.command.to_lowercase().contains(&query)
-                        || p.pid.to_string().contains(&query)
-                        || self
-                            .users
-                            .get(&p.user_id)
-                            .is_some_and(|s| s.to_lowercase().contains(&query)))
-            })
+            .filter(|p| self.process_matches_filters(p, &query))
             .cloned()
             .collect();
         matches.sort_by(|a, b| {
@@ -364,6 +353,19 @@ impl TaskottoApp {
             append_tree(pid, 0, &by_pid, &children, &mut visited, &mut result);
         }
         result
+    }
+
+    fn process_matches_filters(&self, process: &Process, lowercase_query: &str) -> bool {
+        (self.settings.show_kernel_threads || !is_kernel_thread(process))
+            && (!self.settings.only_my_processes || process.user_id == self.my_uid)
+            && (lowercase_query.is_empty()
+                || process.name.to_lowercase().contains(lowercase_query)
+                || process.command.to_lowercase().contains(lowercase_query)
+                || process.pid.to_string().contains(lowercase_query)
+                || self
+                    .users
+                    .get(&process.user_id)
+                    .is_some_and(|name| name.to_lowercase().contains(lowercase_query)))
     }
 
     fn sort_pids(&self, processes: Vec<&Process>) -> Vec<i32> {
@@ -425,6 +427,16 @@ impl TaskottoApp {
     }
 
     fn nav(&mut self, ctx: &egui::Context) {
+        if self.settings.theme == Theme::Chromeos {
+            // ChromeOS presents one primary task table. Additional navigation
+            // is opt-in, with all views available from the toolbar menu.
+            match self.settings.layout_mode {
+                LayoutMode::Auto => {}
+                LayoutMode::TopTabs => rices::navigation(self, ctx),
+                LayoutMode::Sidebar => rices::vertical_navigation(self, ctx),
+            }
+            return;
+        }
         if self.settings.theme == Theme::Macos
             && self.settings.layout_mode.resolve(self.settings.theme) == LayoutMode::Sidebar
         {
@@ -1755,8 +1767,11 @@ mod tests {
             Theme::XpLuna,
             Theme::Windows7,
             Theme::Windows10,
+            Theme::Chromeos,
         ] {
-            for &navigation in if matches!(theme, Theme::Windows98 | Theme::Windows10) {
+            for &navigation in if theme == Theme::Chromeos {
+                &[LayoutMode::Auto, LayoutMode::TopTabs, LayoutMode::Sidebar][..]
+            } else if matches!(theme, Theme::Windows98 | Theme::Windows10) {
                 &[LayoutMode::TopTabs, LayoutMode::Sidebar][..]
             } else {
                 &[LayoutMode::TopTabs][..]
