@@ -4,6 +4,7 @@
 
 mod applications;
 mod chrome;
+mod classic98;
 mod details;
 mod macos;
 mod performance;
@@ -19,11 +20,14 @@ use super::*;
 pub(super) fn supports(theme: Theme) -> bool {
     matches!(
         theme,
-        Theme::XpLuna | Theme::Windows7 | Theme::Windows10 | Theme::Macos
+        Theme::Windows98 | Theme::XpLuna | Theme::Windows7 | Theme::Windows10 | Theme::Macos
     )
 }
 
 pub(super) fn topbar(app: &mut TaskottoApp, ctx: &egui::Context) {
+    if app.settings.theme == Theme::Windows98 {
+        return classic98::topbar(app, ctx);
+    }
     if app.settings.theme == Theme::Macos {
         return macos::topbar(app, ctx);
     }
@@ -51,6 +55,10 @@ pub(super) fn vertical_navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
 }
 
 pub(super) fn statusbar(app: &mut TaskottoApp, ctx: &egui::Context) {
+    if app.settings.theme == Theme::Windows98 {
+        // The original Close Program dialog has no app-level status bar.
+        return;
+    }
     if app.settings.theme == Theme::Macos {
         return macos::statusbar(app, ctx);
     }
@@ -137,6 +145,10 @@ pub(super) fn mac_disk(app: &mut TaskottoApp, ui: &mut egui::Ui) {
 
 pub(super) fn mac_info_dialog(app: &mut TaskottoApp, ctx: &egui::Context) {
     macos::info_dialog(app, ctx);
+}
+
+pub(super) fn classic98_page(app: &mut TaskottoApp, ui: &mut egui::Ui) {
+    classic98::page(app, ui);
 }
 
 fn is_xp(app: &TaskottoApp) -> bool {

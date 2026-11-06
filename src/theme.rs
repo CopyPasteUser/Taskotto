@@ -80,6 +80,15 @@ impl ThemeStyle {
         };
         visuals.widgets.active.bg_fill = self.accent;
         match settings.theme {
+            Theme::Windows98 => {
+                visuals.extreme_bg_color = Color32::WHITE;
+                visuals.faint_bg_color = Color32::from_rgb(214, 214, 214);
+                visuals.widgets.noninteractive.bg_stroke.color = Color32::from_rgb(128, 128, 128);
+                visuals.widgets.inactive.bg_fill = Color32::from_rgb(192, 192, 192);
+                visuals.widgets.inactive.bg_stroke.color = Color32::from_rgb(64, 64, 64);
+                visuals.widgets.hovered.bg_fill = Color32::from_rgb(225, 225, 225);
+                visuals.widgets.active.bg_fill = self.accent;
+            }
             Theme::XpLuna => {
                 // Raised rectangular controls on the warm, classic task-manager
                 // surface. All tones are original recreations, not OS assets.

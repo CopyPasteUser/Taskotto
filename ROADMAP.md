@@ -96,7 +96,7 @@ Taskotto is a **standalone, on-demand Rust system monitor and process manager** 
 
 ## 0.9 — Release candidate
 
-- [x] Buildable `1.0.0-rc.10` candidate with all-profile small/large headless layout and integration tests.
+- [x] Buildable `1.0.0-rc.11` candidate with all-profile small/large headless layout and integration tests.
 - [x] Contributor/security policies, dependency-update configuration and CI checks.
 - [x] Reproducible egui-rendered headless screenshots with real procfs measurements, documented provenance and visual inspection.
 - [x] Consistent network/disk comparison charts (both directions on one scale), early-history width regression coverage and readable navigation labels.
@@ -118,7 +118,10 @@ Taskotto is a **standalone, on-demand Rust system monitor and process manager** 
 - [x] Provide truthful Linux analogues for Windows 10 Startup/Services/App history without invented Windows-only data; optional future enhancements include startup enable/disable with recoverable backups and additional user service controls.
 - [x] RC9 Seven fidelity: standalone Windows 7 Aero-like task manager with six historical tabs and a floating process properties sheet, sortable compact process report, per-core green CPU and blue memory history, real networking/UID views, asynchronous read-only Linux service data and seven new real-egui screenshots. Maintain XP/Win10 behavior and document all Linux-specific differences.
 - [x] RC10 macOS fidelity: independent Activity Monitor-inspired toolbar, process search/info/actions, five horizontal views (CPU, Memory, Energy, Disk, Network), real per-process CPU/RSS/disk fields, context-dependent rolling histories, explicit energy-as-CPU proxy and honest aggregate-only networking. Six new genuine egui/procfs scenes, responsive table width tests and two-size/five-tab/two-navigation GUI-layout regressions.
+- [x] RC11 historical Windows 98 **Close Program** dialog client (not XP's tabbed Task Manager), current-user Linux process list, confirmed End Task, safe Cancel and disabled host shutdown. Advanced process/CPU/memory/network/owner/info views reside in a separate Tools menu. Five original 650×510 snapshots added.
+- [x] RC11 decoration contract: remove imitation top-level caption/titlebars across XP, Seven, Win10 and macOS; RiceBowl/compositor draws native frame, caption colors and caption buttons. Re-capture all 27 earlier screenshots as client-only egui pixels (32 total).
 - [ ] Side-by-side native macOS Activity Monitor reference comparison on user hardware, including font, row density, inspector, window chrome and accessibility; headless Linux renders cannot justify a numerical similarity claim.
+- [ ] Native reference comparison of Windows 98 Close Program layout, focus, selection, task termination and menu reachability on RiceBowl/labwc and X11; verify themed native titlebars and caption controls are not duplicated for any rice.
 
 **Gate:** no P0/P1 defects, all regression tests passing and no misleading feature claims.
 
@@ -131,7 +134,7 @@ Taskotto is a **standalone, on-demand Rust system monitor and process manager** 
 
 ### After 1.0 (not blockers)
 
-Optional per-GPU utilization (driver-specific), container/cgroup view, separate process inspector and more RiceBowl-specific window chrome. These must not burden the baseline runtime.
+Optional per-GPU utilization (driver-specific), container/cgroup view, separate process inspector and a richer RiceBowl-to-compositor decoration theme contract. **Top-level window chrome always remains outside Taskotto's client rendering.** These must not burden the baseline runtime.
 
 ## Remaining 1.0 release gate
 

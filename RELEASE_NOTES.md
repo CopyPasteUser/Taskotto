@@ -1,10 +1,18 @@
-# Taskotto 1.0.0-rc.10 — release candidate
+# Taskotto 1.0.0-rc.11 — release candidate
 
 **Date:** 2026-11-06 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
 Rust-only Linux process manager and system monitor. This is a **prerelease**, not a stable 1.0 certification.
 
-## Changes since rc.9
+## Changes since rc.10
+
+- Windows 98 now uses its period-appropriate **Close Program** layout, which historically had a simple task list instead of the Windows NT/XP Task Manager tabs. It uses genuine, current-user Linux processes, a selected-process confirmation-protected **End Task** action and **Cancel** to close the Taskotto window. **Shut Down** is visibly unavailable: Taskotto does not power off the host.
+- An explicitly extended **Tools** menu gives access to process search, sortable full process report, real CPU/RAM and aggregate network histories, process owners and safe selected-process inspection. Linux tasks are not falsely presented as enumerated graphical windows.
+- Removed the custom-painted top-level title strips and duplicated window titles from previous XP Luna, Windows 7, Windows 10 and macOS presets. **RiceBowl / the compositor owns frame, caption colors and top-right window buttons**; Taskotto draws just functional client UI, menus, toolbars and in-client modals.
+- Five real-egui Windows 98 captures (650×510) plus refreshed screenshots for all four previously dedicated presets yield **32** genuine, reproducible captures. The README and QA/fidelity notes now reflect the split in responsibilities.
+- Native X11/Wayland and RiceBowl window-decoration acceptance, interaction tests, hardware performance and historical reference-image alignment remain unverified. **Neither 95% nor literal 1:1 accuracy is certified.**
+
+## Earlier changes since rc.9 (rc.10)
 
 - The macOS preset now has an independent, light Activity Monitor-inspired layout: original mini activity-mark, Stop/Info/View toolbar, live search, five historical horizontal segments (CPU, Memory, Energy, Disk, Network), sortable dense report, per-process context menu and an actual selected-process Info dialog.
 - Context-specific bottom statistics and rolling CPU/memory/disk/network charts reflect live Linux samples. Memory columns show resident/virtual usage; Disk exposes permission-checked `/proc/PID/io` with explicit N/A; Energy reports genuine process CPU as an explicitly labeled activity proxy since the proprietary macOS Energy Impact and App Nap measurements cannot be derived from procfs. Network remains system-wide, not fabricated per PID.

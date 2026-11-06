@@ -389,8 +389,7 @@ impl TaskottoApp {
         egui::TopBottomPanel::top("topbar").show(ctx, |ui| {
             ui.add_space(9.0);
             ui.horizontal(|ui| {
-                ui.label(RichText::new("Taskotto").strong().size(21.0));
-                ui.add_space(14.0);
+                // Window title and controls are the compositor's responsibility.
                 if let Some(snapshot) = &self.snapshot {
                     let cpu = snapshot.cpu_percent / 100.0;
                     ui.label("CPU");
@@ -420,6 +419,10 @@ impl TaskottoApp {
     }
 
     fn nav(&mut self, ctx: &egui::Context) {
+        if self.settings.theme == Theme::Windows98 {
+            // Windows 98 Close Program is a dialog, not a tabbed NT task manager.
+            return;
+        }
         if self.settings.theme == Theme::Macos
             && self.settings.layout_mode.resolve(self.settings.theme) == LayoutMode::Sidebar
         {
@@ -1165,20 +1168,26 @@ impl TaskottoApp {
                 });
                 ui.separator();
             }
-            match self.page {
-                Page::Applications => rices::applications(self, ui),
-                Page::Processes => self.processes_page(ui),
-                Page::Performance => self.performance_page(ui),
-                Page::AppHistory => rices::app_history(self, ui),
-                Page::Startup => rices::startup(self, ui),
-                Page::Networking => rices::networking(self, ui),
-                Page::Users => rices::users(self, ui),
-                Page::Details if self.settings.theme == Theme::Windows7 => self.processes_page(ui),
-                Page::Details => self.details_page(ui),
-                Page::Services => rices::services(self, ui),
-                Page::MacEnergy => rices::mac_energy(self, ui),
-                Page::MacDisk => rices::mac_disk(self, ui),
-                Page::Preferences => self.preferences_page(ui),
+            if self.settings.theme == Theme::Windows98 {
+                rices::classic98_page(self, ui);
+            } else {
+                match self.page {
+                    Page::Applications => rices::applications(self, ui),
+                    Page::Processes => self.processes_page(ui),
+                    Page::Performance => self.performance_page(ui),
+                    Page::AppHistory => rices::app_history(self, ui),
+                    Page::Startup => rices::startup(self, ui),
+                    Page::Networking => rices::networking(self, ui),
+                    Page::Users => rices::users(self, ui),
+                    Page::Details if self.settings.theme == Theme::Windows7 => {
+                        self.processes_page(ui)
+                    }
+                    Page::Details => self.details_page(ui),
+                    Page::Services => rices::services(self, ui),
+                    Page::MacEnergy => rices::mac_energy(self, ui),
+                    Page::MacDisk => rices::mac_disk(self, ui),
+                    Page::Preferences => self.preferences_page(ui),
+                }
             }
         });
         if self.settings.theme == Theme::Windows7 && self.page == Page::Details {
@@ -1676,6 +1685,82 @@ mod tests {
                         "missing macOS {page:?} {layout:?} paint commands"
                     );
                 }
+            }
+        }
+    }
+
+    #[test]
+    fn classic98_dialog_and_advanced_views_layout_without_a_fake_titlebar() {
+        let ctx = egui::Context::default();
+        let mut app = TaskottoApp {
+            worker: Worker::start(10_000, ctx.clone()),
+            settings: Settings {
+                theme: Theme::Windows98,
+                ..Settings::default()
+            },
+            snapshot: Some(Snapshot {
+                cpu_percent: 8.0,
+                cores_percent: vec![8.0],
+                memory: crate::monitor::Memory {
+                    total: 8 * 1024 * 1024 * 1024,
+                    available: 4 * 1024 * 1024 * 1024,
+                    swap_total: 0,
+                    swap_free: 0,
+                },
+                rates: Default::default(),
+                uptime_seconds: 100.0,
+                processes: vec![Process {
+                    pid: 3300,
+                    name: "example-worker".into(),
+                    user_id: 1000,
+                    resident_bytes: 100 * 1024 * 1024,
+                    ..Process::default()
+                }],
+                logical_cpus: 1,
+            }),
+            history: History::default(),
+            page: Page::Processes,
+            performance_focus: PerformanceFocus::Cpu,
+            query: String::new(),
+            focus_search: false,
+            selected: Some((3300, 0)),
+            pending: None,
+            notification: None,
+            theme_accent_input: String::new(),
+            theme_surface_input: String::new(),
+            theme_text_input: String::new(),
+            my_uid: 1000,
+            users: HashMap::new(),
+            system_pages: rices::SystemPages::default(),
+            new_task: NewTaskDialog::default(),
+            mac_info_open: false,
+        };
+        apply_theme(&ctx, &app.settings);
+        for page in [
+            Page::Processes,
+            Page::Applications,
+            Page::Performance,
+            Page::Networking,
+            Page::Users,
+            Page::Details,
+            Page::Preferences,
+        ] {
+            app.page = page;
+            for (width, height) in [(460.0, 340.0), (650.0, 510.0), (1280.0, 800.0)] {
+                let output = ctx.run(
+                    egui::RawInput {
+                        screen_rect: Some(egui::Rect::from_min_size(
+                            egui::Pos2::ZERO,
+                            Vec2::new(width, height),
+                        )),
+                        ..Default::default()
+                    },
+                    |ctx| app.draw_contents(ctx),
+                );
+                assert!(
+                    !output.shapes.is_empty(),
+                    "Classic 98 {page:?} {width}x{height} must draw"
+                );
             }
         }
     }

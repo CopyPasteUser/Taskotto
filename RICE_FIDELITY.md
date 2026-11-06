@@ -1,10 +1,14 @@
-# macOS / Windows 7 / Windows 10 / XP Luna task-manager rice fidelity
+# Windows 98 / macOS / Windows 7 / Windows 10 / XP Luna task-manager rice fidelity
 
 Taskotto is Linux system software. The goal is **recognizable task-manager
 interaction and visual hierarchy**, not a falsely branded Windows program.
 Only original vector-style drawing and standard egui controls are used.
 
 ## References and design direction
+
+- Windows 98's original **Close Program** dialog is illustrated in
+  [GUIdebook's historical screenshots](https://guidebookgallery.org/screenshots/tasks/)
+  and documented in the [Microsoft Knowledge Base archive (KB222518)](https://www.betaarchive.com/wiki/index.php/Microsoft_KB_Archive/222518).
 
 - Historical Windows 10 Task Manager processes/navigation examples:
   [BleepingComputer Task Manager guide](https://www.bleepingcomputer.com/tutorials/close-a-program-using-task-manager/).
@@ -25,11 +29,49 @@ Only original vector-style drawing and standard egui controls are used.
 These are design references; their screenshots, icons, product logos, textures
 and fonts are **not** copied or bundled.
 
+## Window-decoration ownership contract (all profiles)
+
+- **RiceBowl / the X11 or Wayland compositor** owns the actual top-level window
+  title, border, window-shadow and theme-colored titlebar with the native
+  minimize, maximize and close controls. Taskotto uses the ordinary decorated
+  eframe/winit viewport; it does **not** draw extra in-client caption strips.
+- **Taskotto** owns only the task manager's interior: menus, navigation,
+  toolbar actions, reports, status displays and graphs. The earlier blue XP,
+  gradient Seven and white Win10 imitation titlebars were removed. The macOS
+  view retains Stop/Info/View/Search as genuine tools, not a duplicated title.
+- In-client modal dialogs (`egui::Window` for properties/confirmation) remain
+  local pop-ups with their own dismiss action; they are *not* independent
+  top-level OS windows and cannot be decorated by RiceBowl.
+- Headless PNGs show *only* client pixels. Real screenshots and frame colors
+  depend on the user's RiceBowl compositor, X11/Wayland theme and window rules.
+
+## Windows 98 Close Program
+
+- Authentic Windows 98 uses the small **Close Program** task list from
+  Ctrl+Alt+Delete, **not** the Windows NT/XP multi-tab Task Manager. Taskotto's
+  Classic 98 default therefore has no fake historical tabs or caption strip.
+- Compact default 650 × 510 client, classic #C0C0C0 dialog surface, inset white
+  list, original-drawn neutral task icons, navy selection and beveled buttons.
+  **End Task** is confirmation-protected through the existing Linux pidfd path,
+  **Cancel** closes Taskotto and **Shut Down** is explicitly disabled so a
+  monitoring tool never unexpectedly powers off the Linux machine.
+- The original warning about pressing Ctrl+Alt+Del twice would be false on
+  Linux and is intentionally replaced with an honest unsaved-data warning.
+  `/proc` cannot enumerate GUI windows across X11/Wayland: the list represents
+  current-user **Linux processes**, labeled as such, not inferred applications.
+- A clearly nonhistorical **Tools** menu preserves full utility: an advanced
+  sortable process report, live green-on-black System Monitor with Linux CPU
+  and RAM histories, honest aggregate Network and UID-owner summaries, and
+  individual selected-process information. No empty decorative UI controls.
+- Keyboard search (Ctrl+F) and manual refresh (F5) still work; the custom
+  classic list retains pointer selection, accessible focus and process actions.
+
 ## macOS Activity Monitor
 
 - Dedicated light, neutral Activity Monitor-inspired UI rather than the generic
-  Taskotto theme: an original activity-wave mark, compact toolbar with **Stop**,
-  **Info**, functional **View** menu and a persistent **Search processes** field.
+  Taskotto theme: a compact content toolbar with **Stop**, **Info**, functional
+  **View** menu and a persistent **Search processes** field. Window title and
+  app icon belong to the compositor and are not repeated inside the client.
 - Five familiar segments in their original order: **CPU, Memory, Energy, Disk,
   Network**, displayed as horizontal tabs by default. Explicitly choosing a
   sidebar is a Taskotto customization, not a claim about Apple's default.
@@ -56,9 +98,9 @@ and fonts are **not** copied or bundled.
 
 ## Windows 7
 
-- Separate Aero-era title treatment drawn from original gradient/vector
-  primitives; pale blue client surface, beveled rectangular tabs and a
-  classic status strip for process count, CPU usage and physical memory.
+- Pale blue Aero-era **client surface**, beveled rectangular tabs and classic
+  status strip for process count, CPU usage and physical memory. The old
+  simulated blue titlebar was removed; RiceBowl decorates the real frame.
 - The original six-tab order: **Applications, Processes, Services, Performance,
   Networking, Users**. Each tab has a Linux-backed screen rather than a
   nonfunctional visual placeholder.
@@ -88,8 +130,8 @@ and fonts are **not** copied or bundled.
 
 ## XP Luna
 
-- Blue vertical-gradient, original app-mark and cream menu strip.
-- Compact 32 px title chrome, raised tabs, a white list surface filling the
+- Cream menu strip; RiceBowl draws the blue Luna titlebar and window controls.
+- Raised tabs, a white list surface filling the
   process pane, and XP-era `Image Name`, `Mem Usage` and `User Name` headers.
 - The optional Taskotto process filter appears on Ctrl+F or View → Find,
   keeping the default view close to the period's table-first design.
@@ -143,10 +185,9 @@ and fonts are **not** copied or bundled.
 ## Intentional differences and verification
 
 - The compositor/window manager owns the **native window frame** on X11 and
-  Wayland. The in-client bars are styled headers, not replacement decorations
-  or simulated OS window buttons.
-- Windows 10 exposes seven data-backed tabs; Windows 7 exposes six; XP
-  exposes five. The original Windows APIs and historic App history accounting
+  Wayland. Taskotto never overlays it with a second painted caption/titlebar.
+- Windows 98 exposes its untabbed Close Program dialog; Windows 10 exposes
+  seven data-backed tabs, Windows 7 six and XP five. The original Windows APIs and historic App history accounting
   do not directly exist on Linux. Settings and selected-process Properties
   remain accessible through menus and process actions.
 - Linux cannot provide Windows process categories, application-history
@@ -162,6 +203,6 @@ and fonts are **not** copied or bundled.
 - Headless screenshot renders prove actual egui layout/paint commands and real
   procfs values, **not native desktop output**. [QA.md](QA.md) retains the Mint
   X11, KDE Wayland and labwc visual/keyboard/performance sign-off gates.
-- The README gallery and provenance describe 27 current Mac/Seven/XP/Windows 10
+- The README gallery and provenance describe 32 current 98/Mac/Seven/XP/Windows 10
   captures; old generic-theme renders were removed, while all eight rice
   presets remain available.

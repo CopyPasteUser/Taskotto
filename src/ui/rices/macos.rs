@@ -45,31 +45,8 @@ pub(super) fn topbar(app: &mut TaskottoApp, ctx: &egui::Context) {
         )
         .show(ctx, |ui| {
             ui.horizontal(|ui| {
-                let (mark, _) = ui.allocate_exact_size(egui::vec2(21.0, 21.0), Sense::hover());
-                ui.painter()
-                    .rect_filled(mark, 5.0, Color32::from_rgb(231, 242, 253));
-                ui.painter().rect_stroke(
-                    mark,
-                    5.0,
-                    Stroke::new(1.0_f32, BORDER),
-                    StrokeKind::Inside,
-                );
-                let path = [
-                    egui::pos2(mark.left() + 2.0, mark.center().y + 1.0),
-                    egui::pos2(mark.left() + 7.0, mark.center().y + 1.0),
-                    egui::pos2(mark.left() + 10.0, mark.top() + 3.0),
-                    egui::pos2(mark.left() + 13.0, mark.bottom() - 3.0),
-                    egui::pos2(mark.right() - 2.0, mark.center().y - 1.0),
-                ];
-                ui.painter()
-                    .add(egui::Shape::line(path.to_vec(), Stroke::new(1.8_f32, BLUE)));
-                ui.label(
-                    RichText::new("Taskotto Activity Monitor")
-                        .color(INK)
-                        .size(13.0)
-                        .strong(),
-                );
-                ui.add_space(6.0);
+                // The macOS/RiceBowl window chrome already supplies the app
+                // name and traffic-light controls. This is solely a toolbar.
                 if ui
                     .add_enabled(
                         app.selected_process().is_some_and(can_signal_process),

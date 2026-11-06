@@ -6,6 +6,8 @@ use std::{collections::HashMap, fs, path::Path, thread, time::Duration};
 
 const WIDTH: usize = 1280;
 const HEIGHT: usize = 800;
+const CLASSIC98_WIDTH: usize = 650;
+const CLASSIC98_HEIGHT: usize = 510;
 
 #[test]
 #[ignore = "run explicitly with TASKOTTO_SCREENSHOT_DIR=assets/screenshots"]
@@ -29,6 +31,31 @@ fn generate_headless_ui_screenshots() {
     let snapshot = latest.expect("at least one sample");
 
     for (theme, page, file) in [
+        (
+            Theme::Windows98,
+            Page::Processes,
+            "taskotto-win98-close-program.png",
+        ),
+        (
+            Theme::Windows98,
+            Page::Applications,
+            "taskotto-win98-process-report.png",
+        ),
+        (
+            Theme::Windows98,
+            Page::Performance,
+            "taskotto-win98-system-monitor.png",
+        ),
+        (
+            Theme::Windows98,
+            Page::Networking,
+            "taskotto-win98-network.png",
+        ),
+        (
+            Theme::Windows98,
+            Page::Details,
+            "taskotto-win98-information.png",
+        ),
         (
             Theme::Windows7,
             Page::Applications,
@@ -134,6 +161,11 @@ fn generate_headless_ui_screenshots() {
         {
             continue;
         }
+        let (width, height) = if theme == Theme::Windows98 {
+            (CLASSIC98_WIDTH, CLASSIC98_HEIGHT)
+        } else {
+            (WIDTH, HEIGHT)
+        };
         let ctx = egui::Context::default();
         let settings = Settings {
             theme,
@@ -185,7 +217,7 @@ fn generate_headless_ui_screenshots() {
         let input = egui::RawInput {
             screen_rect: Some(egui::Rect::from_min_size(
                 egui::Pos2::ZERO,
-                Vec2::new(WIDTH as f32, HEIGHT as f32),
+                Vec2::new(width as f32, height as f32),
             )),
             ..Default::default()
         };
@@ -205,18 +237,23 @@ fn generate_headless_ui_screenshots() {
                 thread::sleep(Duration::from_millis(350));
             }
             pixels = Some(
-                paint_egui(&ctx, output, &mut textures, frame == 2)
+                paint_egui(&ctx, output, &mut textures, frame == 2, width, height)
                     .expect("rasterize original egui primitives"),
             );
         }
         let pixels = pixels.expect("rendered at least one frame");
-        save_png(&directory.join(file), &pixels).expect("write screenshot");
+        save_png(&directory.join(file), &pixels, width, height).expect("write screenshot");
     }
 }
 
-fn save_png(path: &Path, pixels: &[u8]) -> Result<(), Box<dyn std::error::Error>> {
+fn save_png(
+    path: &Path,
+    pixels: &[u8],
+    width: usize,
+    height: usize,
+) -> Result<(), Box<dyn std::error::Error>> {
     let file = fs::File::create(path)?;
-    let mut encoder = png::Encoder::new(file, WIDTH as u32, HEIGHT as u32);
+    let mut encoder = png::Encoder::new(file, width as u32, height as u32);
     encoder.set_color(png::ColorType::Rgba);
     encoder.set_depth(png::BitDepth::Eight);
     let mut writer = encoder.write_header()?;
@@ -229,6 +266,8 @@ fn paint_egui(
     output: egui::FullOutput,
     textures: &mut HashMap<TextureId, ColorImage>,
     render: bool,
+    width: usize,
+    height: usize,
 ) -> Result<Vec<u8>, String> {
     for (id, delta) in output.textures_delta.set {
         let ImageData::Color(image) = delta.image;
@@ -255,7 +294,7 @@ fn paint_egui(
     // are intentionally translucent: an all-white initial canvas would show
     // a spurious white strip underneath those panels in dark/classic themes.
     let fill = ctx.style().visuals.panel_fill;
-    let mut image = [fill.r(), fill.g(), fill.b(), 255].repeat(WIDTH * HEIGHT);
+    let mut image = [fill.r(), fill.g(), fill.b(), 255].repeat(width * height);
     for clipped in primitives {
         let Primitive::Mesh(mesh) = clipped.primitive else {
             return Err("headless screenshot encountered a paint callback".to_string());
@@ -266,8 +305,8 @@ fn paint_egui(
         let clip = clipped.clip_rect;
         let clip_left = (clip.left() * pixels_per_point).floor().max(0.0) as usize;
         let clip_top = (clip.top() * pixels_per_point).floor().max(0.0) as usize;
-        let clip_right = (clip.right() * pixels_per_point).ceil().min(WIDTH as f32) as usize;
-        let clip_bottom = (clip.bottom() * pixels_per_point).ceil().min(HEIGHT as f32) as usize;
+        let clip_right = (clip.right() * pixels_per_point).ceil().min(width as f32) as usize;
+        let clip_bottom = (clip.bottom() * pixels_per_point).ceil().min(height as f32) as usize;
         let (triangles, remainder) = mesh.indices.as_chunks::<3>();
         debug_assert!(remainder.is_empty());
         for indices in triangles {
@@ -282,6 +321,7 @@ fn paint_egui(
                 texture,
                 (clip_left, clip_top, clip_right, clip_bottom),
                 pixels_per_point,
+                width,
             );
         }
     }
@@ -294,6 +334,7 @@ fn paint_triangle(
     texture: &ColorImage,
     clip: (usize, usize, usize, usize),
     scale: f32,
+    width: usize,
 ) {
     let positions = verts.map(|vertex| egui::pos2(vertex.pos.x * scale, vertex.pos.y * scale));
     let area = edge(positions[0], positions[1], positions[2]);
@@ -362,7 +403,7 @@ fn paint_triangle(
                 }
             }
             let alpha = (color[3] * texture_rgba[3]).clamp(0.0, 1.0);
-            let offset = (y * WIDTH + x) * 4;
+            let offset = (y * width + x) * 4;
             for channel in 0..3 {
                 let foreground = (color[channel] * texture_rgba[channel]).clamp(0.0, 1.0);
                 destination[offset + channel] = ((foreground
@@ -422,6 +463,7 @@ fn rasterizer_honors_triangle_bounds_and_clip_rect() {
         &texture,
         (4, 4, 8, 8),
         1.0,
+        WIDTH,
     );
     assert_eq!(&destination[(5 * WIDTH + 5) * 4..][..3], &[255, 0, 0]);
     assert_eq!(&destination[(3 * WIDTH + 3) * 4..][..3], &[0, 0, 0]);

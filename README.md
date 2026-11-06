@@ -6,13 +6,17 @@
 
 A customizable process manager and system monitor written in **Rust**. Runs alone or alongside [RiceBowl](https://github.com/CopyPasteUser/Ricebowl) on **X11 and Wayland**.
 
-![License](https://img.shields.io/badge/license-MIT-blue) ![Rust](https://img.shields.io/badge/language-Rust-orange) ![Status](https://img.shields.io/badge/status-1.0%20RC10-yellow)
+![License](https://img.shields.io/badge/license-MIT-blue) ![Rust](https://img.shields.io/badge/language-Rust-orange) ![Status](https://img.shields.io/badge/status-1.0%20RC11-yellow)
 
 </div>
 
-> **Status:** `1.0.0-rc.10` — four dedicated, OS-inspired task managers: macOS Activity Monitor, Windows 7, XP Luna and Windows 10. Native GUI and resource-use acceptance are still outstanding. See [roadmap](ROADMAP.md) and [QA checklist](QA.md). This is **not yet stable 1.0**.
+> **Status:** `1.0.0-rc.11` — five dedicated, OS-inspired task managers: Windows 98, macOS Activity Monitor, Windows 7, XP Luna and Windows 10. Native GUI and resource-use acceptance are still outstanding. See [roadmap](ROADMAP.md) and [QA checklist](QA.md). This is **not yet stable 1.0**.
 
 ## Screenshots
+
+**Windows 98 · Close Program** (native window frame and close/minimize/maximize buttons are supplied by your compositor/RiceBowl):
+
+[![Windows 98-inspired Close Program client view](assets/screenshots/taskotto-win98-close-program.png)](assets/screenshots/taskotto-win98-close-program.png)
 
 | macOS · Activity Monitor (CPU) | Windows 7 · Aero-era report |
 | :---: | :---: |
@@ -21,7 +25,11 @@ A customizable process manager and system monitor written in **Rust**. Runs alon
 | [![Windows 10 Taskotto processes](assets/screenshots/taskotto-win10-processes.png)](assets/screenshots/taskotto-win10-processes.png) | [![XP Luna Taskotto performance](assets/screenshots/taskotto-xp-luna-performance.png)](assets/screenshots/taskotto-xp-luna-performance.png) |
 
 <details>
-<summary>More genuine renders: macOS, Windows 7, Windows 10 and XP Luna</summary>
+<summary>More genuine renders: Windows 98, macOS, Windows 7, Windows 10 and XP Luna</summary>
+
+![Windows 98-inspired advanced process report](assets/screenshots/taskotto-win98-process-report.png)
+
+![Windows 98-inspired System Monitor with Linux data](assets/screenshots/taskotto-win98-system-monitor.png)
 
 ![macOS-inspired Activity Monitor Memory view](assets/screenshots/taskotto-macos-memory.png)
 
@@ -49,14 +57,16 @@ A customizable process manager and system monitor written in **Rust**. Runs alon
 
 </details>
 
-*All images are real Taskotto egui renders using live Linux `/proc`; the capture environment exposes few processes. [All 27 captures and reproduction details](SCREENSHOTS.md) · [Fidelity boundaries](RICE_FIDELITY.md). Native X11/Wayland and pixel-accuracy verification remain pending.*
+*All images are real Taskotto egui renders using live Linux `/proc`; the capture environment exposes few processes. [All 32 captures and reproduction details](SCREENSHOTS.md) · [Fidelity boundaries](RICE_FIDELITY.md). Window decorations are intentionally absent from the screenshots and supplied by RiceBowl/your window manager. Native X11/Wayland and pixel-accuracy verification remain pending.*
 
 ## What works
 
 - **Processes:** searchable live list, CPU/RAM/I/O/PID/name sort, tree, user filter, process start/runtime and per-process I/O rates.
 - **Safe actions:** terminate, force kill, pause and resume with confirmation and PID-reuse protection via Linux `pidfd`.
 - **Performance:** CPU/core load, RAM/swap, network RX/TX and disk read/write rates, bounded comparative rolling graphs.
-- **Riceable:** 8 profiles; focused macOS Activity Monitor (CPU, Memory, Energy, Disk, Network), XP Luna (5 tabs), Windows 7 (6 tabs) and Windows 10 (7 tabs). Each defaults to **horizontal** tabs; Preferences → Navigation → Sidebar offers a custom alternative. Custom colors, fonts, table density and persistent TOML preferences remain supported.
+- **Riceable:** 8 profiles; Windows 98 Close Program (dialog-style, no historical tabs), macOS Activity Monitor (5 views), XP Luna (5 tabs), Windows 7 (6 tabs) and Windows 10 (7 tabs). All four multi-view designs default to **horizontal** tabs; Preferences → Navigation → Sidebar offers a custom alternative on macOS and Windows 10. Custom colors, fonts, table density and persistent TOML preferences remain supported.
+- **Classic 98:** original-style process list, confirmed End Task and Cancel, plus a clearly separate Tools menu for advanced Linux process reports, System Monitor graphs, network usage and owner statistics. Host shutdown remains disabled; Linux process entries are not misrepresented as desktop windows.
+- **Decoration ownership:** Taskotto draws **client contents only**. RiceBowl/labwc or another compositor paints the top-level titlebar, titlebar color, minimize/maximize/close buttons and window frame. Older XP/Seven title-strip simulations have been removed; native pop-up dialogs remain application UI.
 - **macOS-style Activity Monitor:** searchable, sortable process reports with alternating rows, context actions, process Info and a live bottom history panel. Energy shows CPU activity as a clearly labeled proxy, not invented watts; Network reports genuine machine-wide traffic without false per-PID attribution.
 - **Desktop features:** user-local XDG autostart list (read-only), live user systemd services (read-only if available), process-lifetime CPU accounting, and an XP-style **New Task** command dialog running with ordinary user permissions.
 - **Independent:** no root service, no resident daemon, no RiceBowl or desktop-shell dependency.
@@ -100,7 +110,7 @@ The launcher and icon are replaced atomically on reinstall, so interrupted write
 | Clear search / dismiss confirmation | `Esc` |
 | Show system snapshot | `taskotto --snapshot` |
 | JSON snapshot | `taskotto --snapshot --json` |
-| Choose a rice | `taskotto --theme macos` (or `xp-luna`, `windows7`, `windows10`) |
+| Choose a rice | `taskotto --theme windows98` (or `macos`, `xp-luna`, `windows7`, `windows10`) |
 | Reduce polling | `taskotto --refresh-ms 5000` |
 
 Select a process to see **Details** and signal actions. A confirmation dialog appears before any signal. Taskotto uses only the permissions of the current user and refuses signals to PID 1 and itself.
@@ -149,7 +159,7 @@ cargo build --locked --release
 - [Hardware QA checklist](QA.md) — X11/Wayland, process safety and measured resource use.
 - [Performance measurements](PERFORMANCE.md) — reproducible headless baseline and GUI acceptance limits.
 - [Screenshot provenance](SCREENSHOTS.md) — reproducible live-data renders and their limitations.
-- [macOS, Windows 7, Windows 10 and XP Luna rice details](RICE_FIDELITY.md) — layout, interaction and fidelity boundaries.
+- [Windows 98, macOS, Windows 7, Windows 10 and XP Luna rice details](RICE_FIDELITY.md) — layout, interaction, decoration ownership and fidelity boundaries.
 - [Release candidate notes](RELEASE_NOTES.md) — implemented scope, verified checks and known limitations.
 - [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) · [Changelog](CHANGELOG.md)
 - [RiceField](https://github.com/CopyPasteUser/Ricefield) — matching standalone Rust file manager.

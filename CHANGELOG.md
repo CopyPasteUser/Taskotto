@@ -2,6 +2,13 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.11] — 2026-11-06
+
+- Added a historically grounded Windows 98 **Close Program** client instead of incorrectly reusing XP-era Task Manager tabs: inset running-task list, classic gray controls, safe confirmation-protected **End Task**, working **Cancel**, and explicitly disabled host **Shut Down**.
+- Kept honest Linux semantics: user-owned processes approximate visible tasks, with no invented X11/Wayland window mapping. An explicitly nonhistorical **Tools** menu exposes the sortable process report, CPU/memory System Monitor, network history, process owners and per-process inspection.
+- Corrected decoration ownership across **all** dedicated rices. RiceBowl / the window manager supplies the top-level frame, title color and minimize/maximize/close buttons; removed XP, Windows 7, Windows 10 and macOS in-client duplicate title treatments while retaining genuine menu/toolbar controls and internal modals.
+- Added five native-size (650×510) headless Windows 98 egui scenes and regenerated the other 27 real-procfs images without simulated titlebars, totaling **32** reproducible captures. Updated the README showcase, fidelity contract, QA and release documentation. Native desktop acceptance and reference-based 95% accuracy remain unverified.
+
 ## [1.0.0-rc.10] — 2026-11-06
 
 - Gave macOS its own Activity Monitor-inspired UI: original-drawn toolbar, process Stop/Info/View controls, always-available search, familiar five horizontal CPU/Memory/Energy/Disk/Network segments, compact sortable alternating-row process report and process-inspection dialog.

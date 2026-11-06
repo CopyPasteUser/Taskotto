@@ -23,87 +23,8 @@ const TABS: [(Page, &str); 6] = [
 ];
 
 pub(super) fn topbar(app: &mut TaskottoApp, ctx: &egui::Context) {
-    let accent = accent(app);
-    egui::TopBottomPanel::top("seven-aero-title")
-        .frame(Frame::NONE)
-        .show(ctx, |ui| {
-            let (rect, _) =
-                ui.allocate_exact_size(egui::vec2(ui.available_width(), 38.0), Sense::hover());
-            // An original drawn glass-like Aero title, not a copied bitmap.
-            for line in 0..38 {
-                let t = line as f32 / 37.0;
-                let top = if t < 0.5 {
-                    blend(
-                        Color32::from_rgb(203, 232, 249),
-                        Color32::from_rgb(149, 200, 228),
-                        t * 2.0,
-                    )
-                } else {
-                    blend(
-                        Color32::from_rgb(149, 200, 228),
-                        Color32::from_rgb(194, 224, 242),
-                        (t - 0.5) * 2.0,
-                    )
-                };
-                ui.painter().rect_filled(
-                    Rect::from_min_size(
-                        rect.min + egui::vec2(0.0, line as f32),
-                        egui::vec2(rect.width(), 1.1),
-                    ),
-                    0.0,
-                    blend(top, accent, 0.13),
-                );
-            }
-            ui.painter().line_segment(
-                [
-                    rect.left_top() + egui::vec2(0.0, 1.0),
-                    rect.right_top() + egui::vec2(0.0, 1.0),
-                ],
-                Stroke::new(1.0_f32, Color32::WHITE),
-            );
-            ui.painter().line_segment(
-                [rect.left_bottom(), rect.right_bottom()],
-                Stroke::new(1.0_f32, Color32::from_rgb(104, 151, 181)),
-            );
-            let badge =
-                Rect::from_min_size(rect.min + egui::vec2(11.0, 9.0), egui::vec2(19.0, 19.0));
-            ui.painter()
-                .rect_filled(badge, 3.0, Color32::from_rgb(239, 250, 253));
-            ui.painter().rect_stroke(
-                badge,
-                3.0,
-                Stroke::new(1.0_f32, Color32::from_rgb(91, 142, 168)),
-                StrokeKind::Inside,
-            );
-            for (i, level) in [8.0, 12.0, 6.0].iter().enumerate() {
-                ui.painter().rect_filled(
-                    Rect::from_min_size(
-                        egui::pos2(
-                            badge.left() + 4.0 + 4.0 * i as f32,
-                            badge.bottom() - 3.0 - level,
-                        ),
-                        egui::vec2(2.0, *level),
-                    ),
-                    0.0,
-                    Color32::from_rgb(50, 145, 185),
-                );
-            }
-            // The light outline is important on the bright Aero gradient.
-            ui.painter().text(
-                rect.min + egui::vec2(37.0, 19.0),
-                Align2::LEFT_CENTER,
-                "Taskotto Task Manager",
-                FontId::proportional(14.0),
-                Color32::WHITE,
-            );
-            ui.painter().text(
-                rect.min + egui::vec2(36.0, 18.0),
-                Align2::LEFT_CENTER,
-                "Taskotto Task Manager",
-                FontId::proportional(14.0),
-                INK,
-            );
-        });
+    // RiceBowl / the window manager supplies Aero-colored native decoration.
+    // Only the content-area menu belongs to Taskotto.
     chrome::menu_bar(app, ctx);
 }
 
@@ -858,16 +779,6 @@ pub(super) fn properties_dialog(app: &mut TaskottoApp, ctx: &egui::Context) {
     }
 }
 
-fn blend(a: Color32, b: Color32, t: f32) -> Color32 {
-    let t = t.clamp(0.0, 1.0);
-    let channel = |x: u8, y: u8| (x as f32 * (1.0 - t) + y as f32 * t).round() as u8;
-    Color32::from_rgb(
-        channel(a.r(), b.r()),
-        channel(a.g(), b.g()),
-        channel(a.b(), b.b()),
-    )
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -898,11 +809,5 @@ mod tests {
             let actual = cols.iter().map(|(_, w)| w).sum::<f32>();
             assert!((actual - width).abs() < 0.01, "width {width}: got {actual}");
         }
-    }
-
-    #[test]
-    fn color_interpolation_endpoints_are_exact() {
-        assert_eq!(blend(PALE, INK, 0.0), PALE);
-        assert_eq!(blend(PALE, INK, 1.0), INK);
     }
 }

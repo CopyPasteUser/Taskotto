@@ -15,7 +15,7 @@ The restricted capture environment currently exposes few processes and very
 little I/O; this is why some screenshots look sparse. They are not evidence of
 hardware compatibility or GUI performance.
 
-To regenerate all 27 images on Linux:
+To regenerate all 32 images on Linux:
 
 ```bash
 TASKOTTO_SCREENSHOT_DIR=assets/screenshots \
@@ -23,6 +23,14 @@ TASKOTTO_SCREENSHOT_DIR=assets/screenshots \
 ```
 
 The command samples real system activity for about four seconds and writes:
+
+### Windows 98 (Close Program and explicitly modern Linux extensions)
+
+- `assets/screenshots/taskotto-win98-close-program.png` — compact 650 × 510 dialog-like client, actual current user's Linux processes and safe disabled host shutdown, without fake caption buttons.
+- `assets/screenshots/taskotto-win98-process-report.png` — advanced sortable real Linux process table, accessible via Tools; not a historical Windows 98 tab.
+- `assets/screenshots/taskotto-win98-system-monitor.png` — classic green-on-black CPU and turquoise memory history with Linux readings.
+- `assets/screenshots/taskotto-win98-network.png` — measured system-wide network usage, not original Windows 98 per-interface metadata.
+- `assets/screenshots/taskotto-win98-information.png` — permission-sensitive live selected process details, no forged app/window ownership.
 
 ### macOS Activity Monitor (five views and process information)
 
@@ -36,7 +44,7 @@ The command samples real system activity for about four seconds and writes:
 ### Windows 7 (six historical tabs)
 
 - `assets/screenshots/taskotto-win7-applications.png` — current-user process approximation, not compositor window enumeration.
-- `assets/screenshots/taskotto-win7-processes.png` — Aero-era chrome, six tabs, compact sortable report and PID-safe process actions.
+- `assets/screenshots/taskotto-win7-processes.png` — Aero-era client controls, six tabs, compact sortable report and PID-safe process actions; the titlebar is compositor-owned.
 - `assets/screenshots/taskotto-win7-services.png` — real read-only systemd **user** units or explicit unavailable/error state (as in restricted CI).
 - `assets/screenshots/taskotto-win7-performance.png` — original green CPU and blue memory histories with Linux CPU-core samples and memory statistics.
 - `assets/screenshots/taskotto-win7-networking.png` — real non-loopback receive/send trends, bytes/second not Windows link utilization.
@@ -68,14 +76,22 @@ focused fidelity pass. Their original styles remain available in Taskotto.
 
 To regenerate only one rice's screenshots (and preserve the others), set
 `TASKOTTO_SCREENSHOT_FILTER=win7`, `TASKOTTO_SCREENSHOT_FILTER=win10`,
-`TASKOTTO_SCREENSHOT_FILTER=xp-luna` or `TASKOTTO_SCREENSHOT_FILTER=macos`
+`TASKOTTO_SCREENSHOT_FILTER=xp-luna`, `TASKOTTO_SCREENSHOT_FILTER=macos` or
+`TASKOTTO_SCREENSHOT_FILTER=win98`
 before the same command.
 
-Captures are pinned to 1280 × 800 pixels. Re-running on another machine will
+Most captures are pinned to 1280 × 800 pixels; Windows 98 uses its compact
+default client dimensions, 650 × 510 pixels. Re-running on another machine will
 change displayed processes, readings and potentially the image hashes. Inspect
 the resulting images before committing them; do not imply they are native
 screenshots. Capture real X11, KDE Wayland and labwc windows as part of the
 [remaining hardware acceptance](QA.md) before a stable 1.0 release.
+
+Top-level native titlebars, accent-colored frames and caption buttons are
+deliberately **not** painted by Taskotto. They are owned by the active window
+manager/compositor and the RiceBowl rice. These headless captures only include
+the egui client area. The older XP, Seven, Win10 and macOS scenes have been
+recaptured after removing earlier fake in-client title treatments.
 
 The sidebar capture is an explicitly **custom** layout. XDG and systemd
 screens display live local configuration and availability; they are not

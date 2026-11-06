@@ -2,102 +2,8 @@ use super::*;
 use egui::{Align2, FontId, Frame, Margin, Rect};
 
 pub(super) fn topbar(app: &mut TaskottoApp, ctx: &egui::Context) {
-    let xp = is_xp(app);
-    let base = accent(app);
-    let height = 32.0;
-    egui::TopBottomPanel::top("rice-title-strip")
-        .frame(Frame::NONE)
-        .show(ctx, |ui| {
-            let (rect, _) =
-                ui.allocate_exact_size(egui::vec2(ui.available_width(), height), Sense::hover());
-            let painter = ui.painter();
-            if xp {
-                // The XP title gradient is drawn, not imported from OS bitmaps.
-                // Honor the rice's custom accent so generated palettes work.
-                for step in 0..32 {
-                    let top = rect.top() + rect.height() * step as f32 / 32.0;
-                    let bottom = rect.top() + rect.height() * (step + 1) as f32 / 32.0;
-                    let t = step as f32 / 31.0;
-                    let highlight = if t < 0.43 { (0.43 - t) * 0.35 } else { 0.0 };
-                    painter.rect_filled(
-                        Rect::from_min_max(
-                            egui::pos2(rect.left(), top),
-                            egui::pos2(rect.right(), bottom),
-                        ),
-                        0.0,
-                        mix(
-                            mix(Color32::from_rgb(68, 156, 254), Color32::WHITE, highlight),
-                            base,
-                            t * 0.92,
-                        ),
-                    );
-                }
-                // Luna's bright top rim and deep lower edge are paint primitives,
-                // so the theme remains asset-free and tintable.
-                painter.line_segment(
-                    [
-                        rect.left_top() + egui::vec2(0.0, 1.0),
-                        rect.right_top() + egui::vec2(0.0, 1.0),
-                    ],
-                    Stroke::new(1.0_f32, Color32::from_rgb(118, 194, 255)),
-                );
-                painter.rect_filled(
-                    Rect::from_min_size(rect.min + egui::vec2(8.0, 7.0), egui::vec2(17.0, 17.0)),
-                    2.0,
-                    Color32::from_rgb(237, 243, 255),
-                );
-                for (x, y, color) in [
-                    (11.0, 10.0, Color32::from_rgb(52, 138, 218)),
-                    (18.0, 10.0, Color32::from_rgb(31, 113, 196)),
-                    (11.0, 17.0, Color32::from_rgb(91, 190, 113)),
-                    (18.0, 17.0, Color32::from_rgb(54, 150, 82)),
-                ] {
-                    painter.rect_filled(
-                        Rect::from_min_size(rect.min + egui::vec2(x, y), egui::vec2(4.0, 4.0)),
-                        0.0,
-                        color,
-                    );
-                }
-                painter.text(
-                    rect.min + egui::vec2(32.0, height / 2.0),
-                    Align2::LEFT_CENTER,
-                    "Taskotto Task Manager",
-                    FontId::proportional(15.0),
-                    Color32::WHITE,
-                );
-                painter.line_segment(
-                    [rect.left_bottom(), rect.right_bottom()],
-                    Stroke::new(1.0_f32, Color32::from_rgb(17, 52, 116)),
-                );
-            } else {
-                painter.rect_filled(rect, 0.0, Color32::from_rgb(255, 255, 255));
-                // Original minimalist window mark; no Microsoft icon.
-                painter.rect_stroke(
-                    Rect::from_min_size(rect.min + egui::vec2(10.0, 9.0), egui::vec2(14.0, 14.0)),
-                    0.0,
-                    Stroke::new(1.5_f32, base),
-                    egui::StrokeKind::Inside,
-                );
-                painter.line_segment(
-                    [
-                        rect.min + egui::vec2(17.0, 10.0),
-                        rect.min + egui::vec2(17.0, 22.0),
-                    ],
-                    Stroke::new(1.0_f32, base),
-                );
-                painter.text(
-                    rect.min + egui::vec2(32.0, height / 2.0),
-                    Align2::LEFT_CENTER,
-                    "Taskotto Task Manager",
-                    FontId::proportional(12.5),
-                    Color32::from_rgb(34, 34, 34),
-                );
-                painter.line_segment(
-                    [rect.left_bottom(), rect.right_bottom()],
-                    Stroke::new(1.0_f32, Color32::from_rgb(222, 222, 222)),
-                );
-            }
-        });
+    // The compositor/RiceBowl owns the real titlebar, border, accent and
+    // minimize/maximize/close controls. Draw only the task manager's menu.
     menu_bar(app, ctx);
 }
 
@@ -464,14 +370,4 @@ pub(super) fn statusbar(app: &mut TaskottoApp, ctx: &egui::Context) {
                 }
             });
         });
-}
-
-fn mix(a: Color32, b: Color32, amount: f32) -> Color32 {
-    let t = amount.clamp(0.0, 1.0);
-    let channel = |one: u8, two: u8| ((one as f32) * (1.0 - t) + (two as f32) * t).round() as u8;
-    Color32::from_rgb(
-        channel(a.r(), b.r()),
-        channel(a.g(), b.g()),
-        channel(a.b(), b.b()),
-    )
 }

@@ -24,11 +24,13 @@ archive and invokes its binary and local desktop installer before publishing.
 
 ## Desktop behavior
 
-- [ ] XP Luna: verify blue chrome, raised tabs, File/Options/View/Help menus, classic CPU/RAM history, process sorting and status strip; use keyboard focus and resize to minimum.
-- [ ] Windows 7: verify Aero-like title chrome and six historical tabs; compact report sorting/filtering, per-core CPU histories, blue memory graph, process confirmation, service unavailable/available states, and selection via keyboard at 650×420 and a large size.
+- [ ] Windows 98: launch `taskotto --theme windows98`; verify native RiceBowl/compositor window controls **without an extra client titlebar**, gray Close Program list, safe selected End Task and Cancel, disabled host Shut Down, and all Tools pages with Back navigation. Resize around 460×340 and 650×510; check pointer and keyboard selection.
+- [ ] XP Luna: verify native RiceBowl blue Luna *window frame*, client raised tabs, File/Options/View/Help menus, classic CPU/RAM history, process sorting and status strip; use keyboard focus and resize to minimum.
+- [ ] Windows 7: verify RiceBowl/compositor Aero-themed *native frame* and six client tabs; compact report sorting/filtering, per-core CPU histories, blue memory graph, process confirmation, service unavailable/available states, and selection via keyboard at 650×420 and a large size.
 - [ ] Windows 10: verify light tabs, process grouping, CPU/memory heatmap, sorting, context menus, and switching CPU/Memory/Disk/Network in the Performance sidebar.
 - [ ] macOS Activity Monitor: verify five horizontal CPU/Memory/Energy/Disk/Network segments, toolbar View filters, search, process selection, double-click Info, context-menu actions and continuously updated bottom history. Switch to optional Sidebar and back; resize to 650×420 and 1280×800. Note that Energy is a CPU proxy and Network is global-only by design.
-- [ ] All four dedicated rices: right-click a disposable process, open Details/Info, Pause/Resume and End task after confirmation; verify no unintended actions or stale PID targets.
+- [ ] All five dedicated rices: right-click a disposable process, open Details/Info, Pause/Resume and End task after confirmation (Windows 98 via Tools when appropriate); verify no unintended actions or stale PID targets.
+- [ ] All five rices: compare native titlebar color, top-right close/minimize/maximize buttons and shadows with the active RiceBowl rice. Verify **Taskotto never draws duplicate in-client top-level decorations**; in-app properties/confirmation dialogs remain functional.
 - [ ] Capture and review a native Taskotto window screenshot on X11, KDE Wayland and labwc. The [headless README images](SCREENSHOTS.md) do not certify display-server rendering.
 - [ ] Linux Mint / X11: launch via `.desktop` menu, resize, minimize, close, reopen.
 - [ ] Fedora KDE / Wayland: repeat and test clipboard/focus.

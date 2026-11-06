@@ -127,10 +127,17 @@ fn run() -> Result<(), String> {
     if let Some(ms) = refresh_ms {
         settings.refresh_ms = ms;
     }
+    // Windows 98's Close Program was a compact dialog. Keep the actual
+    // decorated outer window native; RiceBowl/labwc can provide its chrome.
+    let (initial_size, min_size) = if settings.theme == Theme::Windows98 {
+        ([650.0, 510.0], [460.0, 340.0])
+    } else {
+        ([1100.0, 720.0], [650.0, 420.0])
+    };
     let options = eframe::NativeOptions {
         viewport: eframe::egui::ViewportBuilder::default()
-            .with_inner_size([1100.0, 720.0])
-            .with_min_inner_size([650.0, 420.0])
+            .with_inner_size(initial_size)
+            .with_min_inner_size(min_size)
             .with_app_id("io.github.copypasteuser.taskotto"),
         ..Default::default()
     };
