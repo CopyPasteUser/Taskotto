@@ -334,16 +334,15 @@ pub(super) fn processes(app: &mut TaskottoApp, ui: &mut egui::Ui) {
                 if header_cell(ui, &title, width)
                     .on_hover_text("Click to sort")
                     .clicked()
+                    && let Some(sort) = column.sort()
                 {
-                    if let Some(sort) = column.sort() {
-                        if app.settings.sort_by == sort {
-                            app.settings.descending = !app.settings.descending;
-                        } else {
-                            app.settings.sort_by = sort;
-                            app.settings.descending = false;
-                        }
-                        app.save_preferences(ui.ctx());
+                    if app.settings.sort_by == sort {
+                        app.settings.descending = !app.settings.descending;
+                    } else {
+                        app.settings.sort_by = sort;
+                        app.settings.descending = false;
                     }
+                    app.save_preferences(ui.ctx());
                 }
             }
         });
