@@ -1,8 +1,14 @@
-# Taskotto 1.0.0-rc.18 — release candidate
+# Taskotto 1.0.0-rc.19 — release candidate
 
 **Date:** 2026-11-06 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
 Rust-only Linux process manager and system monitor. This is a **prerelease**, not a stable 1.0 certification.
+
+## Changes since rc.18
+
+- Verified the first RiceBowl-to-Taskotto bridge end-to-end using RiceBowl's versioned `de taskotto-export` fixture: the generated TOML is parsed in a standalone Rust integration test, and Taskotto's production `--check-ricepack` CLI accepts it without a GUI or RiceBowl installation.
+- Documented manual opt-in export/launch commands, preserving all user preferences and keeping desktop recipe JSON/ZIP separate from Taskotto's strictly checked TOML design contract.
+- The pack affects appearance only. Native X11/Wayland/labwc acceptance, GUI resource measurements and broader custom widget tokens still remain open.
 
 ## Changes since rc.17
 
