@@ -920,6 +920,14 @@ impl TaskottoApp {
                 .small()
                 .weak(),
         );
+        if let Some(name) = &self.settings.launch_ricepack_name {
+            ui.label(
+                RichText::new(format!(
+                    "RicePack active: {name} · appearance overrides are session-only; other settings can still be saved"
+                ))
+                .small(),
+            );
+        }
         ui.add_space(if xp { 8.0 } else { 14.0 });
         let mut changed = false;
         egui::ScrollArea::vertical().show(ui, |ui| {

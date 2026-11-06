@@ -48,6 +48,27 @@ fn cli_rejects_invalid_combinations_without_launching_gui() {
     let help = run(&["--help"]);
     assert!(help.status.success());
     assert!(String::from_utf8_lossy(&help.stdout).contains("--snapshot"));
+    assert!(String::from_utf8_lossy(&help.stdout).contains("--check-ricepack"));
+}
+
+#[test]
+fn ricepack_can_be_validated_headlessly_and_invalid_files_are_rejected() {
+    let path = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/examples/ricepacks/sea-glass.toml"
+    );
+    let output = run(&["--check-ricepack", path]);
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(String::from_utf8_lossy(&output.stdout).contains("Sea Glass"));
+    let invalid = run(&["--check-ricepack", "/does-not-exist/taskotto.toml"]);
+    assert!(!invalid.status.success());
+    assert!(String::from_utf8_lossy(&invalid.stderr).contains("invalid RicePack"));
+    let conflict = run(&["--ricepack", path, "--snapshot"]);
+    assert!(!conflict.status.success());
 }
 
 struct TestDataHome(PathBuf);

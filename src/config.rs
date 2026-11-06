@@ -147,6 +147,25 @@ pub struct Settings {
     /// Session-only RiceBowl/CLI override; never replace the user's saved theme.
     #[serde(skip)]
     pub launch_theme_original: Option<Theme>,
+    /// RicePack design overrides are transient and must not overwrite the user's config.
+    #[serde(skip)]
+    pub(crate) launch_ricepack_original: Option<Box<AppearanceBackup>>,
+    #[serde(skip)]
+    pub launch_ricepack_name: Option<String>,
+}
+
+#[derive(Clone, Debug)]
+pub(crate) struct AppearanceBackup {
+    theme: Theme,
+    density: Density,
+    layout_mode: LayoutMode,
+    accent_hex: Option<String>,
+    surface_hex: Option<String>,
+    text_hex: Option<String>,
+    font_scale: f32,
+    ui_spacing: f32,
+    corner_radius: Option<u8>,
+    table_row_height: Option<f32>,
 }
 
 impl Default for Settings {
@@ -171,11 +190,31 @@ impl Default for Settings {
             ui_spacing: 8.0,
             corner_radius: None,
             launch_theme_original: None,
+            launch_ricepack_original: None,
+            launch_ricepack_name: None,
         }
     }
 }
 
 impl Settings {
+    pub(crate) fn record_ricepack_session(&mut self, name: &str) {
+        if self.launch_ricepack_original.is_none() {
+            self.launch_ricepack_original = Some(Box::new(AppearanceBackup {
+                theme: self.theme,
+                density: self.density,
+                layout_mode: self.layout_mode,
+                accent_hex: self.accent_hex.clone(),
+                surface_hex: self.surface_hex.clone(),
+                text_hex: self.text_hex.clone(),
+                font_scale: self.font_scale,
+                ui_spacing: self.ui_spacing,
+                corner_radius: self.corner_radius,
+                table_row_height: self.table_row_height,
+            }));
+        }
+        self.launch_ricepack_name = Some(name.to_owned());
+    }
+
     pub fn normalize(&mut self) {
         self.refresh_ms = self.refresh_ms.clamp(500, 10_000);
         if self
@@ -231,6 +270,18 @@ impl Settings {
             .ok_or_else(|| io::Error::other("invalid config path"))?;
         fs::create_dir_all(parent)?;
         let mut persistent = self.clone();
+        if let Some(original) = &self.launch_ricepack_original {
+            persistent.theme = original.theme;
+            persistent.density = original.density;
+            persistent.layout_mode = original.layout_mode;
+            persistent.accent_hex.clone_from(&original.accent_hex);
+            persistent.surface_hex.clone_from(&original.surface_hex);
+            persistent.text_hex.clone_from(&original.text_hex);
+            persistent.font_scale = original.font_scale;
+            persistent.ui_spacing = original.ui_spacing;
+            persistent.corner_radius = original.corner_radius;
+            persistent.table_row_height = original.table_row_height;
+        }
         if let Some(original) = self.launch_theme_original {
             persistent.theme = original;
         }
@@ -379,6 +430,40 @@ mod tests {
         assert!(loaded.launch_theme_original.is_none());
         fs::remove_file(&path).unwrap();
         fs::remove_dir(&test_dir).unwrap();
+    }
+
+    #[test]
+    fn ricepack_appearance_is_session_only_but_monitor_settings_are_saved() {
+        let test_dir = std::env::temp_dir().join(format!(
+            "taskotto-ricepack-test-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        fs::create_dir(&test_dir).unwrap();
+        let path = test_dir.join("config.toml");
+        let mut config = Settings {
+            theme: Theme::Windows10,
+            accent_hex: Some("#2277CC".into()),
+            layout_mode: LayoutMode::Sidebar,
+            refresh_ms: 3_000,
+            ..Settings::default()
+        };
+        crate::ricepack::RicePack::from_toml(include_str!("../examples/ricepacks/sea-glass.toml"))
+            .unwrap()
+            .apply(&mut config);
+        config.refresh_ms = 5_000;
+        config.save_to(&path).unwrap();
+        let loaded: Settings = toml::from_str(&fs::read_to_string(&path).unwrap()).unwrap();
+        assert_eq!(loaded.theme, Theme::Windows10);
+        assert_eq!(loaded.layout_mode, LayoutMode::Sidebar);
+        assert_eq!(loaded.accent_hex.as_deref(), Some("#2277CC"));
+        assert_eq!(loaded.refresh_ms, 5_000);
+        assert!(loaded.launch_ricepack_name.is_none());
+        fs::remove_file(path).unwrap();
+        fs::remove_dir(test_dir).unwrap();
     }
 
     #[test]

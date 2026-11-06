@@ -38,6 +38,9 @@ archive and invokes its binary and local desktop installer before publishing.
 - [ ] Tab through controls and use Ctrl+F, F5, Escape.
 - [ ] Switch all 8 profiles, density, custom accent/surface/text, font scale, spacing, corners, table columns/row height and sidebar/top-tabs; reopen and verify persistence.
 - [ ] Launch with `RICEBOWL_RICE=windows7 taskotto` and explicit `--theme xp-luna` override.
+- [ ] Validate `examples/ricepacks/sea-glass.toml` with `--check-ricepack`, then run `--ricepack` on a real desktop. Verify base theme, palette/spacing/navigation and normal process actions; restart without the pack and ensure saved appearance is unchanged.
+- [ ] Launch with `RICEBOWL_TASKOTTO_RICEPACK=/absolute/path/taskotto-rice.toml` and confirm the desktop's RiceBowl rice remains optional. Test malformed, oversized and inaccessible packs (clear error, no GUI crash), and confirm an explicit `--theme` overrides only the pack's base theme.
+- [ ] With a pack active, change refresh interval and save. Check that monitoring options persist while temporary RicePack colors/layout do not; appearance edits made during that session remain temporary.
 - [ ] Confirm the launcher override does not replace the saved theme after changing another setting.
 - [ ] Test malformed `config.toml`: error shown, defaults active; original saved as `config.invalid-*.toml` after editing preferences.
 

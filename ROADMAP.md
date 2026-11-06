@@ -1,5 +1,10 @@
 # Taskotto — Roadmap to 1.0
 
+For the post-foundation feature tracks (RicePacks, advanced process controls,
+GPU, cgroups, diagnosis, dashboards and performance), see
+[the expansion roadmap](EXPANSION_ROADMAP.md). Its implementation can progress
+while the 1.0 user-hardware acceptance gates below remain open.
+
 Taskotto is a **standalone, on-demand Rust system monitor and process manager** for Linux. It must function on X11 and Wayland, independently of RiceBowl, while accepting optional RiceBowl styling. No root daemon, mandatory background service or compositor dependency.
 
 ## Acceptance rules for each milestone
@@ -97,7 +102,7 @@ Taskotto is a **standalone, on-demand Rust system monitor and process manager** 
 
 ## 0.9 — Release candidate
 
-- [x] Buildable `1.0.0-rc.13` candidate with dedicated ChromeOS and Frutiger Aero client UIs, native window decorations owned by RiceBowl/the WM, real-data screenshots, and all-profile small/large headless layout and integration tests.
+- [x] Buildable `1.0.0-rc.14` candidate with dedicated ChromeOS and Frutiger Aero client UIs, native window decorations owned by RiceBowl/the WM, a validated RicePack v1 foundation, real-data screenshots, and all-profile small/large headless layout and integration tests.
 - [x] Remove duplicate in-client XP, Windows 7 and Windows 10 title strips; keep working menus and toolbars across all rice profiles. Add compact historical menu-height regression coverage and refresh 37 headless client screenshots.
 - [x] Contributor/security policies, dependency-update configuration and CI checks.
 - [x] Reproducible egui-rendered headless screenshots with real procfs measurements, documented provenance and visual inspection.
