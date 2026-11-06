@@ -316,7 +316,7 @@ impl TaskottoApp {
         egui::TopBottomPanel::top("topbar").show(ctx, |ui| {
             ui.add_space(9.0);
             ui.horizontal(|ui| {
-                ui.label(RichText::new("◉  Taskotto").strong().size(21.0));
+                ui.label(RichText::new("Taskotto").strong().size(21.0));
                 ui.add_space(14.0);
                 if let Some(snapshot) = &self.snapshot {
                     let cpu = snapshot.cpu_percent / 100.0;
@@ -372,9 +372,9 @@ impl TaskottoApp {
                 ui.heading("WORKSPACE");
                 ui.add_space(11.0);
                 for (page, label) in [
-                    (Page::Processes, "▦  Processes"),
-                    (Page::Performance, "◴  Performance"),
-                    (Page::Details, "▤  Details"),
+                    (Page::Processes, "Processes"),
+                    (Page::Performance, "Performance"),
+                    (Page::Details, "Details"),
                     (Page::Preferences, "⚙  Preferences"),
                 ] {
                     if ui
@@ -435,9 +435,9 @@ impl TaskottoApp {
                 });
             if ui
                 .button(if self.settings.descending {
-                    "↓"
+                    "DESC"
                 } else {
-                    "↑"
+                    "ASC"
                 })
                 .on_hover_text("Reverse sort")
                 .clicked()
@@ -615,17 +615,23 @@ impl TaskottoApp {
             ui.heading("I/O throughput");
             ui.columns(2, |columns| {
                 columns[0].label(RichText::new("Network (all interfaces except loopback)").strong());
-                columns[0].label(format!("↓  {}", format::rate(snapshot.rates.received_per_second)));
-                columns[0].label(format!("↑  {}", format::rate(snapshot.rates.sent_per_second)));
+                columns[0].label(format!("Rx  {}", format::rate(snapshot.rates.received_per_second)));
+                columns[0].label(format!("Tx  {}", format::rate(snapshot.rates.sent_per_second)));
                 let network_max = graph_max(&self.history.received, &self.history.sent);
-                chart(&mut columns[0], &self.history.received, network_max, accent);
-                chart(&mut columns[0], &self.history.sent, network_max, Color32::from_rgb(82, 173, 155));
+                chart_lines(&mut columns[0], &[
+                    (&self.history.received, accent),
+                    (&self.history.sent, Color32::from_rgb(82, 173, 155)),
+                ], network_max);
+                columns[0].label(RichText::new(format!("Rx Accent  ·  Tx Green  ·  scale {}", format::rate(network_max as u64))).small().weak());
                 columns[1].label(RichText::new("Block devices").strong());
                 columns[1].label(format!("Read  {}", format::rate(snapshot.rates.disk_read_per_second)));
                 columns[1].label(format!("Write  {}", format::rate(snapshot.rates.disk_write_per_second)));
                 let disk_max = graph_max(&self.history.disk_read, &self.history.disk_write);
-                chart(&mut columns[1], &self.history.disk_read, disk_max, accent);
-                chart(&mut columns[1], &self.history.disk_write, disk_max, Color32::from_rgb(82, 173, 155));
+                chart_lines(&mut columns[1], &[
+                    (&self.history.disk_read, accent),
+                    (&self.history.disk_write, Color32::from_rgb(82, 173, 155)),
+                ], disk_max);
+                columns[1].label(RichText::new(format!("Read accent  ·  Write green  ·  scale {}", format::rate(disk_max as u64))).small().weak());
             });
             ui.add_space(12.0);
             ui.label(RichText::new("The first sample has no rate baseline. Network totals can include virtual interfaces; disk data represents block-layer traffic, not filesystem-only I/O.").small().weak());
@@ -1007,24 +1013,42 @@ fn load_users() -> HashMap<u32, String> {
 }
 
 fn chart(ui: &mut egui::Ui, values: &VecDeque<f32>, max_value: f32, color: Color32) {
+    chart_lines(ui, &[(values, color)], max_value);
+}
+
+fn chart_lines(ui: &mut egui::Ui, series: &[(&VecDeque<f32>, Color32)], max_value: f32) {
     let (rect, _) = ui.allocate_exact_size(Vec2::new(ui.available_width(), 120.0), Sense::hover());
     ui.painter()
         .rect_filled(rect, 6.0, ui.visuals().faint_bg_color);
-    if values.len() < 2 {
-        return;
+    for line in [0.25, 0.5, 0.75] {
+        let y = rect.bottom() - rect.height() * line;
+        ui.painter().line_segment(
+            [egui::pos2(rect.left(), y), egui::pos2(rect.right(), y)],
+            Stroke::new(0.5_f32, ui.visuals().widgets.noninteractive.bg_stroke.color),
+        );
     }
-    let points = values
+    for &(values, color) in series {
+        if values.len() >= 2 {
+            ui.painter().add(egui::Shape::line(
+                chart_points(values, rect, max_value),
+                Stroke::new(2.0_f32, color),
+            ));
+        }
+    }
+}
+
+fn chart_points(values: &VecDeque<f32>, rect: egui::Rect, max_value: f32) -> Vec<egui::Pos2> {
+    let denominator = (values.len().saturating_sub(1)).max(1) as f32;
+    values
         .iter()
         .enumerate()
         .map(|(index, value)| {
             egui::pos2(
-                rect.left() + rect.width() * index as f32 / 119.0,
+                rect.left() + rect.width() * index as f32 / denominator,
                 rect.bottom() - rect.height() * (*value / max_value).clamp(0.0, 1.0),
             )
         })
-        .collect::<Vec<_>>();
-    ui.painter()
-        .add(egui::Shape::line(points, Stroke::new(2.0_f32, color)));
+        .collect()
 }
 
 fn graph_max(first: &VecDeque<f32>, second: &VecDeque<f32>) -> f32 {
@@ -1043,6 +1067,9 @@ fn accent_color(settings: &Settings) -> Color32 {
 fn apply_theme(ctx: &egui::Context, settings: &Settings) {
     ThemeStyle::from_settings(settings).apply(ctx, settings);
 }
+
+#[cfg(test)]
+mod captures;
 
 #[cfg(test)]
 mod tests {
@@ -1084,6 +1111,16 @@ mod tests {
             graph_max(&VecDeque::from([f32::NAN, 3.0]), &VecDeque::from([5.0])),
             5.0
         );
+    }
+
+    #[test]
+    fn chart_history_uses_full_width_even_before_120_samples() {
+        let rect = egui::Rect::from_min_size(egui::Pos2::ZERO, Vec2::new(320.0, 120.0));
+        let values = VecDeque::from([0.0, 50.0, 100.0]);
+        let points = chart_points(&values, rect, 100.0);
+        assert_eq!(points.first().unwrap().x, rect.left());
+        assert_eq!(points.last().unwrap().x, rect.right());
+        assert_eq!(points.last().unwrap().y, rect.top());
     }
 
     #[test]

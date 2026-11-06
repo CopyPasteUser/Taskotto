@@ -6,17 +6,32 @@
 
 A customizable process manager and system monitor written in **Rust**. Runs alone or alongside [RiceBowl](https://github.com/CopyPasteUser/Ricebowl) on **X11 and Wayland**.
 
-![License](https://img.shields.io/badge/license-MIT-blue) ![Rust](https://img.shields.io/badge/language-Rust-orange) ![Status](https://img.shields.io/badge/status-1.0%20RC2-yellow)
+![License](https://img.shields.io/badge/license-MIT-blue) ![Rust](https://img.shields.io/badge/language-Rust-orange) ![Status](https://img.shields.io/badge/status-1.0%20RC3-yellow)
 
 </div>
 
-> **Status:** `1.0.0-rc.2` — the 1.0 code scope is implemented; final X11/Wayland GUI and resource-use acceptance remain. See [roadmap](ROADMAP.md) and [QA checklist](QA.md). This is **not yet stable 1.0**.
+> **Status:** `1.0.0-rc.3` — the 1.0 code scope is implemented; final X11/Wayland GUI and resource-use acceptance remain. See [roadmap](ROADMAP.md) and [QA checklist](QA.md). This is **not yet stable 1.0**.
+
+## Screenshots
+
+![Taskotto's Windows 7-inspired system performance page](assets/screenshots/taskotto-seven-performance.png)
+
+<details>
+<summary>More: Taskotto dark and Classic 98</summary>
+
+![Taskotto dark process manager](assets/screenshots/taskotto-processes-dark.png)
+
+![Taskotto Classic 98 process manager](assets/screenshots/taskotto-classic98.png)
+
+</details>
+
+*Real Taskotto egui rendering with live Linux `/proc` readings, captured headlessly; the isolated test environment exposes only a few processes. Native X11/Wayland window captures are still pending. [How the screenshots were made](SCREENSHOTS.md).*
 
 ## What works
 
 - **Processes:** searchable live list, CPU/RAM/I/O/PID/name sort, tree, user filter, process start/runtime and per-process I/O rates.
 - **Safe actions:** terminate, force kill, pause and resume with confirmation and PID-reuse protection via Linux `pidfd`.
-- **Performance:** CPU/core load, RAM/swap, network and disk I/O rates, bounded rolling graphs.
+- **Performance:** CPU/core load, RAM/swap, network RX/TX and disk read/write rates, bounded comparative rolling graphs.
 - **Riceable:** 8 profiles, custom colors, layout, spacing, fonts, table columns/row height, density and persistent TOML preferences.
 - **Independent:** no root service, no resident daemon, no RiceBowl or desktop-shell dependency.
 - **Headless:** `--snapshot --json` is available without a graphical session.
@@ -106,6 +121,7 @@ cargo build --locked --release
 - [Roadmap to 1.0](ROADMAP.md) — milestones, acceptance gates and deferred enhancements.
 - [Hardware QA checklist](QA.md) — X11/Wayland, process safety and measured resource use.
 - [Performance measurements](PERFORMANCE.md) — reproducible headless baseline and GUI acceptance limits.
+- [Screenshot provenance](SCREENSHOTS.md) — reproducible live-data renders and their limitations.
 - [Release candidate notes](RELEASE_NOTES.md) — implemented scope, verified checks and known limitations.
 - [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) · [Changelog](CHANGELOG.md)
 - [RiceField](https://github.com/CopyPasteUser/Ricefield) — matching standalone Rust file manager.

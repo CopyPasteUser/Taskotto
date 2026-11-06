@@ -96,9 +96,11 @@ Taskotto is a **standalone, on-demand Rust system monitor and process manager** 
 
 ## 0.9 — Release candidate
 
-- [x] Buildable `1.0.0-rc.2` candidate with all-profile small/large headless layout and integration tests.
+- [x] Buildable `1.0.0-rc.3` candidate with all-profile small/large headless layout and integration tests.
 - [x] Contributor/security policies, dependency-update configuration and CI checks.
-- [ ] X11/Wayland screenshot and interaction walkthrough.
+- [x] Reproducible egui-rendered headless screenshots with real procfs measurements, documented provenance and visual inspection.
+- [x] Consistent network/disk comparison charts (both directions on one scale), early-history width regression coverage and readable navigation labels.
+- [ ] Native X11/Wayland screenshots and interaction walkthrough. *The headless captures do not satisfy this hardware gate.*
 - [ ] Complete hardware test checklist (`QA.md`) with recorded results.
 - [ ] Packaging/desktop integration acceptance.
 - [ ] CI green on the release commit; review warnings, errors, license/dependencies.

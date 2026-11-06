@@ -4,6 +4,7 @@ Run this checklist before a stable 1.0 tag. Record distro, kernel, display serve
 
 ## Desktop behavior
 
+- [ ] Capture and review a native Taskotto window screenshot on X11, KDE Wayland and labwc. The [headless README images](SCREENSHOTS.md) do not certify display-server rendering.
 - [ ] Linux Mint / X11: launch via `.desktop` menu, resize, minimize, close, reopen.
 - [ ] Fedora KDE / Wayland: repeat and test clipboard/focus.
 - [ ] labwc / Wayland: launch without XFCE/KDE services; confirm no missing runtime dependencies.
