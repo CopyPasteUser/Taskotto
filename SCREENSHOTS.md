@@ -1,6 +1,6 @@
 # Screenshot provenance and reproduction
 
-[**View all 43 screenshots in the expandable README gallery**](README.md#screenshots).
+[**View all 45 screenshots in the expandable README gallery**](README.md#screenshots).
 The gallery groups every image by rice, including the supplementary pages
 and alternate layouts; click any preview to see its full-resolution PNG.
 
@@ -23,7 +23,7 @@ The restricted capture environment currently exposes few processes and very
 little I/O; this is why some screenshots look sparse. They are not evidence of
 hardware compatibility or GUI performance.
 
-To regenerate all 43 images on Linux:
+To regenerate all 45 images on Linux:
 
 ```bash
 TASKOTTO_SCREENSHOT_DIR=assets/screenshots \
@@ -79,6 +79,7 @@ The command samples real system activity and writes:
 ### Windows 10 (seven historical tabs, plus custom sidebar)
 
 - `assets/screenshots/taskotto-win10-processes.png` — horizontal seven-tab navigation and process heatmap.
+- `assets/screenshots/taskotto-win10-indigo-ricepack.png` — original Indigo RicePack with dark process list and semantic navigation; the per-process CPU/memory heatmaps remain meaningful under custom table colors.
 - `assets/screenshots/taskotto-win10-vertical.png` — custom optional vertical navigation (not the historical Windows 10 default).
 - `assets/screenshots/taskotto-win10-performance.png` — CPU performance and metric navigator.
 - `assets/screenshots/taskotto-win10-app-history.png` — current Linux process-lifetime CPU accounting, not persistent Windows app history.
@@ -92,6 +93,7 @@ The command samples real system activity and writes:
 - `assets/screenshots/taskotto-xp-luna-applications.png` — current-user process list; **not** a compositor window enumeration.
 - `assets/screenshots/taskotto-xp-luna-new-task.png` — functional user-command launch dialog.
 - `assets/screenshots/taskotto-xp-luna-processes.png` — classic process view.
+- `assets/screenshots/taskotto-xp-midnight-ricepack.png` — original Midnight RicePack with customizable XP-era tabs, borders, dark report and actual current Linux process selection.
 - `assets/screenshots/taskotto-xp-luna-performance.png` — CPU/memory history.
 - `assets/screenshots/taskotto-xp-luna-networking.png` — non-loopback receive/send trends.
 - `assets/screenshots/taskotto-xp-luna-details.png` — process properties using live Linux fields.

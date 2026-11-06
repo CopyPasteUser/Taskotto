@@ -2,6 +2,7 @@
 //! compositor-independent map from processes to open graphical windows; show
 //! real user-owned processes and communicate that limitation prominently.
 use super::*;
+use crate::theme::{ComponentPaint, readable_text};
 
 fn owned_rows(rows: Vec<ProcessRow>, uid: u32) -> Vec<ProcessRow> {
     rows.into_iter()
@@ -10,6 +11,7 @@ fn owned_rows(rows: Vec<ProcessRow>, uid: u32) -> Vec<ProcessRow> {
 }
 
 pub(super) fn page(app: &mut TaskottoApp, ui: &mut egui::Ui) {
+    let paint = ComponentPaint::from_settings(&app.settings);
     ui.label(
         RichText::new("Applications · current user's Linux processes (not a window list)")
             .small()
@@ -24,31 +26,43 @@ pub(super) fn page(app: &mut TaskottoApp, ui: &mut egui::Ui) {
     let rows = owned_rows(app.processes(), app.my_uid);
     let frame_height = (ui.available_height() - 48.0).max(100.0);
     egui::Frame::new()
-        .fill(Color32::WHITE)
-        .stroke(Stroke::new(1.0_f32, Color32::from_rgb(138, 137, 124)))
+        .fill(paint.table(Color32::WHITE))
+        .stroke(Stroke::new(
+            1.0_f32,
+            paint.border(Color32::from_rgb(138, 137, 124)),
+        ))
         .show(ui, |ui| {
             ui.set_min_height(frame_height);
             let (header, _) =
                 ui.allocate_exact_size(egui::vec2(ui.available_width(), 24.0), Sense::hover());
             ui.painter()
-                .rect_filled(header, 0.0, Color32::from_rgb(245, 244, 234));
+                .rect_filled(header, 0.0, paint.control(Color32::from_rgb(245, 244, 234)));
             ui.painter().text(
                 header.left_center() + egui::vec2(9.0, 0.0),
                 egui::Align2::LEFT_CENTER,
                 "Task",
                 egui::FontId::proportional(12.0),
-                Color32::from_rgb(35, 35, 35),
+                paint.on_control(
+                    Color32::from_rgb(245, 244, 234),
+                    Color32::from_rgb(35, 35, 35),
+                ),
             );
             ui.painter().text(
                 egui::pos2(header.left() + (header.width() * 0.62), header.center().y),
                 egui::Align2::LEFT_CENTER,
                 "Status",
                 egui::FontId::proportional(12.0),
-                Color32::from_rgb(35, 35, 35),
+                paint.on_control(
+                    Color32::from_rgb(245, 244, 234),
+                    Color32::from_rgb(35, 35, 35),
+                ),
             );
             ui.separator();
             if rows.is_empty() {
-                ui.label("No current-user processes match the filter.");
+                ui.colored_label(
+                    paint.on_table(Color32::BLACK),
+                    "No current-user processes match the filter.",
+                );
             } else {
                 egui::ScrollArea::vertical()
                     .max_height((frame_height - 29.0).max(55.0))
@@ -62,11 +76,11 @@ pub(super) fn page(app: &mut TaskottoApp, ui: &mut egui::Ui) {
                                 let (rect, response) =
                                     ui.allocate_exact_size(egui::vec2(width, 23.0), Sense::click());
                                 let background = if selected {
-                                    Color32::from_rgb(49, 95, 162)
+                                    paint.selection(Color32::from_rgb(49, 95, 162))
                                 } else if response.hovered() {
-                                    Color32::from_rgb(226, 233, 244)
+                                    paint.hover(Color32::from_rgb(226, 233, 244))
                                 } else {
-                                    Color32::WHITE
+                                    paint.table(Color32::WHITE)
                                 };
                                 ui.painter().rect_filled(rect, 0.0, background);
                                 ui.painter().text(
@@ -74,7 +88,12 @@ pub(super) fn page(app: &mut TaskottoApp, ui: &mut egui::Ui) {
                                     egui::Align2::LEFT_CENTER,
                                     &p.name,
                                     egui::FontId::proportional(13.0),
-                                    if selected {
+                                    if (selected && paint.selection.is_some())
+                                        || (!selected
+                                            && (paint.table.is_some() || paint.hover.is_some()))
+                                    {
+                                        readable_text(background)
+                                    } else if selected {
                                         Color32::WHITE
                                     } else {
                                         Color32::BLACK
@@ -87,7 +106,10 @@ pub(super) fn page(app: &mut TaskottoApp, ui: &mut egui::Ui) {
                                     app.selected = Some((p.pid, p.start_ticks));
                                     app.page = Page::Details;
                                 }
-                                ui.label(state_name(p.state));
+                                ui.colored_label(
+                                    paint.on_table(Color32::BLACK),
+                                    state_name(p.state),
+                                );
                             });
                         }
                     });

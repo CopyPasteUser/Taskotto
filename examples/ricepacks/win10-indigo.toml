@@ -1,0 +1,14 @@
+format_version = 1
+name = "Indigo: Modern task report"
+base_theme = "windows10"
+
+[appearance]
+accent = "#5B68CE"
+navigation = "top-tabs"
+
+[components]
+control = "#E4E9FA"
+hover = "#8195D4"
+border = "#9AA8CE"
+table = "#243052"
+selection = "#505DC0"

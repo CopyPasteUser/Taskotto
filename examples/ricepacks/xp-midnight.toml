@@ -1,0 +1,14 @@
+format_version = 1
+name = "Midnight: Luna process report"
+base_theme = "xp-luna"
+
+[appearance]
+accent = "#356DB0"
+navigation = "top-tabs"
+
+[components]
+control = "#D6E0EC"
+hover = "#456E8D"
+border = "#8C9EAD"
+table = "#182638"
+selection = "#245AA0"

@@ -1,8 +1,14 @@
-# Taskotto 1.0.0-rc.23 — release candidate
+# Taskotto 1.0.0-rc.24 — release candidate
 
 **Date:** 2026-11-06 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
 Rust-only Linux process manager and system monitor. This is a **prerelease**, not a stable 1.0 certification.
+
+## Changes since rc.23
+
+- XP Luna and Windows 10 now share validated semantic RicePack colors in their custom top tabs and process tables. XP Applications and Windows 10's optional vertical navigation also honor component tokens without altering their historical no-override appearance.
+- On customized dark table fills, the real per-process Windows 10 CPU/memory utilization heatmap remains visible, with per-cell contrast-aware text; Linux telemetry, sorting and process actions are unchanged.
+- Added the original `xp-midnight.toml` and `win10-indigo.toml` examples with two real headless egui screenshots (45 gallery captures) and token/heatmap geometry tests. Classic 98 widget/size customization and native Mint/X11, Fedora/Wayland, RiceBowl/labwc acceptance still remain open.
 
 ## Changes since rc.22
 
