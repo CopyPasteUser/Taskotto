@@ -1,6 +1,6 @@
 # Screenshot provenance and reproduction
 
-[**View all 40 screenshots in the expandable README gallery**](README.md#screenshots).
+[**View all 41 screenshots in the expandable README gallery**](README.md#screenshots).
 The gallery groups every image by rice, including the supplementary pages
 and alternate layouts; click any preview to see its full-resolution PNG.
 
@@ -23,7 +23,7 @@ The restricted capture environment currently exposes few processes and very
 little I/O; this is why some screenshots look sparse. They are not evidence of
 hardware compatibility or GUI performance.
 
-To regenerate all 40 images on Linux:
+To regenerate all 41 images on Linux:
 
 ```bash
 TASKOTTO_SCREENSHOT_DIR=assets/screenshots \
@@ -62,6 +62,7 @@ The command samples real system activity and writes:
 - `assets/screenshots/taskotto-macos-disk.png` — permission-sensitive real `/proc/PID/io` process bytes and aggregate block-device rates.
 - `assets/screenshots/taskotto-macos-network.png` — real non-loopback system-wide traffic history; no imaginary per-process counters.
 - `assets/screenshots/taskotto-macos-info.png` — modal process information from the currently selected actual PID.
+- `assets/screenshots/taskotto-macos-nightshift-ricepack.png` — real macOS-inspired process report with the included Nightshift RicePack v1, proving the custom drawn selection, controls, border and dark table token flow.
 
 ### Windows 7 (six historical tabs)
 

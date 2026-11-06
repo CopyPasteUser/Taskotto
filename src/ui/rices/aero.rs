@@ -2,7 +2,7 @@
 //! No OS artwork, simulated titlebar, window controls, fake counters, or
 //! background polling beyond Taskotto's existing Linux procfs worker.
 use super::*;
-use crate::theme::{parse_hex, readable_text};
+use crate::theme::{ComponentPaint as AeroPalette, readable_text};
 use egui::{Align2, FontId, Frame, Margin, Pos2, Rect, StrokeKind};
 
 const INK: Color32 = Color32::from_rgb(24, 74, 79);
@@ -11,64 +11,6 @@ const SKY: Color32 = Color32::from_rgb(42, 169, 220);
 const LEAF: Color32 = Color32::from_rgb(61, 174, 104);
 const AQUA: Color32 = Color32::from_rgb(26, 177, 168);
 const BORDER: Color32 = Color32::from_rgb(157, 212, 211);
-
-// The era-specific artwork stays original, but interactive client surfaces
-// consume the same optional RicePack v1 semantic tokens as egui widgets.
-// All None values preserve the existing built-in Frutiger Aero rendering.
-#[derive(Clone, Copy, Debug, Default)]
-struct AeroPalette {
-    control: Option<Color32>,
-    hover: Option<Color32>,
-    border: Option<Color32>,
-    table: Option<Color32>,
-    selection: Option<Color32>,
-}
-
-impl AeroPalette {
-    fn from_settings(settings: &Settings) -> Self {
-        let components = &settings.components;
-        Self {
-            control: components.control.as_deref().and_then(parse_hex),
-            hover: components.hover.as_deref().and_then(parse_hex),
-            border: components.border.as_deref().and_then(parse_hex),
-            table: components.table.as_deref().and_then(parse_hex),
-            selection: components.selection.as_deref().and_then(parse_hex),
-        }
-    }
-
-    fn control(self, fallback: Color32) -> Color32 {
-        self.control.unwrap_or(fallback)
-    }
-    fn hover(self, fallback: Color32) -> Color32 {
-        self.hover.unwrap_or(fallback)
-    }
-    fn border(self) -> Color32 {
-        self.border.unwrap_or(BORDER)
-    }
-    fn table(self, fallback: Color32) -> Color32 {
-        self.table.unwrap_or(fallback)
-    }
-    fn selection(self, fallback: Color32) -> Color32 {
-        self.selection.unwrap_or(fallback)
-    }
-    fn on_table(self) -> Color32 {
-        self.table.map(readable_text).unwrap_or(INK)
-    }
-    fn on_selection(self, fallback: Color32) -> Color32 {
-        if self.selection.is_some() {
-            readable_text(self.selection(fallback))
-        } else {
-            Color32::WHITE
-        }
-    }
-    fn on_control(self, fallback: Color32) -> Color32 {
-        if self.control.is_some() {
-            readable_text(self.control(fallback))
-        } else {
-            INK
-        }
-    }
-}
 
 const PAGES: [(Page, &str); 7] = [
     (Page::Processes, "Processes"),
@@ -112,12 +54,12 @@ pub(super) fn topbar(app: &mut TaskottoApp, ctx: &egui::Context) {
                     if ui
                         .add(
                             egui::Button::new(
-                                RichText::new("↻  Refresh")
-                                    .strong()
-                                    .color(palette.on_control(Color32::from_rgb(235, 255, 253))),
+                                RichText::new("↻  Refresh").strong().color(
+                                    palette.on_control(Color32::from_rgb(235, 255, 253), INK),
+                                ),
                             )
                             .fill(palette.control(Color32::from_rgb(235, 255, 253)))
-                            .stroke(Stroke::new(1.0_f32, palette.border())),
+                            .stroke(Stroke::new(1.0_f32, palette.border(BORDER))),
                         )
                         .on_hover_text("Read fresh Linux /proc data (F5)")
                         .clicked()
@@ -173,9 +115,9 @@ pub(super) fn navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
                                 .size(if available >= 790.0 { 13.5 } else { 12.0 })
                                 .strong()
                                 .color(if active {
-                                    palette.on_selection(accent)
+                                    palette.on_selection(accent, Color32::WHITE)
                                 } else {
-                                    palette.on_control(Color32::from_rgb(244, 255, 251))
+                                    palette.on_control(Color32::from_rgb(244, 255, 251), INK)
                                 }),
                         )
                         .corner_radius(15.0)
@@ -189,7 +131,7 @@ pub(super) fn navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
                             if active {
                                 palette.selection(accent)
                             } else {
-                                palette.border()
+                                palette.border(BORDER)
                             },
                         )),
                     );
@@ -232,9 +174,9 @@ pub(super) fn sidebar(app: &mut TaskottoApp, ctx: &egui::Context) {
                         egui::Button::new(
                             RichText::new(label)
                                 .color(if active {
-                                    palette.on_selection(accent)
+                                    palette.on_selection(accent, Color32::WHITE)
                                 } else {
-                                    palette.on_control(Color32::from_rgb(245, 255, 250))
+                                    palette.on_control(Color32::from_rgb(245, 255, 250), INK)
                                 })
                                 .strong(),
                         )
@@ -265,7 +207,7 @@ pub(super) fn statusbar(app: &TaskottoApp, ctx: &egui::Context) {
         .show(ctx, |ui| {
             ui.painter().line_segment(
                 [ui.max_rect().left_top(), ui.max_rect().right_top()],
-                Stroke::new(1.0_f32, palette.border()),
+                Stroke::new(1.0_f32, palette.border(BORDER)),
             );
             ui.horizontal_wrapped(|ui| {
                 ui.label(RichText::new("Live").strong().color(LEAF));
@@ -307,7 +249,7 @@ pub(super) fn processes(app: &mut TaskottoApp, ui: &mut egui::Ui) {
     ui.add_space(13.0);
     egui::Frame::new()
         .fill(palette.table(Color32::from_rgb(247, 255, 253)))
-        .stroke(Stroke::new(1.0_f32, palette.border()))
+        .stroke(Stroke::new(1.0_f32, palette.border(BORDER)))
         .corner_radius(17.0)
         .inner_margin(egui::Margin::symmetric(15, 11))
         .show(ui, |ui| {
@@ -348,7 +290,7 @@ pub(super) fn processes(app: &mut TaskottoApp, ui: &mut egui::Ui) {
                 if ui
                     .selectable_label(
                         app.settings.tree_view,
-                        RichText::new("Tree").color(palette.on_table()),
+                        RichText::new("Tree").color(palette.on_table(INK)),
                     )
                     .on_hover_text("Group child processes under parents")
                     .clicked()
@@ -370,13 +312,13 @@ pub(super) fn processes(app: &mut TaskottoApp, ui: &mut egui::Ui) {
                 ui.label(
                     RichText::new(format!("{} processes in view", rows.len()))
                         .strong()
-                        .color(palette.on_table()),
+                        .color(palette.on_table(INK)),
                 );
                 ui.add_space(10.0);
                 if let Some(p) = app.selected_process() {
                     ui.label(
                         RichText::new(format!("Selected: {} · PID {}", p.name, p.pid))
-                            .color(palette.on_table()),
+                            .color(palette.on_table(INK)),
                     );
                     if ui.button("Inspect ↗").clicked() {
                         app.page = Page::Details;
@@ -394,7 +336,7 @@ pub(super) fn processes(app: &mut TaskottoApp, ui: &mut egui::Ui) {
                 } else {
                     ui.label(
                         RichText::new("Select a row to inspect or manage it")
-                            .color(palette.on_table()),
+                            .color(palette.on_table(INK)),
                     );
                 }
             });
@@ -405,11 +347,11 @@ pub(super) fn processes(app: &mut TaskottoApp, ui: &mut egui::Ui) {
                     ui.label(
                         RichText::new("No matching processes")
                             .strong()
-                            .color(palette.on_table()),
+                            .color(palette.on_table(INK)),
                     );
                     ui.label(
                         RichText::new("Try a different name, PID or filter.")
-                            .color(palette.on_table()),
+                            .color(palette.on_table(INK)),
                     );
                     if ui.button("Clear search").clicked() {
                         app.query.clear();
@@ -518,20 +460,20 @@ pub(super) fn processes(app: &mut TaskottoApp, ui: &mut egui::Ui) {
                                     name,
                                     FontId::proportional(13.0),
                                     if selected && palette.selection.is_some() {
-                                        palette.on_selection(accent)
+                                        palette.on_selection(accent, Color32::WHITE)
                                     } else if response.hovered() && palette.hover.is_some() {
                                         readable_text(palette.hover(Color32::WHITE))
                                     } else {
-                                        palette.on_table()
+                                        palette.on_table(INK)
                                     },
                                 );
                                 if response.on_hover_text(&p.command).clicked() {
                                     app.selected = Some((p.pid, p.start_ticks));
                                 }
                                 let row_text = if selected && palette.selection.is_some() {
-                                    palette.on_selection(accent)
+                                    palette.on_selection(accent, Color32::WHITE)
                                 } else {
-                                    palette.on_table()
+                                    palette.on_table(INK)
                                 };
                                 cell(ui, p.pid.to_string(), pid_width, row_text);
                                 cell(ui, format!("{:.1}%", p.cpu_percent), cpu_width, row_text);
@@ -726,7 +668,7 @@ fn hero(
     painter.rect_stroke(
         rect,
         19.0,
-        Stroke::new(1.0_f32, palette.border()),
+        Stroke::new(1.0_f32, palette.border(BORDER)),
         StrokeKind::Inside,
     );
     let center = Pos2::new(rect.right() - 87.0, rect.center().y);
@@ -806,7 +748,7 @@ struct ChartPanel<'a> {
 fn chart_panel(ui: &mut egui::Ui, chart: &ChartPanel<'_>, chart_height: f32, palette: AeroPalette) {
     Frame::new()
         .fill(palette.table(Color32::from_rgb(248, 255, 254)))
-        .stroke(Stroke::new(1.0_f32, palette.border()))
+        .stroke(Stroke::new(1.0_f32, palette.border(BORDER)))
         .corner_radius(15.0)
         .inner_margin(Margin::same(13))
         .show(ui, |ui| {
@@ -815,13 +757,13 @@ fn chart_panel(ui: &mut egui::Ui, chart: &ChartPanel<'_>, chart_height: f32, pal
                 RichText::new(chart.title)
                     .strong()
                     .size(13.0)
-                    .color(palette.on_table()),
+                    .color(palette.on_table(INK)),
             );
             ui.label(
                 RichText::new(&chart.detail)
                     .size(12.0)
                     .color(if palette.table.is_some() {
-                        palette.on_table()
+                        palette.on_table(INK)
                     } else {
                         MUTED
                     }),
@@ -1018,7 +960,7 @@ fn head(ui: &mut egui::Ui, label: &str, width: f32, palette: AeroPalette) {
         label,
         FontId::proportional(11.0),
         if palette.table.is_some() {
-            palette.on_table()
+            palette.on_table(INK)
         } else {
             MUTED
         },
@@ -1050,11 +992,11 @@ mod tests {
         let base = AeroPalette::from_settings(&Settings::default());
         assert_eq!(base.control(Color32::WHITE), Color32::WHITE);
         assert_eq!(base.hover(SKY), SKY);
-        assert_eq!(base.border(), BORDER);
+        assert_eq!(base.border(BORDER), BORDER);
         assert_eq!(base.table(Color32::WHITE), Color32::WHITE);
         assert_eq!(base.selection(AQUA), AQUA);
-        assert_eq!(base.on_table(), INK);
-        assert_eq!(base.on_selection(AQUA), Color32::WHITE);
+        assert_eq!(base.on_table(INK), INK);
+        assert_eq!(base.on_selection(AQUA, Color32::WHITE), Color32::WHITE);
 
         let mut settings = Settings::default();
         settings.components.control = Some("#223344".into());
@@ -1068,9 +1010,9 @@ mod tests {
             Color32::from_rgb(34, 51, 68)
         );
         assert_eq!(custom.hover(SKY), Color32::from_rgb(51, 68, 85));
-        assert_eq!(custom.border(), Color32::from_rgb(68, 85, 102));
-        assert_eq!(custom.on_control(Color32::WHITE), Color32::WHITE);
-        assert_eq!(custom.on_table(), Color32::WHITE);
-        assert_eq!(custom.on_selection(AQUA), Color32::BLACK);
+        assert_eq!(custom.border(BORDER), Color32::from_rgb(68, 85, 102));
+        assert_eq!(custom.on_control(Color32::WHITE, INK), Color32::WHITE);
+        assert_eq!(custom.on_table(INK), Color32::WHITE);
+        assert_eq!(custom.on_selection(AQUA, Color32::WHITE), Color32::BLACK);
     }
 }

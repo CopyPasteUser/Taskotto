@@ -2,6 +2,12 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.21] — 2026-11-06
+
+- Extracted a shared, no-dependency `ComponentPaint` resolver for validated semantic RicePack colors, retaining Frutiger Aero's previous output and avoiding per-rice duplicate parsers.
+- Wired macOS Activity Monitor's custom tab/sidebar controls, table headers, process rows, hover/selection and borders to the same component tokens. Historical defaults remain intact when fields are absent; dark table and selected rows get readable contrast.
+- Added the original Nightshift RicePack and a genuine egui screenshot (41 total), with default/custom regression tests. Native hardware acceptance and the remaining renderer migration remain outstanding.
+
 ## [1.0.0-rc.20] — 2026-11-06
 
 - Extended existing validated RicePack v1 component tokens into Frutiger Aero's individually drawn client: topbar control, navigation/hover/selected tabs, process table rows and focus, and performance chart containers now honor optional control/hover/border/table/selection colors without new dependencies or scripts.

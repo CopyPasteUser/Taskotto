@@ -153,6 +153,11 @@ fn generate_headless_ui_screenshots() {
         ),
         (Theme::XpLuna, Page::Details, "taskotto-xp-luna-details.png"),
         (Theme::Macos, Page::Processes, "taskotto-macos-cpu.png"),
+        (
+            Theme::Macos,
+            Page::Processes,
+            "taskotto-macos-nightshift-ricepack.png",
+        ),
         (Theme::Macos, Page::Performance, "taskotto-macos-memory.png"),
         (Theme::Macos, Page::MacEnergy, "taskotto-macos-energy.png"),
         (Theme::Macos, Page::MacDisk, "taskotto-macos-disk.png"),
@@ -227,6 +232,13 @@ fn generate_headless_ui_screenshots() {
                 "../../examples/ricepacks/aero-lagoon.toml"
             ))
             .expect("checked-in Aero Lagoon RicePack must remain valid");
+            pack.apply(&mut settings);
+        }
+        if file.contains("nightshift-ricepack") {
+            let pack = crate::ricepack::RicePack::from_toml(include_str!(
+                "../../examples/ricepacks/macos-nightshift.toml"
+            ))
+            .expect("checked-in Nightshift RicePack must remain valid");
             pack.apply(&mut settings);
         }
         apply_theme(&ctx, &settings);

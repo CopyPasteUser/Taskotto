@@ -14,6 +14,60 @@ pub struct ThemeStyle {
     pub font_scale: f32,
 }
 
+/// Parsed optional semantic RicePack colors for custom-drawn rice widgets.
+/// `None` intentionally preserves each preset's original surface, rather than
+/// globally replacing historical artwork with a generic UI appearance.
+#[derive(Clone, Copy, Debug, Default)]
+pub(crate) struct ComponentPaint {
+    pub control: Option<Color32>,
+    pub hover: Option<Color32>,
+    pub border: Option<Color32>,
+    pub table: Option<Color32>,
+    pub selection: Option<Color32>,
+}
+
+impl ComponentPaint {
+    pub fn from_settings(settings: &Settings) -> Self {
+        let components = &settings.components;
+        Self {
+            control: components.control.as_deref().and_then(parse_hex),
+            hover: components.hover.as_deref().and_then(parse_hex),
+            border: components.border.as_deref().and_then(parse_hex),
+            table: components.table.as_deref().and_then(parse_hex),
+            selection: components.selection.as_deref().and_then(parse_hex),
+        }
+    }
+
+    pub fn control(self, fallback: Color32) -> Color32 {
+        self.control.unwrap_or(fallback)
+    }
+    pub fn hover(self, fallback: Color32) -> Color32 {
+        self.hover.unwrap_or(fallback)
+    }
+    pub fn border(self, fallback: Color32) -> Color32 {
+        self.border.unwrap_or(fallback)
+    }
+    pub fn table(self, fallback: Color32) -> Color32 {
+        self.table.unwrap_or(fallback)
+    }
+    pub fn selection(self, fallback: Color32) -> Color32 {
+        self.selection.unwrap_or(fallback)
+    }
+    pub fn on_table(self, original_ink: Color32) -> Color32 {
+        self.table.map(readable_text).unwrap_or(original_ink)
+    }
+    pub fn on_control(self, fallback_fill: Color32, original_ink: Color32) -> Color32 {
+        self.control
+            .map(|_| readable_text(self.control(fallback_fill)))
+            .unwrap_or(original_ink)
+    }
+    pub fn on_selection(self, fallback_fill: Color32, original_ink: Color32) -> Color32 {
+        self.selection
+            .map(|_| readable_text(self.selection(fallback_fill)))
+            .unwrap_or(original_ink)
+    }
+}
+
 impl ThemeStyle {
     pub fn from_settings(settings: &Settings) -> Self {
         let (dark, surface, text, accent, rounding) = match settings.theme {
@@ -361,6 +415,25 @@ mod tests {
             ctx.style().visuals.extreme_bg_color,
             Color32::from_rgb(34, 51, 68)
         );
+    }
+
+    #[test]
+    fn custom_clients_share_component_tokens_without_changing_legacy_defaults() {
+        let unchanged = ComponentPaint::from_settings(&Settings::default());
+        let white = Color32::WHITE;
+        let ink = Color32::from_rgb(37, 43, 51);
+        assert_eq!(unchanged.table(white), white);
+        assert_eq!(unchanged.border(ink), ink);
+        assert_eq!(unchanged.on_selection(ink, white), white);
+
+        let mut settings = Settings::default();
+        settings.components.table = Some("#202A3B".to_owned());
+        settings.components.selection = Some("#E4F1F2".to_owned());
+        settings.components.control = Some("#132A4C".to_owned());
+        let custom = ComponentPaint::from_settings(&settings);
+        assert_eq!(custom.on_table(ink), white);
+        assert_eq!(custom.on_selection(ink, white), Color32::BLACK);
+        assert_eq!(custom.on_control(white, ink), white);
     }
 
     #[test]
