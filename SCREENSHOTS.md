@@ -1,5 +1,9 @@
 # Screenshot provenance and reproduction
 
+[**View all 37 screenshots in the expandable README gallery**](README.md#screenshots).
+The gallery groups every image by rice, including the supplementary pages
+and alternate layouts; click any preview to see its full-resolution PNG.
+
 The README images are captured from **Taskotto itself**: an isolated Rust test
 executes its real egui navigation, modal and rice-specific pages, then
 rasterizes the resulting egui triangle meshes and font atlas to PNG. Process

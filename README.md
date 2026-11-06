@@ -25,47 +25,84 @@ A customizable process manager and system monitor written in **Rust**. Runs alon
 | [![macOS-inspired Activity Monitor CPU process list](assets/screenshots/taskotto-macos-cpu.png)](assets/screenshots/taskotto-macos-cpu.png) | [![Frutiger Aero CPU and memory performance dashboard](assets/screenshots/taskotto-frutiger-aero-performance.png)](assets/screenshots/taskotto-frutiger-aero-performance.png) |
 
 <details>
-<summary>More genuine renders: Aero, ChromeOS, Windows 98, macOS, Windows 7, Windows 10 and XP Luna</summary>
+<summary><strong>All screenshots (37)</strong> — expand to view every rice and every captured screen</summary>
 
-![ChromeOS-inspired supplementary performance view](assets/screenshots/taskotto-chromeos-performance.png)
+### Frutiger Aero
 
-![Windows 98 advanced process report](assets/screenshots/taskotto-win98-processes.png)
+| Frutiger Aero | Frutiger Aero |
+| :---: | :---: |
+| **Processes** | **Performance** |
+| [![Frutiger Aero: Processes](assets/screenshots/taskotto-frutiger-aero-processes.png)](assets/screenshots/taskotto-frutiger-aero-processes.png) | [![Frutiger Aero: Performance](assets/screenshots/taskotto-frutiger-aero-performance.png)](assets/screenshots/taskotto-frutiger-aero-performance.png) |
+| **Network** | **Sidebar layout** |
+| [![Frutiger Aero: Network](assets/screenshots/taskotto-frutiger-aero-network.png)](assets/screenshots/taskotto-frutiger-aero-network.png) | [![Frutiger Aero: Sidebar layout](assets/screenshots/taskotto-frutiger-aero-sidebar.png)](assets/screenshots/taskotto-frutiger-aero-sidebar.png) |
 
-![Frutiger Aero network receive/send history](assets/screenshots/taskotto-frutiger-aero-network.png)
+### ChromeOS
 
-![Frutiger Aero alternative navigation sidebar](assets/screenshots/taskotto-frutiger-aero-sidebar.png)
+| ChromeOS | ChromeOS |
+| :---: | :---: |
+| **Task list** | **Performance** |
+| [![ChromeOS: Task list](assets/screenshots/taskotto-chromeos-tasks.png)](assets/screenshots/taskotto-chromeos-tasks.png) | [![ChromeOS: Performance](assets/screenshots/taskotto-chromeos-performance.png)](assets/screenshots/taskotto-chromeos-performance.png) |
 
-![Windows 98 New Task user-command dialog](assets/screenshots/taskotto-win98-new-task.png)
+### Windows 98
 
-![Windows 98 classic CPU and memory activity](assets/screenshots/taskotto-win98-performance.png)
+| Windows 98 | Windows 98 |
+| :---: | :---: |
+| **Close Program** | **Processes** |
+| [![Windows 98: Close Program](assets/screenshots/taskotto-win98-close-program.png)](assets/screenshots/taskotto-win98-close-program.png) | [![Windows 98: Processes](assets/screenshots/taskotto-win98-processes.png)](assets/screenshots/taskotto-win98-processes.png) |
+| **Performance** | **New Task** |
+| [![Windows 98: Performance](assets/screenshots/taskotto-win98-performance.png)](assets/screenshots/taskotto-win98-performance.png) | [![Windows 98: New Task](assets/screenshots/taskotto-win98-new-task.png)](assets/screenshots/taskotto-win98-new-task.png) |
 
-![macOS-inspired Activity Monitor Memory view](assets/screenshots/taskotto-macos-memory.png)
+### Windows XP Luna
 
-![macOS-inspired Activity Monitor Energy view with honest Linux CPU proxy](assets/screenshots/taskotto-macos-energy.png)
+| Windows XP Luna | Windows XP Luna |
+| :---: | :---: |
+| **Applications** | **Processes** |
+| [![Windows XP Luna: Applications](assets/screenshots/taskotto-xp-luna-applications.png)](assets/screenshots/taskotto-xp-luna-applications.png) | [![Windows XP Luna: Processes](assets/screenshots/taskotto-xp-luna-processes.png)](assets/screenshots/taskotto-xp-luna-processes.png) |
+| **Performance** | **Networking** |
+| [![Windows XP Luna: Performance](assets/screenshots/taskotto-xp-luna-performance.png)](assets/screenshots/taskotto-xp-luna-performance.png) | [![Windows XP Luna: Networking](assets/screenshots/taskotto-xp-luna-networking.png)](assets/screenshots/taskotto-xp-luna-networking.png) |
+| **Details** | **New Task** |
+| [![Windows XP Luna: Details](assets/screenshots/taskotto-xp-luna-details.png)](assets/screenshots/taskotto-xp-luna-details.png) | [![Windows XP Luna: New Task](assets/screenshots/taskotto-xp-luna-new-task.png)](assets/screenshots/taskotto-xp-luna-new-task.png) |
 
-![macOS-inspired Activity Monitor Disk activity](assets/screenshots/taskotto-macos-disk.png)
+### Windows 7
 
-![macOS-inspired Activity Monitor aggregate Network activity](assets/screenshots/taskotto-macos-network.png)
+| Windows 7 | Windows 7 |
+| :---: | :---: |
+| **Applications** | **Processes** |
+| [![Windows 7: Applications](assets/screenshots/taskotto-win7-applications.png)](assets/screenshots/taskotto-win7-applications.png) | [![Windows 7: Processes](assets/screenshots/taskotto-win7-processes.png)](assets/screenshots/taskotto-win7-processes.png) |
+| **Services** | **Performance** |
+| [![Windows 7: Services](assets/screenshots/taskotto-win7-services.png)](assets/screenshots/taskotto-win7-services.png) | [![Windows 7: Performance](assets/screenshots/taskotto-win7-performance.png)](assets/screenshots/taskotto-win7-performance.png) |
+| **Networking** | **Users** |
+| [![Windows 7: Networking](assets/screenshots/taskotto-win7-networking.png)](assets/screenshots/taskotto-win7-networking.png) | [![Windows 7: Users](assets/screenshots/taskotto-win7-users.png)](assets/screenshots/taskotto-win7-users.png) |
+| **Process properties** |  |
+| [![Windows 7: Process properties](assets/screenshots/taskotto-win7-properties.png)](assets/screenshots/taskotto-win7-properties.png) |  |
 
-![macOS-inspired Activity Monitor selected process information](assets/screenshots/taskotto-macos-info.png)
+### Windows 10
 
-![Windows 7 historical CPU and memory usage layout](assets/screenshots/taskotto-win7-performance.png)
+| Windows 10 | Windows 10 |
+| :---: | :---: |
+| **Processes** | **Performance** |
+| [![Windows 10: Processes](assets/screenshots/taskotto-win10-processes.png)](assets/screenshots/taskotto-win10-processes.png) | [![Windows 10: Performance](assets/screenshots/taskotto-win10-performance.png)](assets/screenshots/taskotto-win10-performance.png) |
+| **App history** | **Startup** |
+| [![Windows 10: App history](assets/screenshots/taskotto-win10-app-history.png)](assets/screenshots/taskotto-win10-app-history.png) | [![Windows 10: Startup](assets/screenshots/taskotto-win10-startup.png)](assets/screenshots/taskotto-win10-startup.png) |
+| **Users** | **Details** |
+| [![Windows 10: Users](assets/screenshots/taskotto-win10-users.png)](assets/screenshots/taskotto-win10-users.png) | [![Windows 10: Details](assets/screenshots/taskotto-win10-details.png)](assets/screenshots/taskotto-win10-details.png) |
+| **Services** | **Vertical navigation** |
+| [![Windows 10: Services](assets/screenshots/taskotto-win10-services.png)](assets/screenshots/taskotto-win10-services.png) | [![Windows 10: Vertical navigation](assets/screenshots/taskotto-win10-vertical.png)](assets/screenshots/taskotto-win10-vertical.png) |
 
-![Windows 7 Networking with measured Linux receive/send rates](assets/screenshots/taskotto-win7-networking.png)
+### macOS Activity Monitor
 
-![Windows 10-inspired performance page](assets/screenshots/taskotto-win10-performance.png)
-
-![Optional Windows 10-inspired vertical navigation](assets/screenshots/taskotto-win10-vertical.png)
-
-![Windows 10-inspired Linux startup entries](assets/screenshots/taskotto-win10-startup.png)
-
-![XP Luna-inspired applications-style page](assets/screenshots/taskotto-xp-luna-applications.png)
-
-![XP Luna-inspired New Task dialog](assets/screenshots/taskotto-xp-luna-new-task.png)
+| macOS Activity Monitor | macOS Activity Monitor |
+| :---: | :---: |
+| **CPU** | **Memory** |
+| [![macOS Activity Monitor: CPU](assets/screenshots/taskotto-macos-cpu.png)](assets/screenshots/taskotto-macos-cpu.png) | [![macOS Activity Monitor: Memory](assets/screenshots/taskotto-macos-memory.png)](assets/screenshots/taskotto-macos-memory.png) |
+| **Energy** | **Disk** |
+| [![macOS Activity Monitor: Energy](assets/screenshots/taskotto-macos-energy.png)](assets/screenshots/taskotto-macos-energy.png) | [![macOS Activity Monitor: Disk](assets/screenshots/taskotto-macos-disk.png)](assets/screenshots/taskotto-macos-disk.png) |
+| **Network** | **Process info** |
+| [![macOS Activity Monitor: Network](assets/screenshots/taskotto-macos-network.png)](assets/screenshots/taskotto-macos-network.png) | [![macOS Activity Monitor: Process info](assets/screenshots/taskotto-macos-info.png)](assets/screenshots/taskotto-macos-info.png) |
 
 </details>
 
-*All images are refreshed rc.13 Taskotto egui renders using live Linux `/proc`; the capture environment exposes few processes. These client-only renders intentionally omit RiceBowl's native window frame. [All 37 captures and reproduction details](SCREENSHOTS.md) · [Fidelity boundaries](RICE_FIDELITY.md). Native X11/Wayland verification remains pending.*
+*All 37 images above are refreshed rc.13 Taskotto egui renders using live Linux `/proc`; the capture environment exposes few processes. These client-only renders intentionally omit RiceBowl's native window frame. [Capture provenance and reproduction](SCREENSHOTS.md) · [Fidelity boundaries](RICE_FIDELITY.md). Native X11/Wayland verification remains pending.*
 
 ## What works
 
