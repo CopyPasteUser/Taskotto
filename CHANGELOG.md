@@ -2,6 +2,12 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.14] — 2026-11-06
+
+- Published an [expansion roadmap](EXPANSION_ROADMAP.md) covering 1.0 hardware gates and eight subsequent milestones: RicePack contracts, declarative UI, advanced process actions, GPU monitoring, cgroups/containers, pressure diagnosis, dashboards/exports and measured performance.
+- Implemented the first RicePack v1 contract: a bounded, strictly validated data-only TOML design with a selectable built-in base rice, palette, navigation, density and sizing. New `--ricepack PATH`, `--check-ricepack PATH` and `RICEBOWL_TASKOTTO_RICEPACK` entry points.
+- Packs apply only to the current Taskotto session; saved appearance remains intact when other preferences change. Added a versioned format guide, original sample RicePack, parser/rejection/config-persistence tests and a real CLI integration test. No new dependencies, scripts or unverified compositor window controls.
+
 ## [1.0.0-rc.13] — 2026-11-06
 
 - Fixed duplicate top-level window chrome across the eight rice presets: the XP Luna, Windows 7 and Windows 10 client no longer draw an extra application title strip. Native title, borders and min/max/close buttons belong to RiceBowl/the active window manager.

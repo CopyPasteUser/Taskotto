@@ -1,10 +1,17 @@
-# Taskotto 1.0.0-rc.13 — release candidate
+# Taskotto 1.0.0-rc.14 — release candidate
 
 **Date:** 2026-11-06 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
 Rust-only Linux process manager and system monitor. This is a **prerelease**, not a stable 1.0 certification.
 
-## Changes since rc.12
+## Changes since rc.13
+
+- Added an explicit future [expansion roadmap](EXPANSION_ROADMAP.md) with stable-1.0 hardware gates followed by phased work on a complete declarative RicePack UI, process affinity/priorities, GPU and container metrics, system pressure diagnosis, dashboards and measured performance.
+- Introduced the first **Taskotto RicePack v1** format: unprivileged, declarative TOML files with a valid base theme and optional shared colors, density, navigation, typography and spacing values. The current client UI remains Rust-rendered; per-component layouts and live editor are planned, not claimed.
+- `--ricepack FILE` and `RICEBOWL_TASKOTTO_RICEPACK` apply a pack for one GUI session; `--check-ricepack FILE` validates it without a display. Unknown fields, invalid input and files over 64 KiB are rejected. The existing appearance preferences are restored for persistence even when monitoring settings are saved during a pack session.
+- Added the sample Sea Glass pack, the versioned [format guide](RICEPACK_FORMAT.md), parser/CLI/config persistence regression tests and kept all existing rice behavior and the 37 screenshots. Native hardware QA remains pending.
+
+## Earlier changes since rc.12 (rc.13)
 
 - Removed the in-client simulated XP Luna, Windows 7 Aero and Windows 10 title strips, icons and duplicate captions. These were not native window decoration, so they caused duplicate app bars when RiceBowl/labwc supplied the real window frame. File/Options/View/Help menus and actual navigation stay intact.
 - Explicitly request native decorations on the eframe window for **every** rice; window caption, border, button arrangement and colors remain the responsibility of RiceBowl/the user's window manager. The macOS activity toolbar no longer repeats the app caption; ChromeOS and Frutiger Aero retain real application toolbars/masthead content, and Windows 98 remains a compact client without a fake window frame.

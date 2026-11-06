@@ -1,16 +1,18 @@
-use std::{env, process::ExitCode, thread, time::Duration};
+use std::{env, path::PathBuf, process::ExitCode, thread, time::Duration};
 use taskotto::{
     config::{Settings, Theme, configured_theme},
     desktop, format,
     monitor::Monitor,
+    ricepack::RicePack,
     ui::TaskottoApp,
 };
 
 const HELP: &str = "Taskotto — Linux process manager and system monitor
 
 USAGE
-  taskotto [--theme NAME] [--refresh-ms N]
+  taskotto [--theme NAME] [--ricepack PATH] [--refresh-ms N]
   taskotto --snapshot [--json]
+  taskotto --check-ricepack PATH
   taskotto --install-desktop
   taskotto --help | --version
 
@@ -18,12 +20,15 @@ OPTIONS
   --theme NAME       system, windows98, xp-luna, windows7, windows10,
                      frutiger-aero, chromeos, macos
   --refresh-ms N     Sampling period in milliseconds (500–10000)
+  --ricepack PATH    Apply a session-only Taskotto RicePack TOML design
+  --check-ricepack PATH   Validate a RicePack without opening a GUI
   --snapshot         Print a one-time unprivileged system snapshot and exit
   --install-desktop  Add a user-local application menu entry and icon
   --json             Emit machine-readable JSON with --snapshot
 
 RICEBOWL
   Export RICEBOWL_RICE=<theme> when launching Taskotto to select a profile.
+  RICEBOWL_TASKOTTO_RICEPACK=<path> supplies an optional Taskotto design.
   An explicit --theme always takes precedence. No RiceBowl installation is needed.
 ";
 
@@ -43,6 +48,8 @@ fn run() -> Result<(), String> {
     let mut install_desktop = false;
     let mut forced_theme = None;
     let mut refresh_ms = None;
+    let mut ricepack_path: Option<PathBuf> = None;
+    let mut check_ricepack_path: Option<PathBuf> = None;
     let mut args = env::args().skip(1);
     while let Some(argument) = args.next() {
         match argument.as_str() {
@@ -55,6 +62,16 @@ fn run() -> Result<(), String> {
                 return Ok(());
             }
             "--snapshot" => snapshot = true,
+            "--ricepack" => {
+                ricepack_path = Some(PathBuf::from(
+                    args.next().ok_or("--ricepack requires a file path")?,
+                ));
+            }
+            "--check-ricepack" => {
+                check_ricepack_path = Some(PathBuf::from(
+                    args.next().ok_or("--check-ricepack requires a file path")?,
+                ));
+            }
             "--install-desktop" => install_desktop = true,
             "--json" => json = true,
             "--theme" => {
@@ -75,6 +92,29 @@ fn run() -> Result<(), String> {
     }
     if json && !snapshot {
         return Err("--json requires --snapshot".to_string());
+    }
+    if let Some(path) = check_ricepack_path {
+        if snapshot
+            || json
+            || install_desktop
+            || forced_theme.is_some()
+            || ricepack_path.is_some()
+            || refresh_ms.is_some()
+        {
+            return Err("--check-ricepack must be used on its own".to_owned());
+        }
+        let pack = RicePack::load(&path)
+            .map_err(|err| format!("invalid RicePack {}: {err}", path.display()))?;
+        println!(
+            "Valid RicePack: {} (format {}, base {})",
+            pack.name,
+            pack.format_version,
+            pack.base_theme.label()
+        );
+        return Ok(());
+    }
+    if ricepack_path.is_some() && (snapshot || install_desktop) {
+        return Err("--ricepack requires GUI mode".to_owned());
     }
     if install_desktop {
         if snapshot || json {
@@ -120,8 +160,24 @@ fn run() -> Result<(), String> {
             Settings::default()
         }
     };
-    if let Some(theme) = forced_theme.or_else(configured_theme) {
-        settings.launch_theme_original = Some(settings.theme);
+    let original_theme = settings.theme;
+    let pack_path = ricepack_path
+        .or_else(|| env::var_os("RICEBOWL_TASKOTTO_RICEPACK").map(PathBuf::from))
+        .or_else(|| env::var_os("TASKOTTO_RICEPACK").map(PathBuf::from));
+    if let Some(path) = pack_path {
+        let pack = RicePack::load(&path)
+            .map_err(|err| format!("invalid RicePack {}: {err}", path.display()))?;
+        pack.apply(&mut settings);
+    }
+    let selected_theme = forced_theme.or_else(|| {
+        if settings.launch_ricepack_name.is_some() {
+            None // A pack's base theme takes precedence over the RiceBowl rice.
+        } else {
+            configured_theme()
+        }
+    });
+    if let Some(theme) = selected_theme {
+        settings.launch_theme_original = Some(original_theme);
         settings.theme = theme;
     }
     if let Some(ms) = refresh_ms {

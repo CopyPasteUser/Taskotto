@@ -1,0 +1,14 @@
+format_version = 1
+name = "Sea Glass"
+base_theme = "frutiger-aero"
+
+[appearance]
+accent = "#159DA4"
+surface = "#E8FBF7"
+text = "#143940"
+density = "comfortable"
+navigation = "top-tabs"
+font_scale = 1.05
+spacing = 9.0
+corner_radius = 10
+row_height = 34.0
