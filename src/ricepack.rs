@@ -13,7 +13,7 @@ use std::{
 const MAX_RICEPACK_BYTES: u64 = 64 * 1024;
 pub const FORMAT_VERSION: u32 = 1;
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct RicePack {
     pub format_version: u32,
@@ -23,7 +23,7 @@ pub struct RicePack {
     pub appearance: Appearance,
 }
 
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct Appearance {
     pub accent: Option<String>,

@@ -2,6 +2,12 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.16] — 2026-11-06
+
+- Added optional **live RicePack file reload** to GUI sessions launched with a design. Valid changes to a RicePack's theme/tokens appear about two seconds after saving, without restarting Taskotto.
+- Retains the last valid appearance through incomplete writes, malformed TOML and missing files. Removed overrides fall back to the saved user design, explicitly selected `--theme` remains authoritative, and monitoring preferences persist unchanged.
+- RicePack-free sessions retain the previous timer-free GUI behavior. Added regression coverage for invalid→valid transitions, design reset, navigation changes and diagnostics; updated RicePack documentation and roadmap.
+
 ## [1.0.0-rc.15] — 2026-11-06
 
 - Added `--export-ricepack PATH` to convert the saved Taskotto appearance into a validated, editable RicePack v1 design. This makes a concrete roundtrip for manual/AI-assisted customization: export → edit → check → apply.

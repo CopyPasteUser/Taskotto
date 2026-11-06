@@ -6,11 +6,11 @@
 
 A customizable process manager and system monitor written in **Rust**. Runs alone or alongside [RiceBowl](https://github.com/CopyPasteUser/Ricebowl) on **X11 and Wayland**.
 
-![License](https://img.shields.io/badge/license-MIT-blue) ![Rust](https://img.shields.io/badge/language-Rust-orange) ![Status](https://img.shields.io/badge/status-1.0%20RC15-yellow)
+![License](https://img.shields.io/badge/license-MIT-blue) ![Rust](https://img.shields.io/badge/language-Rust-orange) ![Status](https://img.shields.io/badge/status-1.0%20RC16-yellow)
 
 </div>
 
-> **Status:** `1.0.0-rc.15` — seven dedicated interfaces: Frutiger Aero, ChromeOS, Windows 98, XP Luna, Windows 7, Windows 10 and macOS Activity Monitor. **All eight profiles leave the window frame, title and window buttons to RiceBowl/the active window manager**; Taskotto draws only its content, menus and functional toolbars. Native GUI and resource-use acceptance are still outstanding. See [1.0 roadmap](ROADMAP.md), [future development roadmap](EXPANSION_ROADMAP.md) and [QA checklist](QA.md). This is **not yet stable 1.0**.
+> **Status:** `1.0.0-rc.16` — seven dedicated interfaces: Frutiger Aero, ChromeOS, Windows 98, XP Luna, Windows 7, Windows 10 and macOS Activity Monitor. **All eight profiles leave the window frame, title and window buttons to RiceBowl/the active window manager**; Taskotto draws only its content, menus and functional toolbars. Native GUI and resource-use acceptance are still outstanding. See [1.0 roadmap](ROADMAP.md), [future development roadmap](EXPANSION_ROADMAP.md) and [QA checklist](QA.md). This is **not yet stable 1.0**.
 
 ## Screenshots
 
@@ -102,7 +102,7 @@ A customizable process manager and system monitor written in **Rust**. Runs alon
 
 </details>
 
-*All 37 images above are rc.13-era Taskotto egui renders using live Linux `/proc`; the capture environment exposes few processes. The rc.14–15 RicePack features do not alter the default layouts shown. These client-only renders intentionally omit RiceBowl's native window frame. [Capture provenance and reproduction](SCREENSHOTS.md) · [Fidelity boundaries](RICE_FIDELITY.md). Native X11/Wayland verification remains pending.*
+*All 37 images above are rc.13-era Taskotto egui renders using live Linux `/proc`; the capture environment exposes few processes. The rc.14–16 RicePack features do not alter the default layouts shown. These client-only renders intentionally omit RiceBowl's native window frame. [Capture provenance and reproduction](SCREENSHOTS.md) · [Fidelity boundaries](RICE_FIDELITY.md). Native X11/Wayland verification remains pending.*
 
 ## What works
 
@@ -110,7 +110,7 @@ A customizable process manager and system monitor written in **Rust**. Runs alon
 - **Safe actions:** terminate, force kill, pause and resume with confirmation and PID-reuse protection via Linux `pidfd`.
 - **Performance:** CPU/core load, RAM/swap, network RX/TX and disk read/write rates, bounded comparative rolling graphs.
 - **Riceable:** 8 profiles; Frutiger Aero (original luminous Y2K task manager), ChromeOS (compact task table), Windows 98 **Close Program**, XP Luna (5 tabs), Windows 7 (6 tabs), Windows 10 (7 tabs), and macOS Activity Monitor (5 views). Custom navigation, colors, fonts, density and persistent TOML preferences remain supported.
-- **RicePacks (v1 foundation):** Export your current appearance with `--export-ricepack`, modify its TOML, validate and apply it using `--check-ricepack` / `--ricepack` without rebuilding Rust. The first format handles base theme, shared colors, layout and sizing, not arbitrary component placements; see [RicePack format](RICEPACK_FORMAT.md).
+- **RicePacks (v1 foundation):** Export your current appearance with `--export-ricepack`, modify its TOML, validate and apply it using `--check-ricepack` / `--ricepack` without rebuilding Rust. Active RicePack sessions automatically reload valid file edits about every 2 seconds. The first format handles base theme, shared colors, layout and sizing, not arbitrary component placements; see [RicePack format](RICEPACK_FORMAT.md).
 - **One window decoration:** Taskotto requests WM-managed window decorations for every rice. XP Luna, Windows 7 and Windows 10 no longer draw fake title strips or app captions; their real menus and tabs remain intact. The macOS toolbar no longer repeats the native app caption. Native border colors/buttons are configured in RiceBowl/the compositor, not Taskotto.
 - **Frutiger Aero:** original vector aqua/glass masthead, bubble meters, seven navigable destinations, searchable/sortable process garden, selected-PID actions and four live performance charts. Both pill tabs and a customizable sidebar use the existing sampler; RiceBowl/the compositor owns native decorations.
 - **Classic 98:** compact, gray 3D controls and a white running-program list showing actual *user-owned Linux processes*. End Task uses the same safe confirmation flow; New Task, Refresh, Close and advanced Processes/Performance/Network/Users/Options all work. The compositor owns external window decoration; Taskotto does not draw a second title bar.

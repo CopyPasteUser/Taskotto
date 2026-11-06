@@ -43,6 +43,14 @@ taskotto --check-ricepack my-rice.toml
 taskotto --ricepack my-rice.toml
 ```
 
+While Taskotto stays open with a RicePack, edited files are checked about every
+**two seconds**. Only fully valid, changed packs are applied; a missing,
+partial or malformed file leaves the last valid appearance running and shows a
+recoverable warning. When the file becomes valid again, its new design is
+applied, including removal of now-absent overrides (which fall back to the
+user's original saved appearance). An explicit `--theme` continues to win.
+Ordinary launches without a RicePack have no extra reload timer.
+
 Export reads the ordinary Taskotto config (not a temporary active session
 override), writes only supported appearance tokens and never overwrites an
 existing file. It preserves the original config and refuses malformed

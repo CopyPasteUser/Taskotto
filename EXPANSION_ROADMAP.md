@@ -43,9 +43,11 @@ Development on later milestones may proceed while user-hardware QA is pending.
 - [x] Ship an original demonstration pack, tests and [format specification](RICEPACK_FORMAT.md).
 - [x] Export saved appearance via `--export-ricepack FILE` to a new, safe,
   re-importable and strictly validated TOML file, without GUI launch or config writes.
+- [x] Automatically reload changed valid RicePack files during GUI sessions,
+  with an explicit warning and last-known-good fallback for broken edits.
 - [ ] Contract tests with a RiceBowl-created pack and a versioned integration
   fixture supplied by that repository.
-- [ ] Add pack discovery, live preview, hot reload and non-destructive
+- [ ] Add pack discovery, in-app visual preview and non-destructive
   import/export from the Taskotto UI.
 - [ ] Separate all palette/size tokens from hardcoded rice widget styles;
   make component overrides available without recompilation.
@@ -136,9 +138,9 @@ lean, offline-capable and independent from RiceBowl.
 
 ## Work order
 
-1. **Delivered (RC14–15):** P1 format/loader/CLI, secure reference pack and
-   headless export/check/re-import design workflow.
-2. **Next:** P1 end-to-end RiceBowl interop, preview, hot reload and UI token
+1. **Delivered (RC14–16):** P1 format/loader/CLI, secure reference pack,
+   headless export/check/re-import design workflow and live file reload.
+2. **Next:** P1 end-to-end RiceBowl interop, in-app previews and UI token
    extraction. The runtime should remain backwards-compatible while this grows.
 3. **Then:** P2 data-bound layout schema; P3 real process controls; P4/P5
    optional telemetry backends; P6 diagnosis; P7 dashboards.

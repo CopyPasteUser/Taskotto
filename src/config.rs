@@ -215,6 +215,23 @@ impl Settings {
         self.launch_ricepack_name = Some(name.to_owned());
     }
 
+    /// Restore the user's pre-pack appearance before applying a revised pack.
+    /// Keep the backup so subsequent saves still persist the original design.
+    pub(crate) fn reset_ricepack_appearance(&mut self) {
+        if let Some(original) = &self.launch_ricepack_original {
+            self.theme = original.theme;
+            self.density = original.density;
+            self.layout_mode = original.layout_mode;
+            self.accent_hex.clone_from(&original.accent_hex);
+            self.surface_hex.clone_from(&original.surface_hex);
+            self.text_hex.clone_from(&original.text_hex);
+            self.font_scale = original.font_scale;
+            self.ui_spacing = original.ui_spacing;
+            self.corner_radius = original.corner_radius;
+            self.table_row_height = original.table_row_height;
+        }
+    }
+
     pub fn normalize(&mut self) {
         self.refresh_ms = self.refresh_ms.clamp(500, 10_000);
         if self
