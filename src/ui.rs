@@ -213,12 +213,17 @@ impl TaskottoApp {
         let accent_input = settings.accent_hex.clone().unwrap_or_default();
         let surface_input = settings.surface_hex.clone().unwrap_or_default();
         let text_input = settings.text_hex.clone().unwrap_or_default();
+        let initial_page = if settings.theme == Theme::Windows98 {
+            Page::Applications
+        } else {
+            Page::Processes
+        };
         Self {
             worker: Worker::start(settings.refresh_ms, context.egui_ctx.clone()),
             settings,
             snapshot: None,
             history: History::default(),
-            page: Page::Processes,
+            page: initial_page,
             performance_focus: PerformanceFocus::Cpu,
             query: String::new(),
             focus_search: false,
@@ -851,14 +856,18 @@ impl TaskottoApp {
         if rices::supports(self.settings.theme) {
             let xp = self.settings.theme == Theme::XpLuna;
             egui::Frame::new()
-                .fill(if xp {
+                .fill(if self.settings.theme == Theme::Windows98 {
+                    Color32::from_rgb(192, 192, 192)
+                } else if xp {
                     Color32::from_rgb(246, 244, 231)
                 } else {
                     Color32::WHITE
                 })
                 .stroke(Stroke::new(
                     1.0_f32,
-                    if xp {
+                    if self.settings.theme == Theme::Windows98 {
+                        Color32::from_rgb(128, 128, 128)
+                    } else if xp {
                         Color32::from_rgb(158, 156, 138)
                     } else {
                         Color32::from_rgb(218, 218, 218)
@@ -872,7 +881,7 @@ impl TaskottoApp {
     }
 
     fn preferences_contents(&mut self, ui: &mut egui::Ui) {
-        let xp = self.settings.theme == Theme::XpLuna;
+        let xp = matches!(self.settings.theme, Theme::XpLuna | Theme::Windows98);
         ui.label(
             RichText::new(if xp {
                 "Taskotto Properties"
@@ -905,6 +914,11 @@ impl TaskottoApp {
                         for theme in Theme::ALL {
                             if ui.selectable_value(&mut self.settings.theme, theme, theme.label()).changed() {
                                 self.settings.launch_theme_original = None;
+                                if self.settings.theme == Theme::Windows98 {
+                                    self.page = Page::Applications;
+                                } else if self.page == Page::Applications {
+                                    self.page = Page::Processes;
+                                }
                                 changed = true;
                             }
                         }
@@ -1078,14 +1092,18 @@ impl TaskottoApp {
             .anchor(egui::Align2::CENTER_CENTER, Vec2::ZERO)
             .frame(
                 egui::Frame::window(&ctx.style())
-                    .fill(if self.settings.theme == Theme::XpLuna {
+                    .fill(if self.settings.theme == Theme::Windows98 {
+                        Color32::from_rgb(192, 192, 192)
+                    } else if self.settings.theme == Theme::XpLuna {
                         Color32::from_rgb(236, 233, 216)
                     } else {
                         Color32::WHITE
                     })
                     .stroke(Stroke::new(
                         2.0_f32,
-                        if self.settings.theme == Theme::XpLuna {
+                        if self.settings.theme == Theme::Windows98 {
+                            Color32::from_rgb(128, 128, 128)
+                        } else if self.settings.theme == Theme::XpLuna {
                             Color32::from_rgb(51, 94, 169)
                         } else {
                             Color32::from_rgb(168, 168, 168)
@@ -1151,6 +1169,12 @@ impl TaskottoApp {
             } else {
                 14.0
             });
+            if self.settings.theme == Theme::Windows98
+                && self.settings.layout_mode.resolve(self.settings.theme) == LayoutMode::TopTabs
+                && self.page != Page::Applications
+            {
+                rices::classic98_navigation(self, ui);
+            }
             if let Some(message) = self.notification.clone() {
                 ui.horizontal_wrapped(|ui| {
                     let warning_color = if rices::supports(self.settings.theme) {
@@ -1681,7 +1705,7 @@ mod tests {
     }
 
     #[test]
-    fn win10_and_xp_real_data_pages_layout_at_minimum_and_desktop_sizes() {
+    fn windows_rices_real_data_pages_layout_at_minimum_and_desktop_sizes() {
         let ctx = egui::Context::default();
         let settings = Settings::default();
         let mut app = TaskottoApp {
@@ -1726,8 +1750,13 @@ mod tests {
             new_task: NewTaskDialog::default(),
             mac_info_open: false,
         };
-        for theme in [Theme::XpLuna, Theme::Windows7, Theme::Windows10] {
-            for &navigation in if theme == Theme::Windows10 {
+        for theme in [
+            Theme::Windows98,
+            Theme::XpLuna,
+            Theme::Windows7,
+            Theme::Windows10,
+        ] {
+            for &navigation in if matches!(theme, Theme::Windows98 | Theme::Windows10) {
                 &[LayoutMode::TopTabs, LayoutMode::Sidebar][..]
             } else {
                 &[LayoutMode::TopTabs][..]
@@ -1760,7 +1789,12 @@ mod tests {
                         PerformanceFocus::Network,
                     ] {
                         app.performance_focus = focus;
-                        for (width, height) in [(650.0, 420.0), (1280.0, 800.0)] {
+                        let sizes: &[(f32, f32)] = if theme == Theme::Windows98 {
+                            &[(490.0, 340.0), (650.0, 450.0), (1280.0, 800.0)]
+                        } else {
+                            &[(650.0, 420.0), (1280.0, 800.0)]
+                        };
+                        for &(width, height) in sizes {
                             let output = ctx.run(
                                 egui::RawInput {
                                     screen_rect: Some(egui::Rect::from_min_size(

@@ -1,10 +1,16 @@
-# Taskotto 1.0.0-rc.10 — release candidate
+# Taskotto 1.0.0-rc.11 — release candidate
 
 **Date:** 2026-11-06 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
 Rust-only Linux process manager and system monitor. This is a **prerelease**, not a stable 1.0 certification.
 
-## Changes since rc.9
+## Changes since rc.10
+
+- Classic 98 now opens an independent, compact Windows 98-style **Close Program** view, not a modern sidebar with a gray palette. Raised/sunken controls, white list and classic blue selection are original drawings; there is no extra in-client title bar or window buttons because RiceBowl/native WM owns external decoration.
+- The running-program list is explicitly current-user Linux processes, not fabricated GUI-window detection. End Task uses safe PID-aware signal confirmation, New Task runs user-entered commands without elevation, and Refresh/Close work. The optional Tools menu exposes searchable/sortable Processes, real CPU/memory Performance, Networking, Users and Options.
+- Four new real egui/procfs renders (31 total) plus headless narrow/desktop layout coverage; native display-server and side-by-side historical pixel comparisons remain for hardware acceptance.
+
+## Earlier changes since rc.9 (rc.10)
 
 - The macOS preset now has an independent, light Activity Monitor-inspired layout: original mini activity-mark, Stop/Info/View toolbar, live search, five historical horizontal segments (CPU, Memory, Energy, Disk, Network), sortable dense report, per-process context menu and an actual selected-process Info dialog.
 - Context-specific bottom statistics and rolling CPU/memory/disk/network charts reflect live Linux samples. Memory columns show resident/virtual usage; Disk exposes permission-checked `/proc/PID/io` with explicit N/A; Energy reports genuine process CPU as an explicitly labeled activity proxy since the proprietary macOS Energy Impact and App Nap measurements cannot be derived from procfs. Network remains system-wide, not fabricated per PID.

@@ -18,7 +18,7 @@ impl ThemeStyle {
     pub fn from_settings(settings: &Settings) -> Self {
         let (dark, surface, text, accent, rounding) = match settings.theme {
             Theme::System => (true, (25, 36, 51), (231, 237, 247), (130, 180, 255), 8),
-            Theme::Windows98 => (false, (196, 196, 196), (20, 20, 20), (0, 128, 128), 0),
+            Theme::Windows98 => (false, (192, 192, 192), (0, 0, 0), (0, 0, 128), 0),
             Theme::XpLuna => (false, (236, 233, 216), (29, 29, 29), (42, 99, 198), 0),
             Theme::Windows7 => (false, (222, 238, 248), (29, 44, 65), (43, 138, 195), 6),
             Theme::Windows10 => (false, (250, 250, 250), (32, 32, 32), (0, 120, 215), 0),
@@ -80,6 +80,16 @@ impl ThemeStyle {
         };
         visuals.widgets.active.bg_fill = self.accent;
         match settings.theme {
+            Theme::Windows98 => {
+                visuals.extreme_bg_color = Color32::WHITE;
+                visuals.faint_bg_color = Color32::from_rgb(224, 224, 224);
+                visuals.widgets.noninteractive.bg_fill = self.surface;
+                visuals.widgets.inactive.bg_fill = self.surface;
+                visuals.widgets.inactive.bg_stroke.color = Color32::from_rgb(128, 128, 128);
+                visuals.widgets.noninteractive.bg_stroke.color = Color32::from_rgb(128, 128, 128);
+                visuals.widgets.hovered.bg_fill = Color32::from_rgb(212, 212, 212);
+                visuals.widgets.active.bg_fill = Color32::from_rgb(164, 164, 164);
+            }
             Theme::XpLuna => {
                 // Raised rectangular controls on the warm, classic task-manager
                 // surface. All tones are original recreations, not OS assets.
@@ -141,11 +151,23 @@ impl ThemeStyle {
         );
         style.text_styles.insert(
             TextStyle::Body,
-            FontId::proportional(14.0 * self.font_scale),
+            FontId::proportional(
+                if settings.theme == Theme::Windows98 {
+                    13.0
+                } else {
+                    14.0
+                } * self.font_scale,
+            ),
         );
         style.text_styles.insert(
             TextStyle::Button,
-            FontId::proportional(14.0 * self.font_scale),
+            FontId::proportional(
+                if settings.theme == Theme::Windows98 {
+                    13.0
+                } else {
+                    14.0
+                } * self.font_scale,
+            ),
         );
         style.text_styles.insert(
             TextStyle::Small,

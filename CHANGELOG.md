@@ -2,6 +2,12 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.11] — 2026-11-06
+
+- Gave Classic 98 a standalone Close Program client rather than the generic Taskotto theme: compact gray 3D controls, a sunken white program list, dark-blue selection and no duplicate RiceBowl-managed external window decorations.
+- The list transparently shows actual current-user Linux processes (not invented Wayland/X11 graphical windows); End Task requires the established PID-safe confirmation. New Task, Refresh and Close work, while Tools reveals optional Processes, Performance, Network, Users and Options.
+- Added a searchable/sortable classic PID/CPU/RSS report, 98-style color/typography tokens, small default viewport, four genuine Linux/egui captures, and additional layout/filter regression coverage. Native UI verification remains required for stable 1.0.
+
 ## [1.0.0-rc.10] — 2026-11-06
 
 - Gave macOS its own Activity Monitor-inspired UI: original-drawn toolbar, process Stop/Info/View controls, always-available search, familiar five horizontal CPU/Memory/Energy/Disk/Network segments, compact sortable alternating-row process report and process-inspection dialog.

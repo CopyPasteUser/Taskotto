@@ -1,4 +1,4 @@
-# macOS / Windows 7 / Windows 10 / XP Luna task-manager rice fidelity
+# Windows 98 / XP Luna / Windows 7 / Windows 10 / macOS rice fidelity
 
 Taskotto is Linux system software. The goal is **recognizable task-manager
 interaction and visual hierarchy**, not a falsely branded Windows program.
@@ -24,6 +24,15 @@ Only original vector-style drawing and standard egui controls are used.
 
 These are design references; their screenshots, icons, product logos, textures
 and fonts are **not** copied or bundled.
+
+## Windows 98 Close Program
+
+- The original compact **Close Program** hierarchy is the first screen: short instruction, sunken white running-program list, square gray bevel buttons, dark-blue selection, and a small status line. There is no fabricated Windows title bar, close button or frame in the Taskotto client: RiceBowl/the native window manager owns window decoration.
+- The list alphabetizes current-user processes and excludes kernel threads. Linux `/proc` does not give portable compositor-independent window ownership, so the UI identifies these accurately as **processes**, not a list of GUI windows or a 'Not Responding' detection mechanism.
+- **End Task** operates only on a currently visible, still-matching process, with the existing PID start-time/pidfd verification, explicit confirmation, no elevated privileges, and accurate error reporting. **New Task** launches only a command the user enters; **Refresh** and **Close** work immediately.
+- **Tools >>** opens optional period-styled Processes, Performance, Network, Users and Options. The advanced process report provides sorting, search, PID/CPU/RSS details and confirmed End Process; graph values are actual CPU/memory history. The historical primary dialog remains uncluttered.
+- Default viewport is 650×450 (minimum 490×340) for the compact dialog; advanced pages adapt to resizing. Colors/fonts and other RiceBowl tokens remain configurable. No proprietary graphics, system libraries or historical Windows APIs are included.
+- The result is a faithful design *direction*, not verified 1:1 historical pixels. Native screenshots, system font comparisons and keyboard/accessibility validation remain in QA.
 
 ## macOS Activity Monitor
 
@@ -162,6 +171,6 @@ and fonts are **not** copied or bundled.
 - Headless screenshot renders prove actual egui layout/paint commands and real
   procfs values, **not native desktop output**. [QA.md](QA.md) retains the Mint
   X11, KDE Wayland and labwc visual/keyboard/performance sign-off gates.
-- The README gallery and provenance describe 27 current Mac/Seven/XP/Windows 10
+- The README gallery and provenance describe 31 current Classic 98/Mac/Seven/XP/Windows 10
   captures; old generic-theme renders were removed, while all eight rice
   presets remain available.
