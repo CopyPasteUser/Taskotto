@@ -425,12 +425,9 @@ impl TaskottoApp {
                         (Page::Applications, "Applications"),
                         (Page::Processes, "Processes"),
                         (Page::Performance, "Performance"),
-                        (Page::AppHistory, "App history"),
-                        (Page::Startup, "Startup"),
                         (Page::Networking, "Network"),
                         (Page::Users, "Users"),
                         (Page::Details, "Details"),
-                        (Page::Services, "Services"),
                         (Page::Preferences, "Preferences"),
                     ] {
                         if ui.selectable_label(self.page == page, label).clicked() {
@@ -452,12 +449,9 @@ impl TaskottoApp {
                     (Page::Applications, "Applications"),
                     (Page::Processes, "Processes"),
                     (Page::Performance, "Performance"),
-                    (Page::AppHistory, "App history"),
-                    (Page::Startup, "Startup"),
                     (Page::Networking, "Network"),
                     (Page::Users, "Users"),
                     (Page::Details, "Details"),
-                    (Page::Services, "Services"),
                     (Page::Preferences, "⚙  Preferences"),
                 ] {
                     if ui
