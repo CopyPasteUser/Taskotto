@@ -2,6 +2,12 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.24] — 2026-11-06
+
+- Unified optional RicePack semantic colors across XP Luna/Windows 10 top tabs and shared process reports, XP Applications and the custom Windows 10 sidebar. The original designs remain unchanged when overrides are absent; table, borders, selection, control and hover fills and foreground adapt without scripts or proprietary artwork.
+- Preserved Windows 10's truthful per-process CPU/memory heatmaps on dark custom tables by blending observed utilization into the user-defined row palette; selected/hovered cells keep readable contrast.
+- Shipped original Midnight (XP Luna) and Indigo (Windows 10) packs with two live-procfs headless screenshots (45 gallery images) and regression tests for both token palettes, report geometry and bounded heatmap blending. Windows 98 bevel/size extraction and native hardware QA remain open.
+
 ## [1.0.0-rc.23] — 2026-11-06
 
 - Wired the Windows 7-inspired client tabs, sortable Applications/Processes tables, hover and selection fills, border strokes and empty-table messages to shared, validated RicePack component colors. Missing tokens keep the original Aero-era colors and layouts.

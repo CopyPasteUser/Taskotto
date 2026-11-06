@@ -103,6 +103,11 @@ fn generate_headless_ui_screenshots() {
         (
             Theme::Windows10,
             Page::Processes,
+            "taskotto-win10-indigo-ricepack.png",
+        ),
+        (
+            Theme::Windows10,
+            Page::Processes,
             "taskotto-win10-vertical.png",
         ),
         (
@@ -145,6 +150,11 @@ fn generate_headless_ui_screenshots() {
             Theme::XpLuna,
             Page::Processes,
             "taskotto-xp-luna-processes.png",
+        ),
+        (
+            Theme::XpLuna,
+            Page::Processes,
+            "taskotto-xp-midnight-ricepack.png",
         ),
         (
             Theme::XpLuna,
@@ -265,6 +275,20 @@ fn generate_headless_ui_screenshots() {
             .expect("checked-in Dusk RicePack must remain valid");
             pack.apply(&mut settings);
         }
+        if file.contains("midnight-ricepack") {
+            let pack = crate::ricepack::RicePack::from_toml(include_str!(
+                "../../examples/ricepacks/xp-midnight.toml"
+            ))
+            .expect("checked-in Midnight RicePack must remain valid");
+            pack.apply(&mut settings);
+        }
+        if file.contains("indigo-ricepack") {
+            let pack = crate::ricepack::RicePack::from_toml(include_str!(
+                "../../examples/ricepacks/win10-indigo.toml"
+            ))
+            .expect("checked-in Indigo RicePack must remain valid");
+            pack.apply(&mut settings);
+        }
         apply_theme(&ctx, &settings);
         let mut app = TaskottoApp {
             worker: Worker::start(10_000, ctx.clone()),
@@ -288,6 +312,8 @@ fn generate_headless_ui_screenshots() {
                 || file.contains("chromeos-tasks")
                 || file.contains("nocturne-ricepack")
                 || file.contains("dusk-ricepack")
+                || file.contains("midnight-ricepack")
+                || file.contains("indigo-ricepack")
             {
                 snapshot
                     .processes

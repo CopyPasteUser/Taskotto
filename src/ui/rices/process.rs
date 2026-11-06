@@ -1,4 +1,5 @@
 use super::*;
+use crate::theme::{ComponentPaint, readable_text};
 use egui::{Align2, FontId, Rect, StrokeKind};
 
 #[derive(Clone, Copy)]
@@ -94,6 +95,7 @@ fn grouped_rows(app: &TaskottoApp, rows: Vec<ProcessRow>) -> Vec<Entry> {
 
 pub(super) fn page(app: &mut TaskottoApp, ui: &mut egui::Ui) {
     let xp = is_xp(app);
+    let paint = ComponentPaint::from_settings(&app.settings);
     // Windows 10's Processes tab and XP's report view begin directly with
     // the column headers. The large heading belongs to Performance, not here.
     // Both historical task managers show their table immediately. Keep the
@@ -123,13 +125,19 @@ pub(super) fn page(app: &mut TaskottoApp, ui: &mut egui::Ui) {
     let rows = app.processes();
     if rows.is_empty() {
         egui::Frame::new()
-            .fill(Color32::WHITE)
-            .stroke(Stroke::new(1.0_f32, Color32::from_rgb(173, 173, 173)))
+            .fill(paint.table(Color32::WHITE))
+            .stroke(Stroke::new(
+                1.0_f32,
+                paint.border(Color32::from_rgb(173, 173, 173)),
+            ))
             .show(ui, |ui| {
                 ui.set_min_height((ui.available_height() - 12.0).max(100.0));
                 ui.add_space(32.0);
                 ui.vertical_centered(|ui| {
-                    ui.label("No matching processes");
+                    ui.colored_label(
+                        paint.on_table(Color32::from_rgb(37, 37, 37)),
+                        "No matching processes",
+                    );
                     if ui.button("Clear filter").clicked() {
                         app.query.clear();
                     }
@@ -140,19 +148,19 @@ pub(super) fn page(app: &mut TaskottoApp, ui: &mut egui::Ui) {
     let footer_height = if xp { 32.0 } else { 0.0 };
     let table_height = (ui.available_height() - footer_height - 6.0).max(100.0);
     egui::Frame::new()
-        .fill(Color32::WHITE)
+        .fill(paint.table(Color32::WHITE))
         .stroke(Stroke::new(
             1.0_f32,
-            if xp {
+            paint.border(if xp {
                 Color32::from_rgb(128, 128, 128)
             } else {
                 Color32::from_rgb(218, 218, 218)
-            },
+            }),
         ))
         .show(ui, |ui| {
             ui.set_min_height(table_height);
             let layout = TableColumns::new(ui.available_width() - 14.0, &app.settings);
-            header(app, ui, &layout);
+            header(app, ui, &layout, paint);
             let entries = grouped_rows(app, rows);
             let row_height = app
                 .settings
@@ -165,10 +173,10 @@ pub(super) fn page(app: &mut TaskottoApp, ui: &mut egui::Ui) {
                     for index in range {
                         match &entries[index] {
                             Entry::Section(label, count) => {
-                                section(ui, &layout, label, *count, row_height)
+                                section(ui, &layout, label, *count, row_height, paint)
                             }
                             Entry::Process(row) => {
-                                process_row(app, ui, &layout, row, index, row_height)
+                                process_row(app, ui, &layout, row, index, row_height, paint)
                             }
                         }
                     }
@@ -187,21 +195,22 @@ pub(super) fn page(app: &mut TaskottoApp, ui: &mut egui::Ui) {
     }
 }
 
-fn header(app: &mut TaskottoApp, ui: &mut egui::Ui, layout: &TableColumns) {
+fn header(app: &mut TaskottoApp, ui: &mut egui::Ui, layout: &TableColumns, paint: ComponentPaint) {
     let xp = is_xp(app);
     let details = app.page == Page::Details;
     let (rect, _) = ui.allocate_exact_size(
         egui::vec2(layout.width, if xp || details { 23.0 } else { 65.0 }),
         Sense::hover(),
     );
-    ui.painter().rect_filled(rect, 0.0, Color32::WHITE);
+    ui.painter()
+        .rect_filled(rect, 0.0, paint.table(Color32::WHITE));
     for (column, cell) in layout.cells(rect) {
         let painter = ui.painter();
         if xp {
             painter.rect_stroke(
                 cell,
                 0.0,
-                Stroke::new(1.0_f32, Color32::from_rgb(169, 167, 153)),
+                Stroke::new(1.0_f32, paint.border(Color32::from_rgb(169, 167, 153))),
                 StrokeKind::Inside,
             );
             painter.line_segment(
@@ -214,11 +223,11 @@ fn header(app: &mut TaskottoApp, ui: &mut egui::Ui, layout: &TableColumns) {
         } else {
             painter.line_segment(
                 [cell.right_top(), cell.right_bottom()],
-                Stroke::new(1.0_f32, Color32::from_rgb(235, 235, 235)),
+                Stroke::new(1.0_f32, paint.border(Color32::from_rgb(235, 235, 235))),
             );
             painter.line_segment(
                 [cell.left_bottom(), cell.right_bottom()],
-                Stroke::new(1.0_f32, Color32::from_rgb(216, 216, 216)),
+                Stroke::new(1.0_f32, paint.border(Color32::from_rgb(216, 216, 216))),
             );
         }
         let label = match column {
@@ -261,17 +270,18 @@ fn header(app: &mut TaskottoApp, ui: &mut egui::Ui, layout: &TableColumns) {
                     .as_ref()
                     .map_or(0.0, |s| s.memory.used_fraction() * 100.0),
             };
-            painter.rect_filled(
-                cell.shrink2(egui::vec2(1.0, 1.0)),
-                0.0,
-                Color32::from_rgb(228, 242, 251),
-            );
+            let metric_fill = paint.hover(Color32::from_rgb(228, 242, 251));
+            painter.rect_filled(cell.shrink2(egui::vec2(1.0, 1.0)), 0.0, metric_fill);
             painter.text(
                 egui::pos2(cell.center().x, cell.top() + 24.0),
                 Align2::CENTER_CENTER,
                 format!("{percent:.0}%"),
                 FontId::proportional(22.0),
-                Color32::from_rgb(17, 86, 142),
+                if paint.hover.is_some() {
+                    readable_text(metric_fill)
+                } else {
+                    Color32::from_rgb(17, 86, 142)
+                },
             );
         }
         painter.text(
@@ -282,7 +292,7 @@ fn header(app: &mut TaskottoApp, ui: &mut egui::Ui, layout: &TableColumns) {
             Align2::LEFT_CENTER,
             label,
             FontId::proportional(if xp || details { 12.0 } else { 13.0 }),
-            Color32::from_rgb(40, 40, 40),
+            paint.on_table(Color32::from_rgb(40, 40, 40)),
         );
         if let Some(sort) = column.sort() {
             let response = ui.interact(cell, ui.id().with(("rice-sort", label)), Sense::click());
@@ -313,23 +323,33 @@ fn header(app: &mut TaskottoApp, ui: &mut egui::Ui, layout: &TableColumns) {
                     Align2::CENTER_CENTER,
                     if app.settings.descending { "v" } else { "^" },
                     FontId::monospace(10.0),
-                    Color32::from_rgb(70, 70, 70),
+                    paint.on_table(Color32::from_rgb(70, 70, 70)),
                 );
             }
         }
     }
 }
 
-fn section(ui: &mut egui::Ui, layout: &TableColumns, label: &str, count: usize, height: f32) {
+fn section(
+    ui: &mut egui::Ui,
+    layout: &TableColumns,
+    label: &str,
+    count: usize,
+    height: f32,
+    paint: ComponentPaint,
+) {
     let (rect, _) = ui.allocate_exact_size(egui::vec2(layout.width, height), Sense::hover());
     ui.painter()
-        .rect_filled(rect, 0.0, Color32::from_rgb(245, 247, 250));
+        .rect_filled(rect, 0.0, paint.control(Color32::from_rgb(245, 247, 250)));
     ui.painter().text(
         rect.left_center() + egui::vec2(11.0, 0.0),
         Align2::LEFT_CENTER,
         format!("{label} ({count})"),
         FontId::proportional(14.0),
-        Color32::from_rgb(48, 64, 80),
+        paint.on_control(
+            Color32::from_rgb(245, 247, 250),
+            Color32::from_rgb(48, 64, 80),
+        ),
     );
 }
 
@@ -340,6 +360,7 @@ fn process_row(
     row: &ProcessRow,
     index: usize,
     height: f32,
+    paint: ComponentPaint,
 ) {
     let p = &row.process;
     let xp = is_xp(app);
@@ -347,28 +368,25 @@ fn process_row(
     let (rect, response) = ui.allocate_exact_size(egui::vec2(layout.width, height), Sense::click());
     let background = if selected {
         if xp {
-            Color32::from_rgb(49, 106, 195)
+            paint.selection(Color32::from_rgb(49, 106, 195))
         } else {
-            Color32::from_rgb(203, 230, 247)
+            paint.selection(Color32::from_rgb(203, 230, 247))
         }
     } else if xp || index.is_multiple_of(2) {
-        Color32::WHITE
+        paint.table(Color32::WHITE)
     } else {
-        Color32::from_rgb(250, 250, 250)
+        paint.table(Color32::from_rgb(250, 250, 250))
     };
-    ui.painter().rect_filled(
-        rect,
-        0.0,
-        if response.hovered() && !selected {
-            if xp {
-                Color32::from_rgb(228, 237, 249)
-            } else {
-                Color32::from_rgb(234, 247, 253)
-            }
+    let background = if response.hovered() && !selected {
+        paint.hover(if xp {
+            Color32::from_rgb(228, 237, 249)
         } else {
-            background
-        },
-    );
+            Color32::from_rgb(234, 247, 253)
+        })
+    } else {
+        background
+    };
+    ui.painter().rect_filled(rect, 0.0, background);
     if response.has_focus() {
         ui.painter().rect_stroke(
             rect.shrink(1.0),
@@ -377,7 +395,11 @@ fn process_row(
             StrokeKind::Inside,
         );
     }
-    let text_color = if xp && selected {
+    let text_color = if (selected && paint.selection.is_some())
+        || (!selected && (paint.table.is_some() || paint.hover.is_some()))
+    {
+        readable_text(background)
+    } else if xp && selected {
         Color32::WHITE
     } else {
         Color32::from_rgb(37, 37, 37)
@@ -396,21 +418,28 @@ fn process_row(
             ui.painter()
                 .rect_filled(icon.shrink(4.0), 0.0, Color32::WHITE);
         }
+        let mut cell_text_color = text_color;
         if !selected && !xp && matches!(column, Column::Cpu | Column::Memory) {
             let intensity = match column {
                 Column::Cpu => (p.cpu_percent / 100.0).clamp(0.0, 1.0),
                 _ => (p.resident_bytes as f32 / memory_used as f32).clamp(0.0, 1.0),
             };
-            ui.painter().rect_filled(
-                cell.shrink2(egui::vec2(1.0, 0.0)),
-                0.0,
-                heat_color(intensity, response.hovered()),
-            );
+            let heat_fill = if paint.table.is_some() {
+                let tint = paint.hover(Color32::from_rgb(216, 237, 251));
+                blend(background, tint, 0.16 + intensity * 0.42)
+            } else {
+                heat_color(intensity, response.hovered())
+            };
+            ui.painter()
+                .rect_filled(cell.shrink2(egui::vec2(1.0, 0.0)), 0.0, heat_fill);
+            if paint.table.is_some() {
+                cell_text_color = readable_text(heat_fill);
+            }
         }
         if xp {
             ui.painter().line_segment(
                 [cell.right_top(), cell.right_bottom()],
-                Stroke::new(0.5_f32, Color32::from_rgb(225, 225, 225)),
+                Stroke::new(0.5_f32, paint.border(Color32::from_rgb(225, 225, 225))),
             );
         }
         let value = match column {
@@ -465,7 +494,7 @@ fn process_row(
             Align2::LEFT_CENTER,
             value,
             font.clone(),
-            text_color,
+            cell_text_color,
         );
     }
     if response.clicked() {
@@ -514,6 +543,17 @@ fn heat_color(intensity: f32, hovered: bool) -> Color32 {
     )
 }
 
+/// Preserve numeric heatmap meaning on user-chosen dark/light table backgrounds.
+fn blend(base: Color32, tint: Color32, fraction: f32) -> Color32 {
+    let t = fraction.clamp(0.0, 1.0);
+    let channel = |a: u8, b: u8| ((a as f32) * (1.0 - t) + (b as f32) * t).round() as u8;
+    Color32::from_rgb(
+        channel(base.r(), tint.r()),
+        channel(base.g(), tint.g()),
+        channel(base.b(), tint.b()),
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -551,5 +591,55 @@ mod tests {
                 .iter()
                 .all(|(column, _)| !matches!(column, Column::Io))
         );
+    }
+
+    #[test]
+    fn xp_and_modern_ricepacks_recolor_reports_without_changing_process_columns() {
+        for (toml, expected_theme) in [
+            (
+                include_str!("../../../examples/ricepacks/xp-midnight.toml"),
+                Theme::XpLuna,
+            ),
+            (
+                include_str!("../../../examples/ricepacks/win10-indigo.toml"),
+                Theme::Windows10,
+            ),
+        ] {
+            let original = Settings {
+                theme: expected_theme,
+                ..Settings::default()
+            };
+            let before = TableColumns::new(990.0, &original);
+            let mut themed = original.clone();
+            crate::ricepack::RicePack::from_toml(toml)
+                .expect("checked-in ricepack must validate")
+                .apply(&mut themed);
+            let after = TableColumns::new(990.0, &themed);
+            assert_eq!(themed.theme, expected_theme);
+            assert_eq!(before.columns.len(), after.columns.len());
+            assert_eq!(before.width, after.width);
+
+            let paint = ComponentPaint::from_settings(&themed);
+            assert_ne!(paint.table(Color32::WHITE), Color32::WHITE);
+            assert_ne!(paint.border(Color32::WHITE), Color32::WHITE);
+            assert_eq!(paint.on_table(Color32::BLACK), Color32::WHITE);
+            assert_eq!(
+                paint.on_selection(Color32::WHITE, Color32::BLACK),
+                Color32::WHITE
+            );
+        }
+        let untouched = ComponentPaint::from_settings(&Settings::default());
+        assert_eq!(untouched.table(Color32::WHITE), Color32::WHITE);
+        assert_eq!(untouched.on_table(Color32::BLACK), Color32::BLACK);
+    }
+
+    #[test]
+    fn customized_heatmap_interpolation_is_bounded_and_preserves_signal() {
+        let base = Color32::from_rgb(20, 40, 60);
+        let tint = Color32::from_rgb(120, 140, 160);
+        assert_eq!(blend(base, tint, -1.0), base);
+        assert_eq!(blend(base, tint, 2.0), tint);
+        assert_eq!(blend(base, tint, 0.5), Color32::from_rgb(70, 90, 110));
+        assert_ne!(blend(base, tint, 0.2), blend(base, tint, 0.5));
     }
 }

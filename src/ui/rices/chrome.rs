@@ -1,4 +1,5 @@
 use super::*;
+use crate::theme::{ComponentPaint, readable_text};
 use egui::{Align2, FontId, Frame, Margin, Rect};
 
 pub(super) fn topbar(app: &mut TaskottoApp, ctx: &egui::Context) {
@@ -119,6 +120,7 @@ pub(super) fn menu_bar(app: &mut TaskottoApp, ctx: &egui::Context) {
 
 pub(super) fn navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
     let xp = is_xp(app);
+    let paint = ComponentPaint::from_settings(&app.settings);
     let surface = if xp {
         Color32::from_rgb(236, 233, 216)
     } else {
@@ -158,17 +160,32 @@ pub(super) fn navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
                 let modern_tab_width = (ui.available_width() / tabs.len() as f32).clamp(74.0, 98.0);
                 for &(page, label) in tabs {
                     let selected = app.page == page;
+                    let title = if selected && paint.selection.is_some() {
+                        RichText::new(label)
+                            .color(paint.on_selection(Color32::WHITE, Color32::BLACK))
+                    } else if !selected && paint.control.is_some() {
+                        RichText::new(label).color(paint.on_control(surface, Color32::BLACK))
+                    } else {
+                        RichText::new(label)
+                    };
                     let button = if xp {
-                        egui::Button::new(label)
-                            .fill(if selected { Color32::WHITE } else { surface })
-                            .stroke(Stroke::new(1.0_f32, Color32::from_rgb(135, 134, 121)))
+                        egui::Button::new(title)
+                            .fill(if selected {
+                                paint.selection(Color32::WHITE)
+                            } else {
+                                paint.control(surface)
+                            })
+                            .stroke(Stroke::new(
+                                1.0_f32,
+                                paint.border(Color32::from_rgb(135, 134, 121)),
+                            ))
                             .corner_radius(0)
                     } else {
-                        egui::Button::new(label)
+                        egui::Button::new(title)
                             .fill(if selected {
-                                Color32::from_rgb(242, 249, 254)
+                                paint.selection(Color32::from_rgb(242, 249, 254))
                             } else {
-                                Color32::WHITE
+                                paint.control(Color32::WHITE)
                             })
                             .stroke(Stroke::NONE)
                             .corner_radius(0)
@@ -188,14 +205,14 @@ pub(super) fn navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
                                 r.left_top() + egui::vec2(1.0, 1.0),
                                 r.right_top() + egui::vec2(-1.0, 1.0),
                             ],
-                            Stroke::new(1.0_f32, Color32::WHITE),
+                            Stroke::new(1.0_f32, paint.selection(Color32::WHITE)),
                         );
                         ui.painter().line_segment(
                             [
                                 r.left_bottom() + egui::vec2(2.0, -1.0),
                                 r.right_bottom() + egui::vec2(-2.0, -1.0),
                             ],
-                            Stroke::new(2.0_f32, Color32::WHITE),
+                            Stroke::new(2.0_f32, paint.selection(Color32::WHITE)),
                         );
                     }
                     if !xp && selected {
@@ -216,11 +233,11 @@ pub(super) fn navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
             });
             subtle_separator(
                 ui,
-                if xp {
+                paint.border(if xp {
                     Color32::from_rgb(134, 132, 117)
                 } else {
                     Color32::from_rgb(221, 221, 221)
-                },
+                }),
             );
         });
 }
@@ -229,6 +246,7 @@ pub(super) fn navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
 /// manager uses horizontal tabs; this is deliberately opt-in through the
 /// existing Sidebar navigation setting, not called the historical default.
 pub(super) fn vertical_navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
+    let paint = ComponentPaint::from_settings(&app.settings);
     egui::SidePanel::left("rice-win10-vertical-navigation")
         .resizable(false)
         .exact_width(188.0)
@@ -258,15 +276,12 @@ pub(super) fn vertical_navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
                 let (rect, response) =
                     ui.allocate_exact_size(egui::vec2(ui.available_width(), 38.0), Sense::click());
                 if selected || response.hovered() {
-                    ui.painter().rect_filled(
-                        rect,
-                        1.0,
-                        if selected {
-                            Color32::from_rgb(222, 236, 246)
-                        } else {
-                            Color32::from_rgb(236, 240, 243)
-                        },
-                    );
+                    let fill = if selected {
+                        paint.selection(Color32::from_rgb(222, 236, 246))
+                    } else {
+                        paint.hover(Color32::from_rgb(236, 240, 243))
+                    };
+                    ui.painter().rect_filled(rect, 1.0, fill);
                 }
                 if selected {
                     ui.painter().rect_filled(
@@ -280,7 +295,13 @@ pub(super) fn vertical_navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
                     Align2::LEFT_CENTER,
                     title,
                     FontId::proportional(14.0),
-                    Color32::from_rgb(30, 35, 43),
+                    if selected && paint.selection.is_some() {
+                        readable_text(paint.selection(Color32::from_rgb(222, 236, 246)))
+                    } else if response.hovered() && paint.hover.is_some() {
+                        readable_text(paint.hover(Color32::from_rgb(236, 240, 243)))
+                    } else {
+                        Color32::from_rgb(30, 35, 43)
+                    },
                 );
                 if response.has_focus() {
                     ui.painter().rect_stroke(

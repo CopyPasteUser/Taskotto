@@ -62,7 +62,10 @@ Development on later milestones may proceed while user-hardware QA is pending.
     hover, border, control and selection tokens with honest row contrast.
   - [x] RC23: Windows 7's top tabs, sortable Processes/Applications reports,
     hover/selection, frame borders and empty states use shared component colors.
-  - [ ] Continue extraction for the remaining three Windows-inspired renderers,
+  - [x] RC24: shared XP Luna and Windows 10 navigation and process report,
+    XP Applications, and Win10 optional sidebar consume semantic tokens;
+    custom tables preserve readable Linux process metrics and heatmap signal.
+  - [ ] Continue extraction for Windows 98's classic beveled controls,
     and expose intentionally drawn metric/chart sizes without recompilation.
 
 **Gate:** an AI-generated pack can be checked, previewed and applied without
@@ -151,10 +154,10 @@ lean, offline-capable and independent from RiceBowl.
 
 ## Work order
 
-1. **Delivered (RC14–23):** P1 format/loader/CLI, secure reference pack,
+1. **Delivered (RC14–24):** P1 format/loader/CLI, secure reference pack,
    headless export/check/re-import, live file reload and in-app library,
    session-only preview/revert/import/export, semantic widget tokens, an
-   explicit RiceBowl export fixture and Frutiger Aero/macOS/ChromeOS/Windows 7 tokens.
+   explicit RiceBowl export fixture and Frutiger Aero/macOS/ChromeOS/Windows 7/XP/Windows 10 tokens.
 2. **Next:** P1 component-level UI token extraction. RiceBowl's separate JSON
    desktop pack still is not Taskotto TOML; the explicit RiceBowl exporter is
    the validated conversion boundary.

@@ -6,11 +6,11 @@
 
 A customizable process manager and system monitor written in **Rust**. Runs alone or alongside [RiceBowl](https://github.com/CopyPasteUser/Ricebowl) on **X11 and Wayland**.
 
-![License](https://img.shields.io/badge/license-MIT-blue) ![Rust](https://img.shields.io/badge/language-Rust-orange) ![Status](https://img.shields.io/badge/status-1.0%20RC23-yellow)
+![License](https://img.shields.io/badge/license-MIT-blue) ![Rust](https://img.shields.io/badge/language-Rust-orange) ![Status](https://img.shields.io/badge/status-1.0%20RC24-yellow)
 
 </div>
 
-> **Status:** `1.0.0-rc.23` — seven dedicated interfaces: Frutiger Aero, ChromeOS, Windows 98, XP Luna, Windows 7, Windows 10 and macOS Activity Monitor. **All eight profiles leave the window frame, title and window buttons to RiceBowl/the active window manager**; Taskotto draws only its content, menus and functional toolbars. Native GUI and resource-use acceptance are still outstanding. See [1.0 roadmap](ROADMAP.md), [future development roadmap](EXPANSION_ROADMAP.md) and [QA checklist](QA.md). This is **not yet stable 1.0**.
+> **Status:** `1.0.0-rc.24` — seven dedicated interfaces: Frutiger Aero, ChromeOS, Windows 98, XP Luna, Windows 7, Windows 10 and macOS Activity Monitor. **All eight profiles leave the window frame, title and window buttons to RiceBowl/the active window manager**; Taskotto draws only its content, menus and functional toolbars. Native GUI and resource-use acceptance are still outstanding. See [1.0 roadmap](ROADMAP.md), [future development roadmap](EXPANSION_ROADMAP.md) and [QA checklist](QA.md). This is **not yet stable 1.0**.
 
 ## Screenshots
 
@@ -25,7 +25,7 @@ A customizable process manager and system monitor written in **Rust**. Runs alon
 | [![macOS-inspired Activity Monitor CPU process list](assets/screenshots/taskotto-macos-cpu.png)](assets/screenshots/taskotto-macos-cpu.png) | [![Frutiger Aero CPU and memory performance dashboard](assets/screenshots/taskotto-frutiger-aero-performance.png)](assets/screenshots/taskotto-frutiger-aero-performance.png) |
 
 <details>
-<summary><strong>All screenshots (43)</strong> — expand to view every rice and every captured screen</summary>
+<summary><strong>All screenshots (45)</strong> — expand to view every rice and every captured screen</summary>
 
 ### Frutiger Aero
 
@@ -68,6 +68,8 @@ A customizable process manager and system monitor written in **Rust**. Runs alon
 | [![Windows XP Luna: Performance](assets/screenshots/taskotto-xp-luna-performance.png)](assets/screenshots/taskotto-xp-luna-performance.png) | [![Windows XP Luna: Networking](assets/screenshots/taskotto-xp-luna-networking.png)](assets/screenshots/taskotto-xp-luna-networking.png) |
 | **Details** | **New Task** |
 | [![Windows XP Luna: Details](assets/screenshots/taskotto-xp-luna-details.png)](assets/screenshots/taskotto-xp-luna-details.png) | [![Windows XP Luna: New Task](assets/screenshots/taskotto-xp-luna-new-task.png)](assets/screenshots/taskotto-xp-luna-new-task.png) |
+| **Midnight RicePack: custom report** | |
+| [![XP Luna: Midnight RicePack with a dark process table](assets/screenshots/taskotto-xp-midnight-ricepack.png)](assets/screenshots/taskotto-xp-midnight-ricepack.png) | |
 
 ### Windows 7
 
@@ -94,6 +96,8 @@ A customizable process manager and system monitor written in **Rust**. Runs alon
 | [![Windows 10: Users](assets/screenshots/taskotto-win10-users.png)](assets/screenshots/taskotto-win10-users.png) | [![Windows 10: Details](assets/screenshots/taskotto-win10-details.png)](assets/screenshots/taskotto-win10-details.png) |
 | **Services** | **Vertical navigation** |
 | [![Windows 10: Services](assets/screenshots/taskotto-win10-services.png)](assets/screenshots/taskotto-win10-services.png) | [![Windows 10: Vertical navigation](assets/screenshots/taskotto-win10-vertical.png)](assets/screenshots/taskotto-win10-vertical.png) |
+| **Indigo RicePack: custom heatmap** | |
+| [![Windows 10: Indigo RicePack dark process table and accurate CPU/memory heatmap](assets/screenshots/taskotto-win10-indigo-ricepack.png)](assets/screenshots/taskotto-win10-indigo-ricepack.png) | |
 
 ### macOS Activity Monitor
 
@@ -110,7 +114,7 @@ A customizable process manager and system monitor written in **Rust**. Runs alon
 
 </details>
 
-*All 43 images above are headless Taskotto egui renders using live Linux `/proc`; the capture environment exposes few processes. The editor, Aero Lagoon, Nightshift, Nocturne and Dusk captures are actual renders using bundled RicePacks. These client-only renders intentionally omit RiceBowl's native window frame. [Capture provenance and reproduction](SCREENSHOTS.md) · [Fidelity boundaries](RICE_FIDELITY.md). Native X11/Wayland verification remains pending.*
+*All 45 images above are headless Taskotto egui renders using live Linux `/proc`; the capture environment exposes few processes. The editor, Aero Lagoon, Nightshift, Nocturne, Dusk, Midnight and Indigo captures are actual renders using bundled RicePacks. These client-only renders intentionally omit RiceBowl's native window frame. [Capture provenance and reproduction](SCREENSHOTS.md) · [Fidelity boundaries](RICE_FIDELITY.md). Native X11/Wayland verification remains pending.*
 
 ## What works
 
