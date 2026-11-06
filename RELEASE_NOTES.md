@@ -1,8 +1,14 @@
-# Taskotto 1.0.0-rc.24 — release candidate
+# Taskotto 1.0.0-rc.25 — release candidate
 
 **Date:** 2026-11-06 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
 Rust-only Linux process manager and system monitor. This is a **prerelease**, not a stable 1.0 certification.
+
+## Changes since rc.24
+
+- Classic 98's real Close Program process list, optional advanced report, selected/hovered rows, beveled buttons, sunken borders and focus outlines now accept the shared RicePack semantic colors. Built-in original grayscale defaults and unprivileged PID-safe actions remain intact.
+- The included Violet pack and genuine headless egui screenshot bring the gallery to 46. Custom dark list fills get readable text, while RiceBowl/the window manager still owns native window decorations.
+- All seven custom rice clients now support component colors in their primary process/task UI. P1 sizing and remaining secondary pages, P2+ features and real Mint/X11, KDE/Wayland, RiceBowl/labwc acceptance remain open; no stable release is certified.
 
 ## Changes since rc.23
 
