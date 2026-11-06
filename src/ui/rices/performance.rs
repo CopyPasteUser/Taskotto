@@ -544,7 +544,7 @@ fn xp_graph(ui: &mut egui::Ui, title: &str, fraction: f32, history: &VecDeque<f3
     });
 }
 
-fn graph_rect(ui: &mut egui::Ui, height: f32, fill: Color32, grid: Color32) -> Rect {
+pub(super) fn graph_rect(ui: &mut egui::Ui, height: f32, fill: Color32, grid: Color32) -> Rect {
     let (rect, _) = ui.allocate_exact_size(
         egui::vec2(ui.available_width().max(175.0), height),
         Sense::hover(),
@@ -569,7 +569,7 @@ fn graph_rect(ui: &mut egui::Ui, height: f32, fill: Color32, grid: Color32) -> R
     rect
 }
 
-fn plot_lines(
+pub(super) fn plot_lines(
     ui: &mut egui::Ui,
     rect: Rect,
     series: &[(&VecDeque<f32>, Color32)],

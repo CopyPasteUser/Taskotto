@@ -94,6 +94,7 @@ impl Drop for Worker {
 #[derive(Default)]
 struct History {
     cpu: VecDeque<f32>,
+    cores: Vec<VecDeque<f32>>,
     memory: VecDeque<f32>,
     received: VecDeque<f32>,
     sent: VecDeque<f32>,
@@ -103,6 +104,15 @@ struct History {
 
 impl History {
     fn record(&mut self, snapshot: &Snapshot) {
+        self.cores
+            .resize_with(snapshot.cores_percent.len(), VecDeque::new);
+        self.cores.truncate(snapshot.cores_percent.len());
+        for (history, &load) in self.cores.iter_mut().zip(&snapshot.cores_percent) {
+            if history.len() == 120 {
+                history.pop_front();
+            }
+            history.push_back(load);
+        }
         for (queue, value) in [
             (&mut self.cpu, snapshot.cpu_percent),
             (&mut self.memory, snapshot.memory.used_fraction() * 100.0),
@@ -858,6 +868,8 @@ impl TaskottoApp {
                 "Taskotto Properties"
             } else if self.settings.theme == Theme::Windows10 {
                 "Taskotto Settings"
+            } else if self.settings.theme == Theme::Windows7 {
+                "Taskotto Options"
             } else {
                 "Preferences"
             })
@@ -1149,11 +1161,15 @@ impl TaskottoApp {
                 Page::Startup => rices::startup(self, ui),
                 Page::Networking => rices::networking(self, ui),
                 Page::Users => rices::users(self, ui),
+                Page::Details if self.settings.theme == Theme::Windows7 => self.processes_page(ui),
                 Page::Details => self.details_page(ui),
                 Page::Services => rices::services(self, ui),
                 Page::Preferences => self.preferences_page(ui),
             }
         });
+        if self.settings.theme == Theme::Windows7 && self.page == Page::Details {
+            rices::seven_properties_dialog(self, ctx);
+        }
         self.confirmation_dialog(ctx);
         self.new_task_dialog(ctx);
     }
@@ -1171,7 +1187,11 @@ impl eframe::App for TaskottoApp {
                 self.focus_search = true;
             }
             if input.key_pressed(egui::Key::Escape) && self.pending.is_none() {
-                self.query.clear();
+                if self.settings.theme == Theme::Windows7 && self.page == Page::Details {
+                    self.page = Page::Processes;
+                } else {
+                    self.query.clear();
+                }
             }
         });
         self.draw_contents(ctx);
@@ -1364,9 +1384,9 @@ mod tests {
     #[test]
     fn history_stays_bounded() {
         let mut history = History::default();
-        let snapshot = Snapshot {
+        let mut snapshot = Snapshot {
             cpu_percent: 33.0,
-            cores_percent: vec![],
+            cores_percent: vec![18.0, 55.0],
             memory: Default::default(),
             rates: Default::default(),
             uptime_seconds: 0.0,
@@ -1378,6 +1398,13 @@ mod tests {
         }
         assert_eq!(history.cpu.len(), 120);
         assert_eq!(history.disk_read.len(), 120);
+        assert_eq!(history.cores.len(), 2);
+        assert_eq!(history.cores[0].len(), 120);
+        assert_eq!(history.cores[1].back().copied(), Some(55.0));
+        snapshot.cores_percent = vec![10.0];
+        history.record(&snapshot);
+        assert_eq!(history.cores.len(), 1);
+        assert_eq!(history.cores[0].len(), 120);
     }
 
     #[test]
@@ -1594,7 +1621,7 @@ mod tests {
             system_pages: rices::SystemPages::default(),
             new_task: NewTaskDialog::default(),
         };
-        for theme in [Theme::XpLuna, Theme::Windows10] {
+        for theme in [Theme::XpLuna, Theme::Windows7, Theme::Windows10] {
             for &navigation in if theme == Theme::Windows10 {
                 &[LayoutMode::TopTabs, LayoutMode::Sidebar][..]
             } else {

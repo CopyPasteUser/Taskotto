@@ -1,4 +1,4 @@
-//! Standalone Taskotto views inspired by two historical task-manager design
+//! Standalone Taskotto views inspired by three historical task-manager design
 //! languages. They share the existing procfs sampler, process actions, and
 //! settings; only drawing/navigation is specialized.
 
@@ -7,6 +7,7 @@ mod chrome;
 mod details;
 mod performance;
 mod process;
+mod seven;
 mod system;
 mod users;
 
@@ -15,14 +16,20 @@ pub(super) use system::SystemPages;
 use super::*;
 
 pub(super) fn supports(theme: Theme) -> bool {
-    matches!(theme, Theme::XpLuna | Theme::Windows10)
+    matches!(theme, Theme::XpLuna | Theme::Windows7 | Theme::Windows10)
 }
 
 pub(super) fn topbar(app: &mut TaskottoApp, ctx: &egui::Context) {
+    if app.settings.theme == Theme::Windows7 {
+        return seven::topbar(app, ctx);
+    }
     chrome::topbar(app, ctx);
 }
 
 pub(super) fn navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
+    if app.settings.theme == Theme::Windows7 {
+        return seven::navigation(app, ctx);
+    }
     chrome::navigation(app, ctx);
 }
 
@@ -31,22 +38,37 @@ pub(super) fn vertical_navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
 }
 
 pub(super) fn statusbar(app: &mut TaskottoApp, ctx: &egui::Context) {
+    if app.settings.theme == Theme::Windows7 {
+        return seven::statusbar(app, ctx);
+    }
     chrome::statusbar(app, ctx);
 }
 
 pub(super) fn processes(app: &mut TaskottoApp, ui: &mut egui::Ui) {
+    if app.settings.theme == Theme::Windows7 {
+        return seven::processes(app, ui);
+    }
     process::page(app, ui);
 }
 
 pub(super) fn performance(app: &mut TaskottoApp, ui: &mut egui::Ui) {
+    if app.settings.theme == Theme::Windows7 {
+        return seven::performance(app, ui);
+    }
     performance::page(app, ui);
 }
 
 pub(super) fn networking(app: &mut TaskottoApp, ui: &mut egui::Ui) {
+    if app.settings.theme == Theme::Windows7 {
+        return seven::networking(app, ui);
+    }
     performance::networking_page(app, ui);
 }
 
 pub(super) fn users(app: &mut TaskottoApp, ui: &mut egui::Ui) {
+    if app.settings.theme == Theme::Windows7 {
+        return seven::users(app, ui);
+    }
     users::page(app, ui);
 }
 
@@ -55,6 +77,9 @@ pub(super) fn xp_details(app: &mut TaskottoApp, ui: &mut egui::Ui) {
 }
 
 pub(super) fn applications(app: &mut TaskottoApp, ui: &mut egui::Ui) {
+    if app.settings.theme == Theme::Windows7 {
+        return seven::applications(app, ui);
+    }
     applications::page(app, ui);
 }
 
@@ -67,7 +92,14 @@ pub(super) fn startup(app: &mut TaskottoApp, ui: &mut egui::Ui) {
 }
 
 pub(super) fn services(app: &mut TaskottoApp, ui: &mut egui::Ui) {
+    if app.settings.theme == Theme::Windows7 {
+        return seven::services(app, ui);
+    }
     system::services(app, ui);
+}
+
+pub(super) fn seven_properties_dialog(app: &mut TaskottoApp, ctx: &egui::Context) {
+    seven::properties_dialog(app, ctx);
 }
 
 fn is_xp(app: &TaskottoApp) -> bool {

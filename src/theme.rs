@@ -100,6 +100,15 @@ impl ThemeStyle {
                 visuals.widgets.hovered.bg_fill = Color32::from_rgb(232, 241, 249);
                 visuals.widgets.active.bg_fill = self.accent;
             }
+            Theme::Windows7 => {
+                visuals.extreme_bg_color = Color32::WHITE;
+                visuals.faint_bg_color = Color32::from_rgb(240, 246, 250);
+                visuals.widgets.inactive.bg_fill = Color32::from_rgb(239, 245, 249);
+                visuals.widgets.inactive.bg_stroke.color = Color32::from_rgb(151, 169, 184);
+                visuals.widgets.noninteractive.bg_stroke.color = Color32::from_rgb(163, 180, 195);
+                visuals.widgets.hovered.bg_fill = Color32::from_rgb(218, 236, 247);
+                visuals.widgets.active.bg_fill = self.accent;
+            }
             _ => {}
         }
         let rounding = egui::CornerRadius::same(self.rounding);

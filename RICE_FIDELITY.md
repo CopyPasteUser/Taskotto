@@ -1,4 +1,4 @@
-# Windows 10 / XP Luna task-manager rice fidelity
+# Windows 7 / Windows 10 / XP Luna task-manager rice fidelity
 
 Taskotto is Linux system software. The goal is **recognizable task-manager
 interaction and visual hierarchy**, not a falsely branded Windows program.
@@ -10,11 +10,47 @@ Only original vector-style drawing and standard egui controls are used.
   [BleepingComputer Task Manager guide](https://www.bleepingcomputer.com/tutorials/close-a-program-using-task-manager/).
 - Historical Windows XP task-manager processes example:
   [San José State University CS149](https://www.cs.sjsu.edu/faculty/pearce/cs149/multiproc.htm).
+- Windows 7 historical processes and Services screenshots in the
+  [Windows 7 Resource Kit](https://ptgmedia.pearsoncmg.com/images/9780735627000/samplepages/9780735627000.pdf)
+  (published Microsoft Press material) and
+  [Windows 7 configuration study guide](https://ugvet.ug.edu.ge/storage/books/June2021/TvtRE8oiIEpI6VnL9jM8.pdf).
 - Functional Windows task-manager concepts:
   [Microsoft Learn](https://learn.microsoft.com/en-us/troubleshoot/windows-server/support-tools/support-tools-task-manager).
 
 These are design references; their screenshots, icons, product logos, textures
 and fonts are **not** copied or bundled.
+
+## Windows 7
+
+- Separate Aero-era title treatment drawn from original gradient/vector
+  primitives; pale blue client surface, beveled rectangular tabs and a
+  classic status strip for process count, CPU usage and physical memory.
+- The original six-tab order: **Applications, Processes, Services, Performance,
+  Networking, Users**. Each tab has a Linux-backed screen rather than a
+  nonfunctional visual placeholder.
+- Processes use a dense white report with classic `Image Name`, `User Name`,
+  `CPU`, `Memory (Working Set)` and `Description` columns. PID and I/O appear
+  at sufficiently wide widths. The actual Description cell contains the
+  Linux command line, not imagined Windows file-description metadata; memory
+  is explicitly identified as Linux resident set size (RSS), not private
+  working set. Header sorting, optional search, all-user filter and
+  confirm-protected End Process actions work.
+- Historical-style CPU usage gauge, real per-core CPU usage history (up to
+  four visible at a time, limited to two at narrower widths), blue physical
+  memory gauge/history, physical memory, swap, process/thread/uptime groups.
+  Core histories have individually bounded queues and adjust to core count.
+- Applications are truthfully labeled current-user *Linux processes*, not
+  desktop windows; New Task launches a user-entered command. **Switch To**
+  remains disabled until compositor-specific activation is supportable.
+- Services shows asynchronously queried read-only `systemd --user` units,
+  or a visible unavailable/error state. Windows service PIDs, group control
+  and administrator privilege are not invented.
+- Networking uses real non-loopback receive/send byte-rate history with an
+  honest aggregate-interface caveat. Users lists actual process owners by UID,
+  rather than claiming those UIDs are active graphical desktop sessions.
+- Details/Properties opens as a floating sheet over the Processes tab, not a
+  seventh historical tab; it retains real Linux fields and protected signals.
+  Palette and border treatment follow Seven rather than Luna.
 
 ## XP Luna
 
@@ -75,10 +111,10 @@ and fonts are **not** copied or bundled.
 - The compositor/window manager owns the **native window frame** on X11 and
   Wayland. The in-client bars are styled headers, not replacement decorations
   or simulated OS window buttons.
-- Windows 10 exposes seven data-backed tabs; the original Windows APIs and
-  historic App history accounting do not directly exist on Linux. XP exposes
-  its five historical tabs, with Settings and selected-process Properties
-  reachable through menus and process actions.
+- Windows 10 exposes seven data-backed tabs; Windows 7 exposes six; XP
+  exposes five. The original Windows APIs and historic App history accounting
+  do not directly exist on Linux. Settings and selected-process Properties
+  remain accessible through menus and process actions.
 - Linux cannot provide Windows process categories, application-history
   accounting or window ownership across all Wayland compositors from procfs
   alone. We label substitutes instead of silently misrepresenting them.
@@ -92,5 +128,6 @@ and fonts are **not** copied or bundled.
 - Headless screenshot renders prove actual egui layout/paint commands and real
   procfs values, **not native desktop output**. [QA.md](QA.md) retains the Mint
   X11, KDE Wayland and labwc visual/keyboard/performance sign-off gates.
-- The README gallery and provenance describe 14 current XP/Windows 10 captures; old
-  generic-theme renders were removed, while the other six rice presets remain.
+- The README gallery and provenance describe 21 current Seven/XP/Windows 10
+  captures; old generic-theme renders were removed, while all eight rice
+  presets remain available.

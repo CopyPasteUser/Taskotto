@@ -1,10 +1,18 @@
-# Taskotto 1.0.0-rc.8 — release candidate
+# Taskotto 1.0.0-rc.9 — release candidate
 
 **Date:** 2026-11-06 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
 Rust-only Linux process manager and system monitor. This is a **prerelease**, not a stable 1.0 certification.
 
-## Changes since rc.7
+## Changes since rc.8
+
+- Windows 7 now has its own task-manager UI, rather than inheriting the generic Taskotto sidebar/cards: a bright, original Aero-like header, classic File/Options/View/Help menu, six period-correct horizontal tabs, thin raised borders and a system status strip.
+- Implemented the six usable Windows 7-style tabs: Applications (current-user process approximation and working New Task), Processes (compact sortable report, column selection and safe process actions), Services (nonblocking, read-only systemd user units with explicit errors), Performance (per-logical-core history plus CPU/RAM usage and live memory/swap/thread statistics), Networking (real aggregate RX/TX rates), and Users (real UID group summaries).
+- New per-core sample history is bounded to 120 readings per core and handles CPU-core-count changes. No per-core history is fabricated from an aggregate sample.
+- Seven actual headless egui scene captures (six historical pages and the floating process properties sheet) and a refreshed compact three-rice README gallery bring screenshot provenance to 21 images. Screens with systemd permission failures display those genuine errors in the capture environment.
+- As with the other two rices, the goal is a recognizable, precise historical layout, but **95% pixel similarity is not certified** without paired reference captures on the target desktop. Linux process command lines and RSS are not Windows file-description metadata or private working set.
+
+## Earlier changes since rc.7 (rc.8)
 
 - Windows 10's historical navigation has seven horizontal tabs rather than five. New App history, Startup, and Services pages operate on live Linux data, without inventing Windows APIs or fake startup impact estimates: current-process CPU lifetime counters, XDG autostart desktop files and a nonblocking systemd user service query.
 - The vertical Windows-10-like sidebar requested as an alternate layout is available via Preferences → Navigation → Sidebar. It is explicitly custom, because the original Windows 10 Task Manager used horizontal tabs (the later Windows 11 task manager introduced a sidebar).

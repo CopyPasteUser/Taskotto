@@ -6,24 +6,24 @@
 
 A customizable process manager and system monitor written in **Rust**. Runs alone or alongside [RiceBowl](https://github.com/CopyPasteUser/Ricebowl) on **X11 and Wayland**.
 
-![License](https://img.shields.io/badge/license-MIT-blue) ![Rust](https://img.shields.io/badge/language-Rust-orange) ![Status](https://img.shields.io/badge/status-1.0%20RC8-yellow)
+![License](https://img.shields.io/badge/license-MIT-blue) ![Rust](https://img.shields.io/badge/language-Rust-orange) ![Status](https://img.shields.io/badge/status-1.0%20RC9-yellow)
 
 </div>
 
-> **Status:** `1.0.0-rc.8` — deeper XP/Windows 10 task-manager interactions, seven data-backed Windows 10 tabs, and an optional vertical navigation. Native GUI and resource-use acceptance are still outstanding. See [roadmap](ROADMAP.md) and [QA checklist](QA.md). This is **not yet stable 1.0**.
+> **Status:** `1.0.0-rc.9` — three dedicated historical task-manager UIs: Windows 7, XP Luna and Windows 10. Native GUI and resource-use acceptance are still outstanding. See [roadmap](ROADMAP.md) and [QA checklist](QA.md). This is **not yet stable 1.0**.
 
 ## Screenshots
 
-**Windows 10-inspired process view** — compact tabs, grouped live processes and a resource heatmap. `Ctrl+F` reveals the optional Linux process filter.
-
-![Taskotto in the Windows 10-inspired rice](assets/screenshots/taskotto-win10-processes.png)
-
-**XP Luna-inspired performance view** — blue/cream chrome, black-and-green CPU/RAM history and classic system-statistics groups.
-
-![Taskotto in the XP Luna-inspired rice](assets/screenshots/taskotto-xp-luna-performance.png)
+| Windows 7 · Aero-era report | Windows 10 · Modern processes | XP Luna · Classic performance |
+| :---: | :---: | :---: |
+| [![Windows 7 Taskotto process report](assets/screenshots/taskotto-win7-processes.png)](assets/screenshots/taskotto-win7-processes.png) | [![Windows 10 Taskotto processes](assets/screenshots/taskotto-win10-processes.png)](assets/screenshots/taskotto-win10-processes.png) | [![XP Luna Taskotto performance](assets/screenshots/taskotto-xp-luna-performance.png)](assets/screenshots/taskotto-xp-luna-performance.png) |
 
 <details>
-<summary>More genuine Windows 10 and XP Luna screenshots</summary>
+<summary>More genuine renders: Windows 7, Windows 10 and XP Luna</summary>
+
+![Windows 7 historical CPU and memory usage layout](assets/screenshots/taskotto-win7-performance.png)
+
+![Windows 7 Networking with measured Linux receive/send rates](assets/screenshots/taskotto-win7-networking.png)
 
 ![Windows 10-inspired performance page](assets/screenshots/taskotto-win10-performance.png)
 
@@ -31,24 +31,20 @@ A customizable process manager and system monitor written in **Rust**. Runs alon
 
 ![Windows 10-inspired Linux startup entries](assets/screenshots/taskotto-win10-startup.png)
 
-![Windows 10-inspired users page with live owner group](assets/screenshots/taskotto-win10-users.png)
-
 ![XP Luna-inspired applications-style page](assets/screenshots/taskotto-xp-luna-applications.png)
-
-![XP Luna-inspired networking graphs](assets/screenshots/taskotto-xp-luna-networking.png)
 
 ![XP Luna-inspired New Task dialog](assets/screenshots/taskotto-xp-luna-new-task.png)
 
 </details>
 
-*All images are real Taskotto egui renders using live Linux `/proc` and available desktop configuration; the capture environment exposes few processes. [All 14 captures and reproduction details](SCREENSHOTS.md) · [Fidelity boundaries](RICE_FIDELITY.md). Native X11/Wayland and pixel-accuracy verification remain pending.*
+*All images are real Taskotto egui renders using live Linux `/proc`; the capture environment exposes few processes. [All 21 captures and reproduction details](SCREENSHOTS.md) · [Fidelity boundaries](RICE_FIDELITY.md). Native X11/Wayland and pixel-accuracy verification remain pending.*
 
 ## What works
 
 - **Processes:** searchable live list, CPU/RAM/I/O/PID/name sort, tree, user filter, process start/runtime and per-process I/O rates.
 - **Safe actions:** terminate, force kill, pause and resume with confirmation and PID-reuse protection via Linux `pidfd`.
 - **Performance:** CPU/core load, RAM/swap, network RX/TX and disk read/write rates, bounded comparative rolling graphs.
-- **Riceable:** 8 profiles, with seven Windows 10-inspired task-manager tabs, XP Luna's five classic tabs, and original responsive styles. Windows 10's period-accurate tabs remain horizontal by default; **Preferences → Navigation → Sidebar** enables a custom vertical view. Custom colors, fonts, table density and persistent TOML preferences remain supported.
+- **Riceable:** 8 profiles; period-specific XP Luna (5 tabs), Windows 7 (6 tabs) and Windows 10 (7 tabs) task managers. All default to historical **horizontal** tabs; the Windows 10 **Preferences → Navigation → Sidebar** setting offers a custom alternative. Custom colors, fonts, table density and persistent TOML preferences remain supported.
 - **Desktop features:** user-local XDG autostart list (read-only), live user systemd services (read-only if available), process-lifetime CPU accounting, and an XP-style **New Task** command dialog running with ordinary user permissions.
 - **Independent:** no root service, no resident daemon, no RiceBowl or desktop-shell dependency.
 - **Headless:** `--snapshot --json` is available without a graphical session.
@@ -140,7 +136,7 @@ cargo build --locked --release
 - [Hardware QA checklist](QA.md) — X11/Wayland, process safety and measured resource use.
 - [Performance measurements](PERFORMANCE.md) — reproducible headless baseline and GUI acceptance limits.
 - [Screenshot provenance](SCREENSHOTS.md) — reproducible live-data renders and their limitations.
-- [Windows 10 and XP Luna rice details](RICE_FIDELITY.md) — layout, interaction and fidelity boundaries.
+- [Windows 7, Windows 10 and XP Luna rice details](RICE_FIDELITY.md) — layout, interaction and fidelity boundaries.
 - [Release candidate notes](RELEASE_NOTES.md) — implemented scope, verified checks and known limitations.
 - [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) · [Changelog](CHANGELOG.md)
 - [RiceField](https://github.com/CopyPasteUser/Ricefield) — matching standalone Rust file manager.
