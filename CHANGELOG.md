@@ -2,6 +2,14 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.5] — 2026-11-06
+
+- End-to-end Linux tests exercise real child-process pause/resume/terminate/kill, stale PID start-time rejection, CLI JSON output and invalid argument handling.
+- User-local desktop install now replaces the launcher and icon atomically, including a regression against following symlinked output files.
+- Automated installation/reinstallation smoke test verifies real desktop and SVG files under an isolated XDG data directory.
+- CI checks the declared Rust 1.88 minimum, warning-free documentation and revision-pinned upstream actions. Tag releases recheck formatting/lints, construct deterministically timestamped archives, and smoke-test the archive and checksum before publishing.
+- No scope creep: final X11/Wayland compatibility, native visual accuracy, GUI performance and packaging sign-off still require real machines.
+
 ## [1.0.0-rc.4] — 2026-11-06
 
 - Separate Windows 10-inspired and XP Luna-inspired task-manager screens with original Chrome, functional menus and native-feeling tab navigation.

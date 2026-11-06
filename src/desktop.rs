@@ -1,7 +1,9 @@
 //! Opt-in, user-local XDG desktop entry installation. Never writes system paths.
 use std::{
-    env, fs, io,
+    env, fs,
+    io::{self, Write},
     path::{Path, PathBuf},
+    time::{SystemTime, UNIX_EPOCH},
 };
 
 const DESKTOP: &str = include_str!("../packaging/io.github.copypasteuser.taskotto.desktop");
@@ -58,9 +60,39 @@ pub fn install(data_home: &Path, executable: &Path) -> io::Result<PathBuf> {
         binary.to_owned()
     };
     let desktop_contents = DESKTOP.replace("Exec=taskotto", &format!("Exec={exec}"));
-    fs::write(&icon_path, ICON)?;
-    fs::write(&desktop_path, desktop_contents)?;
+    // Atomic replacement keeps a previously working launcher intact if disk
+    // writes fail. Renaming over a leaf symlink also avoids writing through it.
+    write_atomic(&icon_path, ICON.as_bytes())?;
+    write_atomic(&desktop_path, desktop_contents.as_bytes())?;
     Ok(desktop_path)
+}
+
+fn write_atomic(path: &Path, contents: &[u8]) -> io::Result<()> {
+    let parent = path
+        .parent()
+        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "missing parent directory"))?;
+    let nonce = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_nanos();
+    let temporary = parent.join(format!(".taskotto-{}-{nonce}.tmp", std::process::id()));
+    let result = (|| {
+        let mut options = fs::OpenOptions::new();
+        options.write(true).create_new(true);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::OpenOptionsExt;
+            options.mode(0o644);
+        }
+        let mut file = options.open(&temporary)?;
+        file.write_all(contents)?;
+        file.sync_all()?;
+        fs::rename(&temporary, path)
+    })();
+    if result.is_err() {
+        let _ = fs::remove_file(temporary);
+    }
+    result
 }
 
 #[cfg(test)]
@@ -91,6 +123,41 @@ mod tests {
             folder
                 .join("icons/hicolor/scalable/apps/io.github.copypasteuser.taskotto.svg")
                 .exists()
+        );
+        fs::remove_dir_all(folder).unwrap();
+    }
+
+    #[test]
+    fn installing_over_a_symlink_does_not_overwrite_its_target() {
+        use std::os::unix::fs::symlink;
+
+        let folder = std::env::temp_dir().join(format!(
+            "taskotto-symlink-test-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let desktop_path = folder.join(format!("applications/{APP_ID}.desktop"));
+        fs::create_dir_all(desktop_path.parent().unwrap()).unwrap();
+        let unrelated = folder.join("unrelated.txt");
+        fs::write(&unrelated, "must not change").unwrap();
+        symlink(&unrelated, &desktop_path).unwrap();
+
+        install(&folder, Path::new("/usr/local/bin/taskotto")).unwrap();
+        assert_eq!(fs::read_to_string(unrelated).unwrap(), "must not change");
+        assert!(
+            !desktop_path
+                .symlink_metadata()
+                .unwrap()
+                .file_type()
+                .is_symlink()
+        );
+        assert!(
+            fs::read_to_string(&desktop_path)
+                .unwrap()
+                .contains("Exec=/usr/local/bin/taskotto")
         );
         fs::remove_dir_all(folder).unwrap();
     }
