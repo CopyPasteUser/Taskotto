@@ -12,6 +12,9 @@ components, synthetic process entries or proprietary OS graphics.
 The renderer is **headless and test-only** (the `png` crate is a dev-dependency).
 It is not a native GPU/desktop screenshot: there is no X11/Wayland window frame,
 and software antialiasing may differ slightly from the production renderer.
+The rc.13 captures show the app content **without** any extra XP/Seven/Ten
+title strip: RiceBowl or the currently active window manager supplies the
+real outer caption, title-bar buttons, border colors and focus styling.
 The restricted capture environment currently exposes few processes and very
 little I/O; this is why some screenshots look sparse. They are not evidence of
 hardware compatibility or GUI performance.
@@ -23,7 +26,7 @@ TASKOTTO_SCREENSHOT_DIR=assets/screenshots \
   cargo test --locked generate_headless_ui_screenshots -- --ignored --nocapture
 ```
 
-The command samples real system activity for about four seconds and writes:
+The command samples real system activity and writes:
 
 ### ChromeOS Task manager (primary task table and supplementary tools)
 

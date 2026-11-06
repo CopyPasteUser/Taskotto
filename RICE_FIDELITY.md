@@ -84,9 +84,10 @@ and fonts are **not** copied or bundled.
 
 ## Windows 7
 
-- Separate Aero-era title treatment drawn from original gradient/vector
-  primitives; pale blue client surface, beveled rectangular tabs and a
-  classic status strip for process count, CPU usage and physical memory.
+- Pale blue Aero-era **client** surface, functional menu, beveled rectangular
+  tabs and a classic status strip for process count, CPU usage and physical
+  memory. The outer Aero title treatment comes from RiceBowl/the compositor,
+  never from an in-client imitation.
 - The original six-tab order: **Applications, Processes, Services, Performance,
   Networking, Users**. Each tab has a Linux-backed screen rather than a
   nonfunctional visual placeholder.
@@ -116,9 +117,10 @@ and fonts are **not** copied or bundled.
 
 ## XP Luna
 
-- Blue vertical-gradient, original app-mark and cream menu strip.
-- Compact 32 px title chrome, raised tabs, a white list surface filling the
-  process pane, and XP-era `Image Name`, `Mem Usage` and `User Name` headers.
+- Cream menu strip, raised tabs, a white list surface filling the process
+  pane, and XP-era `Image Name`, `Mem Usage` and `User Name` headers.
+  RiceBowl owns the blue Luna title gradient and window buttons; Taskotto
+  deliberately does not duplicate that 32 px native title area.
 - The optional Taskotto process filter appears on Ctrl+F or View → Find,
   keeping the default view close to the period's table-first design.
 - File, Options, View, Help menus with functional refresh, filtering, tree,
@@ -170,9 +172,11 @@ and fonts are **not** copied or bundled.
 
 ## Intentional differences and verification
 
-- The compositor/window manager owns the **native window frame** on X11 and
-  Wayland. The in-client bars are styled headers, not replacement decorations
-  or simulated OS window buttons.
+- For all eight themes, Taskotto explicitly requests a **compositor/window-manager
+  owned native frame** on X11 and Wayland. XP, Seven and Ten have *only*
+  application menus and tabs, never an extra title strip. ChromeOS and macOS
+  retain functional toolbars; Frutiger Aero retains a distinct application
+  masthead. No in-client top-level window-control buttons are painted.
 - Windows 10 exposes seven data-backed tabs; Windows 7 exposes six; XP
   exposes five. The original Windows APIs and historic App history accounting
   do not directly exist on Linux. Settings and selected-process Properties
@@ -190,6 +194,6 @@ and fonts are **not** copied or bundled.
 - Headless screenshot renders prove actual egui layout/paint commands and real
   procfs values, **not native desktop output**. [QA.md](QA.md) retains the Mint
   X11, KDE Wayland and labwc visual/keyboard/performance sign-off gates.
-- The README gallery and provenance describe 31 current Classic 98/Mac/Seven/XP/Windows 10
-  captures; old generic-theme renders were removed, while all eight rice
-  presets remain available.
+- The README gallery and provenance describe all 37 current client-only
+  captures across seven dedicated visual styles; old generic renders were
+  removed, while all eight rice presets remain available.
