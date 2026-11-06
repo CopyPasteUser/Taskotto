@@ -53,7 +53,7 @@ pub(super) fn topbar(app: &mut TaskottoApp, ctx: &egui::Context) {
                         .add(
                             egui::Button::new(RichText::new("↻  Refresh").strong().color(INK))
                                 .fill(Color32::from_rgb(235, 255, 253))
-                                .stroke(Stroke::new(1.0, BORDER)),
+                                .stroke(Stroke::new(1.0_f32, BORDER)),
                         )
                         .on_hover_text("Read fresh Linux /proc data (F5)")
                         .clicked()
@@ -115,13 +115,13 @@ pub(super) fn navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
                         } else {
                             Color32::from_rgb(244, 255, 251)
                         })
-                        .stroke(Stroke::new(1.0, if active { accent } else { BORDER })),
+                        .stroke(Stroke::new(1.0_f32, if active { accent } else { BORDER })),
                     );
                     if !active && response.hovered() {
                         ui.painter().rect_stroke(
                             response.rect.shrink(1.0),
                             14.0,
-                            Stroke::new(1.0, SKY),
+                            Stroke::new(1.0_f32, SKY),
                             StrokeKind::Inside,
                         );
                     }
@@ -183,7 +183,7 @@ pub(super) fn statusbar(app: &TaskottoApp, ctx: &egui::Context) {
         .show(ctx, |ui| {
             ui.painter().line_segment(
                 [ui.max_rect().left_top(), ui.max_rect().right_top()],
-                Stroke::new(1.0, BORDER),
+                Stroke::new(1.0_f32, BORDER),
             );
             ui.horizontal_wrapped(|ui| {
                 ui.label(RichText::new("Live").strong().color(LEAF));
@@ -223,7 +223,7 @@ pub(super) fn processes(app: &mut TaskottoApp, ui: &mut egui::Ui) {
     ui.add_space(13.0);
     egui::Frame::new()
         .fill(Color32::from_rgb(247, 255, 253))
-        .stroke(Stroke::new(1.0, BORDER))
+        .stroke(Stroke::new(1.0_f32, BORDER))
         .corner_radius(17.0)
         .inner_margin(egui::Margin::symmetric(15, 11))
         .show(ui, |ui| {
@@ -391,7 +391,7 @@ pub(super) fn processes(app: &mut TaskottoApp, ui: &mut egui::Ui) {
                                     ui.painter().rect_stroke(
                                         name_rect.shrink(2.0),
                                         6.0,
-                                        Stroke::new(2.0, accent),
+                                        Stroke::new(2.0_f32, accent),
                                         StrokeKind::Inside,
                                     );
                                 }
@@ -606,7 +606,7 @@ fn hero(
         },
         Color32::from_rgb(241, 255, 254),
     );
-    painter.rect_stroke(rect, 19.0, Stroke::new(1.0, BORDER), StrokeKind::Inside);
+    painter.rect_stroke(rect, 19.0, Stroke::new(1.0_f32, BORDER), StrokeKind::Inside);
     let center = Pos2::new(rect.right() - 87.0, rect.center().y);
     // Translucent lens, offset highlights, and repeated bubbles are drawn
     // from vector primitives. No copied wallpaper or trademarked OS assets.
@@ -618,13 +618,13 @@ fn hero(
     painter.circle_stroke(
         center,
         67.0,
-        Stroke::new(2.0, Color32::from_rgb(180, 231, 226)),
+        Stroke::new(2.0_f32, Color32::from_rgb(180, 231, 226)),
     );
     for (offset, radius) in [(-37.0, 7.0), (-9.0, 4.0), (39.0, 11.0)] {
         painter.circle_stroke(
             center + egui::vec2(offset, -37.0 + offset.abs() / 4.0),
             radius,
-            Stroke::new(1.3, Color32::from_rgb(126, 207, 209)),
+            Stroke::new(1.3_f32, Color32::from_rgb(126, 207, 209)),
         );
     }
     painter.text(
@@ -646,7 +646,7 @@ fn hero(
             rect.min + egui::vec2(22.0, height - 17.0),
             rect.min + egui::vec2(106.0, height - 17.0),
         ],
-        Stroke::new(3.0, accent),
+        Stroke::new(3.0_f32, accent),
     );
     if width >= 710.0 {
         if let Some(cpu) = cpu {
@@ -684,7 +684,7 @@ struct ChartPanel<'a> {
 fn chart_panel(ui: &mut egui::Ui, chart: &ChartPanel<'_>, chart_height: f32) {
     Frame::new()
         .fill(Color32::from_rgb(248, 255, 254))
-        .stroke(Stroke::new(1.0, BORDER))
+        .stroke(Stroke::new(1.0_f32, BORDER))
         .corner_radius(15.0)
         .inner_margin(Margin::same(13))
         .show(ui, |ui| {
@@ -712,14 +712,14 @@ fn chart_panel(ui: &mut egui::Ui, chart: &ChartPanel<'_>, chart_height: f32) {
                 let y = rect.top() + rect.height() * i as f32 / 4.0;
                 painter.line_segment(
                     [Pos2::new(rect.left(), y), Pos2::new(rect.right(), y)],
-                    Stroke::new(1.0, Color32::from_rgb(204, 231, 227)),
+                    Stroke::new(1.0_f32, Color32::from_rgb(204, 231, 227)),
                 );
             }
             for i in 1..6 {
                 let x = rect.left() + rect.width() * i as f32 / 6.0;
                 painter.line_segment(
                     [Pos2::new(x, rect.top()), Pos2::new(x, rect.bottom())],
-                    Stroke::new(1.0, Color32::from_rgb(220, 242, 238)),
+                    Stroke::new(1.0_f32, Color32::from_rgb(220, 242, 238)),
                 );
             }
             plot(
@@ -732,7 +732,7 @@ fn chart_panel(ui: &mut egui::Ui, chart: &ChartPanel<'_>, chart_height: f32) {
             if let Some(other) = chart.secondary {
                 plot(ui, rect.shrink(8.0), other, chart.max, chart.colors[1]);
             }
-            painter.rect_stroke(rect, 9.0, Stroke::new(1.0, BORDER), StrokeKind::Inside);
+            painter.rect_stroke(rect, 9.0, Stroke::new(1.0_f32, BORDER), StrokeKind::Inside);
         });
 }
 
@@ -754,7 +754,7 @@ fn plot(ui: &egui::Ui, rect: Rect, history: &VecDeque<f32>, max: f32, color: Col
         .collect();
     if points.len() > 1 {
         ui.painter()
-            .add(egui::Shape::line(points, Stroke::new(2.1, color)));
+            .add(egui::Shape::line(points, Stroke::new(2.1_f32, color)));
     } else {
         ui.painter().circle_filled(points[0], 2.5, color);
     }
@@ -790,7 +790,7 @@ fn paint_sky(ui: &egui::Ui, rect: Rect, accent: Color32) {
     }
     ui.painter().line_segment(
         [rect.left_bottom(), rect.right_bottom()],
-        Stroke::new(1.0, Color32::from_rgb(87, 171, 178)),
+        Stroke::new(1.0_f32, Color32::from_rgb(87, 171, 178)),
     );
 }
 
@@ -806,7 +806,7 @@ fn paint_orb(ui: &egui::Ui, center: Pos2, radius: f32, color: Color32) {
     p.circle_stroke(
         center,
         radius,
-        Stroke::new(1.5, Color32::from_rgb(65, 146, 157)),
+        Stroke::new(1.5_f32, Color32::from_rgb(65, 146, 157)),
     );
     for (i, magnitude) in [11.0, 18.0, 9.0, 22.0].iter().enumerate() {
         let x = center.x - 12.0 + i as f32 * 8.0;
@@ -815,7 +815,7 @@ fn paint_orb(ui: &egui::Ui, center: Pos2, radius: f32, color: Color32) {
                 Pos2::new(x, center.y + 11.0),
                 Pos2::new(x, center.y + 11.0 - magnitude),
             ],
-            Stroke::new(3.0, Color32::WHITE),
+            Stroke::new(3.0_f32, Color32::WHITE),
         );
     }
 }
@@ -826,7 +826,7 @@ fn meter(ui: &egui::Ui, center: Pos2, radius: f32, percent: f32, color: Color32,
     p.circle_stroke(
         center,
         radius,
-        Stroke::new(7.0, Color32::from_rgb(206, 230, 225)),
+        Stroke::new(7.0_f32, Color32::from_rgb(206, 230, 225)),
     );
     let end = (percent / 100.0).clamp(0.0, 1.0);
     let mut arc = Vec::with_capacity(65);
@@ -839,7 +839,7 @@ fn meter(ui: &egui::Ui, center: Pos2, radius: f32, percent: f32, color: Color32,
         arc.push(center + egui::vec2(angle.cos(), angle.sin()) * radius);
     }
     if arc.len() > 1 {
-        p.add(egui::Shape::line(arc, Stroke::new(7.0, color)));
+        p.add(egui::Shape::line(arc, Stroke::new(7.0_f32, color)));
     }
     p.text(
         center + egui::vec2(0.0, -6.0),
@@ -860,7 +860,7 @@ fn meter(ui: &egui::Ui, center: Pos2, radius: f32, percent: f32, color: Color32,
 fn info_chip(ui: &mut egui::Ui, title: &str, value: &str, color: Color32) {
     Frame::new()
         .fill(Color32::from_rgb(244, 255, 252))
-        .stroke(Stroke::new(1.0, BORDER))
+        .stroke(Stroke::new(1.0_f32, BORDER))
         .corner_radius(13.0)
         .inner_margin(Margin::symmetric(17, 11))
         .show(ui, |ui| {
