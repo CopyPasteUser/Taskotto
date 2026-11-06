@@ -19,9 +19,9 @@ impl ThemeStyle {
         let (dark, surface, text, accent, rounding) = match settings.theme {
             Theme::System => (true, (25, 36, 51), (231, 237, 247), (130, 180, 255), 8),
             Theme::Windows98 => (false, (196, 196, 196), (20, 20, 20), (0, 128, 128), 0),
-            Theme::XpLuna => (false, (237, 235, 222), (28, 39, 65), (48, 105, 215), 5),
+            Theme::XpLuna => (false, (236, 233, 216), (29, 29, 29), (42, 99, 198), 0),
             Theme::Windows7 => (false, (222, 238, 248), (29, 44, 65), (43, 138, 195), 6),
-            Theme::Windows10 => (true, (37, 39, 42), (240, 240, 240), (0, 120, 215), 2),
+            Theme::Windows10 => (false, (250, 250, 250), (32, 32, 32), (0, 120, 215), 0),
             Theme::FrutigerAero => (false, (226, 243, 238), (23, 57, 48), (37, 149, 114), 9),
             Theme::Chromeos => (false, (246, 248, 252), (35, 49, 65), (68, 125, 220), 12),
             Theme::Macos => (false, (241, 242, 245), (34, 37, 44), (24, 118, 238), 9),
@@ -79,6 +79,29 @@ impl ThemeStyle {
             self.text
         };
         visuals.widgets.active.bg_fill = self.accent;
+        match settings.theme {
+            Theme::XpLuna => {
+                // Raised rectangular controls on the warm, classic task-manager
+                // surface. All tones are original recreations, not OS assets.
+                visuals.extreme_bg_color = Color32::WHITE;
+                visuals.faint_bg_color = Color32::from_rgb(248, 247, 238);
+                visuals.widgets.inactive.bg_fill = Color32::from_rgb(242, 240, 226);
+                visuals.widgets.inactive.bg_stroke.color = Color32::from_rgb(145, 144, 130);
+                visuals.widgets.noninteractive.bg_stroke.color = Color32::from_rgb(137, 136, 123);
+                visuals.widgets.hovered.bg_fill = Color32::from_rgb(251, 249, 237);
+                visuals.widgets.active.bg_fill = self.accent;
+            }
+            Theme::Windows10 => {
+                visuals.extreme_bg_color = Color32::WHITE;
+                visuals.faint_bg_color = Color32::from_rgb(245, 249, 252);
+                visuals.widgets.inactive.bg_fill = Color32::from_rgb(246, 246, 246);
+                visuals.widgets.inactive.bg_stroke.color = Color32::from_rgb(200, 200, 200);
+                visuals.widgets.noninteractive.bg_stroke.color = Color32::from_rgb(223, 223, 223);
+                visuals.widgets.hovered.bg_fill = Color32::from_rgb(232, 241, 249);
+                visuals.widgets.active.bg_fill = self.accent;
+            }
+            _ => {}
+        }
         let rounding = egui::CornerRadius::same(self.rounding);
         visuals.widgets.noninteractive.corner_radius = rounding;
         visuals.widgets.inactive.corner_radius = rounding;
@@ -190,5 +213,26 @@ mod tests {
         assert_eq!(tokens.text, Color32::BLACK);
         assert_eq!(tokens.accent, Color32::from_rgb(51, 85, 238));
         assert!(!tokens.dark);
+    }
+
+    #[test]
+    fn task_manager_presets_have_distinct_platform_tokens() {
+        let xp = ThemeStyle::from_settings(&Settings {
+            theme: Theme::XpLuna,
+            ..Settings::default()
+        });
+        let modern = ThemeStyle::from_settings(&Settings {
+            theme: Theme::Windows10,
+            ..Settings::default()
+        });
+        assert_ne!(xp.surface, modern.surface);
+        assert!(!xp.dark && !modern.dark);
+        assert_eq!(xp.rounding, 0);
+        assert_eq!(modern.rounding, 0);
+        assert!(luminance(modern.surface) > luminance(xp.surface));
+        assert_eq!(
+            crate::config::LayoutMode::Auto.resolve(Theme::Windows10),
+            crate::config::LayoutMode::TopTabs
+        );
     }
 }

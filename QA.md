@@ -4,6 +4,9 @@ Run this checklist before a stable 1.0 tag. Record distro, kernel, display serve
 
 ## Desktop behavior
 
+- [ ] XP Luna: verify blue chrome, raised tabs, File/Options/View/Help menus, classic CPU/RAM history, process sorting and status strip; use keyboard focus and resize to minimum.
+- [ ] Windows 10: verify light tabs, process grouping, CPU/memory heatmap, sorting, context menus, and switching CPU/Memory/Disk/Network in the Performance sidebar.
+- [ ] Both rices: right-click a disposable process, open Details, Pause/Resume and End task after confirmation; verify no unintended actions or stale PID targets.
 - [ ] Capture and review a native Taskotto window screenshot on X11, KDE Wayland and labwc. The [headless README images](SCREENSHOTS.md) do not certify display-server rendering.
 - [ ] Linux Mint / X11: launch via `.desktop` menu, resize, minimize, close, reopen.
 - [ ] Fedora KDE / Wayland: repeat and test clipboard/focus.

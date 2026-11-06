@@ -2,6 +2,15 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.4] — 2026-11-06
+
+- Separate Windows 10-inspired and XP Luna-inspired task-manager screens with original Chrome, functional menus and native-feeling tab navigation.
+- Windows 10 light process heatmap, responsive sortable columns, truthful Linux process grouping and switchable CPU/memory/disk/network performance focus.
+- XP Luna blue gradient, cream controls, raised tab/table styling, status bar and dark-green performance history.
+- Shared functional context menus for process details, termination, force kill, pause and resume using the existing pidfd-protected confirmation flow.
+- Four actual egui screenshots with live procfs measurements, additional narrow/wide layout and color-token regression tests.
+- No proprietary Windows graphics; native compositor window frames and hardware acceptance remain open.
+
 ## [1.0.0-rc.3] — 2026-11-06
 
 - README gallery with genuine headless egui-rendered screenshots and reproducible, documented live-procfs capture workflow.
