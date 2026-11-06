@@ -39,7 +39,7 @@ impl Theme {
             Self::Windows7 => "Seven",
             Self::Windows10 => "Modern 10",
             Self::FrutigerAero => "Aero",
-            Self::Chromeos => "Chrome",
+            Self::Chromeos => "ChromeOS",
             Self::Macos => "Mac",
         }
     }

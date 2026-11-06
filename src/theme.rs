@@ -23,7 +23,7 @@ impl ThemeStyle {
             Theme::Windows7 => (false, (222, 238, 248), (29, 44, 65), (43, 138, 195), 6),
             Theme::Windows10 => (false, (250, 250, 250), (32, 32, 32), (0, 120, 215), 0),
             Theme::FrutigerAero => (false, (226, 243, 238), (23, 57, 48), (37, 149, 114), 9),
-            Theme::Chromeos => (false, (246, 248, 252), (35, 49, 65), (68, 125, 220), 12),
+            Theme::Chromeos => (false, (246, 248, 252), (35, 49, 65), (25, 103, 210), 12),
             Theme::Macos => (false, (241, 242, 245), (34, 37, 44), (24, 118, 238), 9),
         };
         let default_surface = rgb(surface);
@@ -119,6 +119,31 @@ impl ThemeStyle {
                 visuals.widgets.hovered.bg_fill = Color32::from_rgb(218, 236, 247);
                 visuals.widgets.active.bg_fill = self.accent;
             }
+            Theme::Chromeos => {
+                visuals.extreme_bg_color = if self.dark {
+                    self.surface
+                } else {
+                    Color32::WHITE
+                };
+                visuals.faint_bg_color = self.surface;
+                visuals.widgets.inactive.bg_fill = self.surface;
+                visuals.widgets.inactive.bg_stroke.color = if self.dark {
+                    self.text.gamma_multiply(0.35)
+                } else {
+                    Color32::from_rgb(212, 219, 229)
+                };
+                visuals.widgets.noninteractive.bg_stroke.color = if self.dark {
+                    self.text.gamma_multiply(0.28)
+                } else {
+                    Color32::from_rgb(223, 227, 234)
+                };
+                visuals.widgets.hovered.bg_fill = if self.dark {
+                    self.accent.gamma_multiply(0.4)
+                } else {
+                    Color32::from_rgb(232, 239, 251)
+                };
+                visuals.widgets.active.bg_fill = self.accent;
+            }
             Theme::Macos => {
                 visuals.extreme_bg_color = Color32::WHITE;
                 visuals.faint_bg_color = Color32::from_rgb(246, 247, 249);
@@ -210,7 +235,7 @@ fn contrast_ratio(first: Color32, second: Color32) -> f32 {
     (a.max(b) + 0.05) / (a.min(b) + 0.05)
 }
 
-fn readable_text(background: Color32) -> Color32 {
+pub(crate) fn readable_text(background: Color32) -> Color32 {
     let black = Color32::BLACK;
     let white = Color32::WHITE;
     if contrast_ratio(black, background) >= contrast_ratio(white, background) {
