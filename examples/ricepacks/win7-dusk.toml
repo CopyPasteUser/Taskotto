@@ -1,0 +1,14 @@
+format_version = 1
+name = "Dusk: Aero-era process report"
+base_theme = "windows7"
+
+[appearance]
+accent = "#438FC8"
+navigation = "top-tabs"
+
+[components]
+control = "#CDDDEA"
+hover = "#56718F"
+border = "#788EA6"
+table = "#1A2B3F"
+selection = "#245CA4"

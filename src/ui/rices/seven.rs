@@ -1,6 +1,7 @@
 //! Original, asset-free recreation of the Windows 7-era Task Manager client UI.
 //! Historical chrome and report layout; every measurement/action remains Linux-native.
 use super::*;
+use crate::theme::{ComponentPaint, readable_text};
 use egui::{Align2, FontId, Frame, Margin, Rect, StrokeKind};
 use std::{collections::BTreeMap, collections::VecDeque};
 
@@ -28,6 +29,7 @@ pub(super) fn topbar(app: &mut TaskottoApp, ctx: &egui::Context) {
 }
 
 pub(super) fn navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
+    let paint = ComponentPaint::from_settings(&app.settings);
     egui::TopBottomPanel::top("seven-era-tabs")
         .frame(Frame::NONE.fill(PALE).inner_margin(Margin::symmetric(9, 3)))
         .show(ctx, |ui| {
@@ -39,19 +41,23 @@ pub(super) fn navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
                         app.page == page || (page == Page::Processes && app.page == Page::Details);
                     let response = ui.add_sized(
                         [width, 27.0],
-                        egui::Button::new(RichText::new(title).size(12.5).color(INK))
-                            .corner_radius(egui::CornerRadius {
-                                nw: 3,
-                                ne: 3,
-                                sw: 0,
-                                se: 0,
-                            })
-                            .fill(if selected {
-                                Color32::WHITE
-                            } else {
-                                Color32::from_rgb(223, 234, 242)
-                            })
-                            .stroke(Stroke::new(1.0_f32, BORDER)),
+                        egui::Button::new(RichText::new(title).size(12.5).color(if selected {
+                            paint.on_selection(Color32::WHITE, INK)
+                        } else {
+                            paint.on_control(Color32::from_rgb(223, 234, 242), INK)
+                        }))
+                        .corner_radius(egui::CornerRadius {
+                            nw: 3,
+                            ne: 3,
+                            sw: 0,
+                            se: 0,
+                        })
+                        .fill(if selected {
+                            paint.selection(Color32::WHITE)
+                        } else {
+                            paint.control(Color32::from_rgb(223, 234, 242))
+                        })
+                        .stroke(Stroke::new(1.0_f32, paint.border(BORDER))),
                     );
                     if selected {
                         let rect = response.rect;
@@ -60,7 +66,7 @@ pub(super) fn navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
                                 rect.left_bottom() + egui::vec2(1.0, 0.0),
                                 rect.right_bottom() + egui::vec2(-1.0, 0.0),
                             ],
-                            Stroke::new(2.0_f32, Color32::WHITE),
+                            Stroke::new(2.0_f32, paint.selection(Color32::WHITE)),
                         );
                     }
                     if response.clicked() {
@@ -72,6 +78,7 @@ pub(super) fn navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
 }
 
 pub(super) fn statusbar(app: &TaskottoApp, ctx: &egui::Context) {
+    let paint = ComponentPaint::from_settings(&app.settings);
     egui::TopBottomPanel::bottom("seven-status")
         .frame(
             Frame::NONE
@@ -81,7 +88,7 @@ pub(super) fn statusbar(app: &TaskottoApp, ctx: &egui::Context) {
         .show(ctx, |ui| {
             ui.painter().line_segment(
                 [ui.max_rect().left_top(), ui.max_rect().right_top()],
-                Stroke::new(1.0_f32, BORDER),
+                Stroke::new(1.0_f32, paint.border(BORDER)),
             );
             if let Some(s) = &app.snapshot {
                 ui.horizontal(|ui| {
@@ -160,28 +167,33 @@ fn process_columns(width: f32, settings: &Settings) -> Vec<(ReportColumn, f32)> 
     result
 }
 
-fn header_cell(ui: &mut egui::Ui, label: &str, width: f32) -> egui::Response {
+fn header_cell(
+    ui: &mut egui::Ui,
+    label: &str,
+    width: f32,
+    paint: ComponentPaint,
+) -> egui::Response {
     let (rect, response) = ui.allocate_exact_size(egui::vec2(width, 24.0), Sense::click());
     ui.painter()
-        .rect_filled(rect, 0.0, Color32::from_rgb(238, 244, 248));
+        .rect_filled(rect, 0.0, paint.table(Color32::from_rgb(238, 244, 248)));
     ui.painter().line_segment(
         [rect.left_top(), rect.right_top()],
         Stroke::new(1.0_f32, Color32::WHITE),
     );
     ui.painter().line_segment(
         [rect.right_top(), rect.right_bottom()],
-        Stroke::new(1.0_f32, BORDER),
+        Stroke::new(1.0_f32, paint.border(BORDER)),
     );
     ui.painter().line_segment(
         [rect.left_bottom(), rect.right_bottom()],
-        Stroke::new(1.0_f32, BORDER),
+        Stroke::new(1.0_f32, paint.border(BORDER)),
     );
     ui.painter().with_clip_rect(rect.shrink(3.0)).text(
         rect.left_center() + egui::vec2(6.0, 0.0),
         Align2::LEFT_CENTER,
         label,
         FontId::proportional(11.5),
-        INK,
+        paint.on_table(INK),
     );
     response
 }
@@ -192,14 +204,15 @@ fn row_cell(
     width: f32,
     shade: Color32,
     selected: bool,
+    paint: ComponentPaint,
 ) -> egui::Response {
     let (rect, response) = ui.allocate_exact_size(egui::vec2(width, 22.0), Sense::click());
     let fill = if selected {
-        Color32::from_rgb(64, 124, 188)
+        paint.selection(Color32::from_rgb(64, 124, 188))
     } else if response.hovered() {
-        Color32::from_rgb(224, 237, 247)
+        paint.hover(Color32::from_rgb(224, 237, 247))
     } else {
-        shade
+        paint.table(shade)
     };
     ui.painter().rect_filled(rect, 0.0, fill);
     ui.painter().with_clip_rect(rect.shrink(3.0)).text(
@@ -207,7 +220,13 @@ fn row_cell(
         Align2::LEFT_CENTER,
         value,
         FontId::proportional(12.0),
-        if selected { Color32::WHITE } else { INK },
+        if selected {
+            paint.on_selection(Color32::from_rgb(64, 124, 188), Color32::WHITE)
+        } else if response.hovered() && (paint.hover.is_some() || paint.table.is_some()) {
+            readable_text(fill)
+        } else {
+            paint.on_table(INK)
+        },
     );
     if response.has_focus() {
         ui.painter().rect_stroke(
@@ -227,6 +246,7 @@ fn accent_from_ui(ui: &egui::Ui) -> Color32 {
 pub(super) fn processes(app: &mut TaskottoApp, ui: &mut egui::Ui) {
     find_strip(app, ui);
     let rows = app.processes();
+    let paint = ComponentPaint::from_settings(&app.settings);
     if app.snapshot.is_none() {
         ui.spinner();
         ui.label("Reading Linux processes…");
@@ -234,7 +254,7 @@ pub(super) fn processes(app: &mut TaskottoApp, ui: &mut egui::Ui) {
     }
     let footer = 59.0;
     let height = (ui.available_height() - footer).max(88.0);
-    report_frame(ui, height, |ui| {
+    report_frame(ui, height, paint, |ui| {
         let width = (ui.available_width() - 14.0).max(430.0);
         let cols = process_columns(width, &app.settings);
         ui.horizontal(|ui| {
@@ -251,7 +271,7 @@ pub(super) fn processes(app: &mut TaskottoApp, ui: &mut egui::Ui) {
                 } else {
                     column.title().to_owned()
                 };
-                if header_cell(ui, &title, width)
+                if header_cell(ui, &title, width, paint)
                     .on_hover_text("Click to sort")
                     .clicked()
                     && let Some(sort) = column.sort()
@@ -268,7 +288,7 @@ pub(super) fn processes(app: &mut TaskottoApp, ui: &mut egui::Ui) {
         });
         if rows.is_empty() {
             ui.add_space(20.0);
-            ui.label("No matching Linux processes.");
+            ui.colored_label(paint.on_table(INK), "No matching Linux processes.");
             if ui.button("Clear filter").clicked() {
                 app.query.clear();
             }
@@ -313,7 +333,7 @@ pub(super) fn processes(app: &mut TaskottoApp, ui: &mut egui::Ui) {
                                     }
                                 }
                             };
-                            let cell = row_cell(ui, &value, width, shade, selected);
+                            let cell = row_cell(ui, &value, width, shade, selected, paint);
                             if cell.clicked()
                                 || cell.double_clicked()
                                 || column == ReportColumn::Name
@@ -409,11 +429,16 @@ fn find_strip(app: &mut TaskottoApp, ui: &mut egui::Ui) {
     }
 }
 
-fn report_frame(ui: &mut egui::Ui, height: f32, contents: impl FnOnce(&mut egui::Ui)) {
+fn report_frame(
+    ui: &mut egui::Ui,
+    height: f32,
+    paint: ComponentPaint,
+    contents: impl FnOnce(&mut egui::Ui),
+) {
     let width = ui.available_width();
     Frame::NONE
-        .fill(Color32::WHITE)
-        .stroke(Stroke::new(1.0_f32, BORDER))
+        .fill(paint.table(Color32::WHITE))
+        .stroke(Stroke::new(1.0_f32, paint.border(BORDER)))
         .inner_margin(Margin::same(1))
         .show(ui, |ui| {
             ui.set_min_height(height);
@@ -433,18 +458,22 @@ pub(super) fn applications(app: &mut TaskottoApp, ui: &mut egui::Ui) {
         .into_iter()
         .filter(|r| r.process.user_id == app.my_uid)
         .collect();
+    let paint = ComponentPaint::from_settings(&app.settings);
     let height = (ui.available_height() - 69.0).max(100.0);
-    report_frame(ui, height, |ui| {
+    report_frame(ui, height, paint, |ui| {
         let report_width = ui.available_width();
         let task_width = report_width * 0.71;
         let status_width = report_width * 0.28;
         ui.horizontal(|ui| {
             ui.spacing_mut().item_spacing.x = 0.0;
-            header_cell(ui, "Task", task_width);
-            header_cell(ui, "Status", status_width);
+            header_cell(ui, "Task", task_width, paint);
+            header_cell(ui, "Status", status_width, paint);
         });
         if rows.is_empty() {
-            ui.label("No current-user Linux processes match this view.");
+            ui.colored_label(
+                paint.on_table(INK),
+                "No current-user Linux processes match this view.",
+            );
         }
         egui::ScrollArea::vertical()
             .auto_shrink([false, false])
@@ -455,13 +484,15 @@ pub(super) fn applications(app: &mut TaskottoApp, ui: &mut egui::Ui) {
                     let selected = app.selected == Some((p.pid, p.start_ticks));
                     ui.horizontal(|ui| {
                         ui.spacing_mut().item_spacing.x = 0.0;
-                        let action = row_cell(ui, &p.name, task_width, Color32::WHITE, selected);
+                        let action =
+                            row_cell(ui, &p.name, task_width, Color32::WHITE, selected, paint);
                         row_cell(
                             ui,
                             state_name(p.state),
                             status_width,
                             Color32::WHITE,
                             selected,
+                            paint,
                         );
                         if action.clicked() {
                             app.selected = Some((p.pid, p.start_ticks));
@@ -678,7 +709,7 @@ pub(super) fn users(app: &mut TaskottoApp, ui: &mut egui::Ui) {
         value.2 = value.2.saturating_add(row.process.resident_bytes);
     }
     let height = (ui.available_height() - 45.0).max(96.0);
-    report_frame(ui, height, |ui| {
+    report_frame(ui, height, ComponentPaint::default(), |ui| {
         egui::Grid::new("seven-user-header")
             .num_columns(4)
             .spacing([20.0, 7.0])
@@ -717,7 +748,7 @@ pub(super) fn services(app: &mut TaskottoApp, ui: &mut egui::Ui) {
     });
     system::poll_services(app, ui.ctx());
     let height = (ui.available_height() - 51.0).max(95.0);
-    report_frame(ui, height, |ui| {
+    report_frame(ui, height, ComponentPaint::default(), |ui| {
         let Some(result) = &app.system_pages.services else {
             ui.spinner();
             ui.label("Reading systemd user service units…");
@@ -808,5 +839,34 @@ mod tests {
             let actual = cols.iter().map(|(_, w)| w).sum::<f32>();
             assert!((actual - width).abs() < 0.01, "width {width}: got {actual}");
         }
+    }
+
+    #[test]
+    fn seven_keeps_historical_palette_unless_a_pack_overrides_it() {
+        let original = ComponentPaint::from_settings(&Settings::default());
+        assert_eq!(original.control(Color32::WHITE), Color32::WHITE);
+        assert_eq!(original.table(Color32::WHITE), Color32::WHITE);
+        assert_eq!(original.border(BORDER), BORDER);
+        assert_eq!(original.on_table(INK), INK);
+        assert_eq!(
+            original.on_selection(Color32::from_rgb(64, 124, 188), Color32::WHITE),
+            Color32::WHITE
+        );
+
+        let mut settings = Settings::default();
+        let pack = crate::ricepack::RicePack::from_toml(include_str!(
+            "../../../examples/ricepacks/win7-dusk.toml"
+        ))
+        .expect("Windows 7 Dusk example is valid");
+        pack.apply(&mut settings);
+        assert_eq!(settings.theme, Theme::Windows7);
+        let paint = ComponentPaint::from_settings(&settings);
+        assert_ne!(paint.control(Color32::WHITE), Color32::WHITE);
+        assert_ne!(paint.hover(Color32::WHITE), Color32::WHITE);
+        assert_ne!(paint.border(BORDER), BORDER);
+        assert_ne!(paint.table(Color32::WHITE), Color32::WHITE);
+        assert_ne!(paint.selection(Color32::WHITE), Color32::WHITE);
+        assert_eq!(paint.on_table(INK), Color32::WHITE);
+        assert_eq!(paint.on_selection(Color32::WHITE, INK), Color32::WHITE);
     }
 }

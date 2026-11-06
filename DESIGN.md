@@ -95,7 +95,8 @@ rice's visual identity.
 `src/ui/rices/` owns each custom client. Shared `ComponentPaint` in
 `src/theme.rs` resolves optional RicePack tokens; Frutiger Aero custom
 navigation/process/chart surfaces, macOS Activity Monitor's custom tabs/process
-report and ChromeOS's adaptive table palette use it with era-specific fallbacks.
+report, ChromeOS's adaptive table palette and Windows 7's classic tab/process
+reports use it with era-specific fallbacks.
 `readable_text` provides contrast-aware
 foreground for user-selected colors. Loading/empty/error states describe the
 real `/proc` state. Keyboard focus is visible, destructive actions require

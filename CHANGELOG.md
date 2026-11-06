@@ -2,6 +2,12 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.23] — 2026-11-06
+
+- Wired the Windows 7-inspired client tabs, sortable Applications/Processes tables, hover and selection fills, border strokes and empty-table messages to shared, validated RicePack component colors. Missing tokens keep the original Aero-era colors and layouts.
+- Added original `win7-dusk.toml` and a genuine egui screenshot of the selected Linux process in a dark custom table (43 screenshots), plus a default/custom palette regression test.
+- Explicitly retained the standard palette for Windows 7 Services/Users plain egui grids; their user-defined table styling remains for later work. No native window decoration or proprietary assets were added, and real X11/Wayland/labwc QA remains open.
+
 ## [1.0.0-rc.22] — 2026-11-06
 
 - Connected ChromeOS's existing light/dark adaptive theme to shared RicePack component tokens for control, hover, border, table and selection. Dynamic table text uses contrast-aware colors while toolbar, metric panels and Linux statistics preserve their existing semantics.
