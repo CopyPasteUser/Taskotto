@@ -842,6 +842,7 @@ mod tests {
             new_task: NewTaskDialog::default(),
             mac_info_open: false,
             ricepack_watcher: None,
+            ricepack_library: RicePackLibraryUi::default(),
         };
         assert_eq!(column_value(Column::ReadRate, &process, &app), "N/A");
     }

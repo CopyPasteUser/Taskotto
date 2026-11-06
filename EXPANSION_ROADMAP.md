@@ -47,7 +47,7 @@ Development on later milestones may proceed while user-hardware QA is pending.
   with an explicit warning and last-known-good fallback for broken edits.
 - [ ] Contract tests with a RiceBowl-created pack and a versioned integration
   fixture supplied by that repository.
-- [ ] Add pack discovery, in-app visual preview and non-destructive
+- [x] Add pack discovery, in-app visual preview and non-destructive
   import/export from the Taskotto UI.
 - [ ] Separate all palette/size tokens from hardcoded rice widget styles;
   make component overrides available without recompilation.
@@ -138,10 +138,12 @@ lean, offline-capable and independent from RiceBowl.
 
 ## Work order
 
-1. **Delivered (RC14–16):** P1 format/loader/CLI, secure reference pack,
-   headless export/check/re-import design workflow and live file reload.
-2. **Next:** P1 end-to-end RiceBowl interop, in-app previews and UI token
-   extraction. The runtime should remain backwards-compatible while this grows.
+1. **Delivered (RC14–17):** P1 format/loader/CLI, secure reference pack,
+   headless export/check/re-import, live file reload and in-app library,
+   session-only preview/revert/import/export workflow.
+2. **Next:** P1 end-to-end RiceBowl interop contract/fixture and component-level
+   UI token extraction. RiceBowl's separate JSON desktop pack is not the same
+   schema as Taskotto's TOML design; do not pass it directly to the loader.
 3. **Then:** P2 data-bound layout schema; P3 real process controls; P4/P5
    optional telemetry backends; P6 diagnosis; P7 dashboards.
 4. **Throughout:** P0 device acceptance and P8 measured resource costs.

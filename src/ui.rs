@@ -3,7 +3,7 @@ use crate::{
     config::{Density, LayoutMode, Settings, SortBy, Theme, is_hex_color},
     format,
     monitor::{Monitor, Process, Snapshot},
-    ricepack::RicePack,
+    ricepack::{self, LibraryEntry, RicePack},
     theme::ThemeStyle,
 };
 use eframe::egui::{self, Color32, RichText, Sense, Stroke, Vec2};
@@ -153,12 +153,29 @@ struct ProcessRow {
     depth: usize,
 }
 
+#[derive(Clone)]
 struct RicePackWatcher {
     path: PathBuf,
     applied: RicePack,
     forced_theme: Option<Theme>,
     next_check: Instant,
     last_error: Option<String>,
+}
+
+#[derive(Default)]
+struct RicePackLibraryUi {
+    source_path: String,
+    export_path: String,
+    entries: Vec<LibraryEntry>,
+    loaded: bool,
+    preview: Option<RicePackPreview>,
+}
+
+struct RicePackPreview {
+    settings: Settings,
+    watcher: Option<RicePackWatcher>,
+    path: PathBuf,
+    pack: RicePack,
 }
 
 pub struct TaskottoApp {
@@ -182,6 +199,7 @@ pub struct TaskottoApp {
     new_task: NewTaskDialog,
     mac_info_open: bool,
     ricepack_watcher: Option<RicePackWatcher>,
+    ricepack_library: RicePackLibraryUi,
 }
 
 #[derive(Default)]
@@ -250,6 +268,7 @@ impl TaskottoApp {
             new_task: NewTaskDialog::default(),
             mac_info_open: false,
             ricepack_watcher: None,
+            ricepack_library: RicePackLibraryUi::default(),
         }
     }
 
@@ -317,6 +336,216 @@ impl TaskottoApp {
         apply_theme(ctx, &self.settings);
         self.notification = Some(format!("Reloaded RicePack: {}", pack.name));
         watcher.applied = pack;
+    }
+
+    fn sync_ricepack_color_inputs(&mut self) {
+        self.theme_accent_input = self.settings.accent_hex.clone().unwrap_or_default();
+        self.theme_surface_input = self.settings.surface_hex.clone().unwrap_or_default();
+        self.theme_text_input = self.settings.text_hex.clone().unwrap_or_default();
+    }
+
+    fn refresh_ricepack_library(&mut self) {
+        let result = ricepack::library_dir().and_then(|dir| ricepack::discover_in(&dir));
+        match result {
+            Ok(entries) => {
+                self.ricepack_library.entries = entries;
+                self.ricepack_library.loaded = true;
+            }
+            Err(error) => {
+                self.notification = Some(format!("Cannot scan RicePack library: {error}"))
+            }
+        }
+    }
+
+    /// A preview is reversible even if the user originally started Taskotto
+    /// with an active RicePack. The original file watcher is paused during it.
+    fn preview_ricepack(&mut self, ctx: &egui::Context) {
+        let path = PathBuf::from(self.ricepack_library.source_path.trim());
+        let pack = match RicePack::load(&path) {
+            Ok(pack) => pack,
+            Err(error) => {
+                self.notification = Some(format!("Cannot preview RicePack: {error}"));
+                return;
+            }
+        };
+        self.restore_ricepack_preview(ctx);
+        self.ricepack_library.preview = Some(RicePackPreview {
+            settings: self.settings.clone(),
+            watcher: self.ricepack_watcher.take(),
+            path,
+            pack: pack.clone(),
+        });
+        self.settings.reset_ricepack_appearance();
+        self.settings.launch_ricepack_original = None;
+        self.settings.launch_ricepack_name = None;
+        pack.apply(&mut self.settings);
+        self.sync_page_for_theme();
+        self.sync_ricepack_color_inputs();
+        apply_theme(ctx, &self.settings);
+        self.notification = Some(format!(
+            "Previewing {} — choose Revert or Keep for session",
+            pack.name
+        ));
+    }
+
+    fn restore_ricepack_preview(&mut self, ctx: &egui::Context) {
+        let Some(previous) = self.ricepack_library.preview.take() else {
+            return;
+        };
+        // Monitoring preferences may have been changed and saved while the
+        // visual preview was active. Preserve them when restoring its palette.
+        let current = &self.settings;
+        let mut settings = previous.settings;
+        settings.refresh_ms = current.refresh_ms;
+        settings.sort_by = current.sort_by;
+        settings.descending = current.descending;
+        settings.tree_view = current.tree_view;
+        settings.only_my_processes = current.only_my_processes;
+        settings.show_kernel_threads = current.show_kernel_threads;
+        settings.show_io_column = current.show_io_column;
+        settings.show_user_column = current.show_user_column;
+        self.settings = settings;
+        self.ricepack_watcher = previous.watcher;
+        self.sync_page_for_theme();
+        self.sync_ricepack_color_inputs();
+        apply_theme(ctx, &self.settings);
+        self.notification = Some("RicePack preview reverted; previous appearance restored".into());
+    }
+
+    fn keep_ricepack_preview(&mut self) {
+        let Some(preview) = self.ricepack_library.preview.take() else {
+            return;
+        };
+        let forced_theme = preview.watcher.and_then(|watcher| watcher.forced_theme);
+        if let Some(theme) = forced_theme {
+            self.settings.theme = theme;
+        }
+        self.ricepack_watcher = Some(RicePackWatcher {
+            path: preview.path,
+            applied: preview.pack,
+            forced_theme,
+            next_check: Instant::now() + Duration::from_secs(2),
+            last_error: None,
+        });
+        self.notification = Some("RicePack active for this session; saved design unchanged".into());
+    }
+
+    fn sync_page_for_theme(&mut self) {
+        if self.settings.theme == Theme::Windows98 {
+            self.page = Page::Applications;
+        } else if self.page == Page::Applications {
+            self.page = Page::Processes;
+        }
+    }
+
+    fn ricepack_library_controls(&mut self, ui: &mut egui::Ui, xp: bool) {
+        if !self.ricepack_library.loaded {
+            self.refresh_ricepack_library();
+        }
+        preference_section(ui, "RicePack library", xp);
+        if let Ok(path) = ricepack::library_dir() {
+            ui.label(
+                RichText::new(format!("Local designs: {}", path.display()))
+                    .small()
+                    .weak(),
+            );
+        }
+        ui.horizontal_wrapped(|ui| {
+            if ui.button("Refresh library").clicked() {
+                self.refresh_ricepack_library();
+            }
+            ui.label(format!("{} designs", self.ricepack_library.entries.len()));
+        });
+        egui::ComboBox::from_id_salt("ricepack-library")
+            .selected_text(
+                self.ricepack_library
+                    .entries
+                    .iter()
+                    .find(|entry| entry.path.to_string_lossy() == self.ricepack_library.source_path)
+                    .map(|entry| entry.name.as_str())
+                    .unwrap_or("Choose a local RicePack…"),
+            )
+            .show_ui(ui, |ui| {
+                for entry in &self.ricepack_library.entries {
+                    let label = if entry.error.is_some() {
+                        format!("⚠ {} (invalid)", entry.name)
+                    } else {
+                        entry.name.clone()
+                    };
+                    if ui.selectable_label(false, label).clicked() {
+                        self.ricepack_library.source_path = entry.path.display().to_string();
+                    }
+                }
+            });
+        ui.horizontal_wrapped(|ui| {
+            ui.label("Pack file");
+            ui.add(
+                egui::TextEdit::singleline(&mut self.ricepack_library.source_path)
+                    .desired_width(380.0)
+                    .hint_text("/absolute/path/to/design.toml"),
+            );
+        });
+        ui.horizontal_wrapped(|ui| {
+            if ui.button("Preview design").clicked() {
+                self.preview_ricepack(ui.ctx());
+            }
+            if ui.button("Import to library").clicked() {
+                let source = PathBuf::from(self.ricepack_library.source_path.trim());
+                let result = RicePack::load(&source).and_then(|pack| {
+                    let directory = ricepack::library_dir()?;
+                    ricepack::import_into(&pack, &directory)
+                });
+                match result {
+                    Ok(path) => {
+                        self.ricepack_library.source_path = path.display().to_string();
+                        self.refresh_ricepack_library();
+                        self.notification = Some(format!("Imported design: {}", path.display()));
+                    }
+                    Err(error) => {
+                        self.notification = Some(format!("RicePack import failed: {error}"))
+                    }
+                }
+            }
+        });
+        if let Some(preview) = &self.ricepack_library.preview {
+            ui.label(
+                RichText::new(format!(
+                    "Preview: {} · changes are temporary",
+                    preview.pack.name
+                ))
+                .strong(),
+            );
+            ui.horizontal(|ui| {
+                if ui.button("Keep for session").clicked() {
+                    self.keep_ricepack_preview();
+                    apply_theme(ui.ctx(), &self.settings);
+                }
+                if ui.button("Revert preview").clicked() {
+                    self.restore_ricepack_preview(ui.ctx());
+                }
+            });
+        }
+        ui.add_space(6.0);
+        ui.horizontal_wrapped(|ui| {
+            ui.label("Export to");
+            ui.add(
+                egui::TextEdit::singleline(&mut self.ricepack_library.export_path)
+                    .desired_width(320.0)
+                    .hint_text("/absolute/path/to/new-design.toml"),
+            );
+            if ui.button("Export current appearance").clicked() {
+                let path = PathBuf::from(self.ricepack_library.export_path.trim());
+                match RicePack::from_settings(&self.settings).write_new(&path) {
+                    Ok(()) => {
+                        self.notification = Some(format!("Exported design: {}", path.display()))
+                    }
+                    Err(error) => {
+                        self.notification = Some(format!("RicePack export failed: {error}"))
+                    }
+                }
+            }
+        });
+        ui.label(RichText::new("Preview changes only this window. Import and export never overwrite files. RicePacks cannot run commands or change monitoring permissions.").small().weak());
     }
 
     fn accept_snapshots(&mut self) {
@@ -1019,6 +1248,8 @@ impl TaskottoApp {
         ui.add_space(if xp { 8.0 } else { 14.0 });
         let mut changed = false;
         egui::ScrollArea::vertical().show(ui, |ui| {
+            self.ricepack_library_controls(ui, xp);
+            ui.add_space(18.0);
             preference_section(ui, "Appearance", xp);
             ui.horizontal(|ui| {
                 ui.label("Rice profile");
@@ -1120,6 +1351,8 @@ impl TaskottoApp {
             ui.label(RichText::new("The UI samples only while the application is open. Longer intervals reduce idle CPU use.").small().weak());
             ui.add_space(18.0);
             if ui.button("Reset to defaults").clicked() {
+                self.ricepack_library.preview = None;
+                self.ricepack_watcher = None;
                 self.settings = Settings::default();
                 self.theme_accent_input.clear();
                 self.theme_surface_input.clear();
@@ -1677,6 +1910,7 @@ mod tests {
             new_task: NewTaskDialog::default(),
             mac_info_open: false,
             ricepack_watcher: None,
+            ricepack_library: RicePackLibraryUi::default(),
         };
         let input = egui::RawInput {
             screen_rect: Some(egui::Rect::from_min_size(
@@ -1744,6 +1978,7 @@ mod tests {
                 next_check: Instant::now(),
                 last_error: None,
             }),
+            ricepack_library: RicePackLibraryUi::default(),
         };
 
         std::fs::write(&path, "format_version = 1\n[broken\n").unwrap();
@@ -1790,6 +2025,26 @@ mod tests {
         assert_eq!(app.settings.theme, Theme::Windows10);
         assert_eq!(app.page, Page::Processes);
 
+        app.ricepack_library.source_path = path.display().to_string();
+        app.preview_ricepack(&ctx);
+        assert_eq!(app.settings.theme, Theme::Macos);
+        assert!(app.ricepack_watcher.is_none());
+        assert!(app.ricepack_library.preview.is_some());
+        app.settings.refresh_ms = 5_000;
+        app.restore_ricepack_preview(&ctx);
+        assert_eq!(app.settings.theme, Theme::Windows10);
+        assert_eq!(app.settings.refresh_ms, 5_000);
+        assert_eq!(app.ricepack_watcher.as_ref().unwrap().path, path);
+
+        app.preview_ricepack(&ctx);
+        app.keep_ricepack_preview();
+        assert_eq!(app.settings.theme, Theme::Windows10); // Existing CLI override wins.
+        assert_eq!(
+            app.ricepack_watcher.as_ref().unwrap().applied.name,
+            "Another Look"
+        );
+        assert!(app.ricepack_library.preview.is_none());
+
         app.settings.reset_ricepack_appearance();
         assert_eq!(app.settings.theme, Theme::Windows7);
         std::fs::remove_file(path).unwrap();
@@ -1820,6 +2075,7 @@ mod tests {
             new_task: NewTaskDialog::default(),
             mac_info_open: false,
             ricepack_watcher: None,
+            ricepack_library: RicePackLibraryUi::default(),
         };
         for theme in Theme::ALL {
             for dimensions in [(650.0, 420.0), (1440.0, 900.0)] {
@@ -1864,6 +2120,7 @@ mod tests {
             new_task: NewTaskDialog::default(),
             mac_info_open: false,
             ricepack_watcher: None,
+            ricepack_library: RicePackLibraryUi::default(),
         };
         for theme in [Theme::XpLuna, Theme::Windows7, Theme::Windows10] {
             app.settings.theme = theme;
@@ -1942,6 +2199,7 @@ mod tests {
             new_task: NewTaskDialog::default(),
             mac_info_open: false,
             ricepack_watcher: None,
+            ricepack_library: RicePackLibraryUi::default(),
         };
         assert_eq!(app.processes().len(), 1);
         app.query = "not-there".into();
@@ -2023,6 +2281,7 @@ mod tests {
             new_task: NewTaskDialog::default(),
             mac_info_open: false,
             ricepack_watcher: None,
+            ricepack_library: RicePackLibraryUi::default(),
         };
         for layout in [LayoutMode::TopTabs, LayoutMode::Sidebar] {
             app.settings.layout_mode = layout;
@@ -2103,6 +2362,7 @@ mod tests {
             new_task: NewTaskDialog::default(),
             mac_info_open: false,
             ricepack_watcher: None,
+            ricepack_library: RicePackLibraryUi::default(),
         };
         for theme in [
             Theme::Windows98,

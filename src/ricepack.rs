@@ -5,13 +5,103 @@
 use crate::config::{Density, LayoutMode, Settings, Theme, is_hex_color};
 use serde::{Deserialize, Serialize};
 use std::{
-    fs::{File, OpenOptions},
+    fs::{self, File, OpenOptions},
     io::{self, Read, Write},
-    path::Path,
+    path::{Path, PathBuf},
 };
 
 const MAX_RICEPACK_BYTES: u64 = 64 * 1024;
 pub const FORMAT_VERSION: u32 = 1;
+const MAX_LIBRARY_ENTRIES: usize = 128;
+
+#[derive(Clone, Debug)]
+pub struct LibraryEntry {
+    pub path: PathBuf,
+    pub name: String,
+    pub error: Option<String>,
+}
+
+/// User-owned, non-recursive pack library. No RiceBowl installation is needed.
+pub fn library_dir() -> io::Result<PathBuf> {
+    Ok(crate::config::config_file()?
+        .parent()
+        .ok_or_else(|| io::Error::other("invalid Taskotto config directory"))?
+        .join("ricepacks"))
+}
+
+/// Enumerate at most 128 files, including broken packs with a visible error.
+/// Symlinks and non-TOML files are ignored, and all file reads stay bounded.
+pub fn discover_in(dir: &Path) -> io::Result<Vec<LibraryEntry>> {
+    let iter = match fs::read_dir(dir) {
+        Ok(iter) => iter,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(Vec::new()),
+        Err(error) => return Err(error),
+    };
+    let mut entries = Vec::new();
+    for entry in iter {
+        let entry = entry?;
+        if !entry.file_type()?.is_file() || entry.path().extension().is_none_or(|ext| ext != "toml")
+        {
+            continue;
+        }
+        if entries.len() == MAX_LIBRARY_ENTRIES {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "RicePack library exceeds 128 TOML files",
+            ));
+        }
+        let path = entry.path();
+        let (name, error) = match RicePack::load(&path) {
+            Ok(pack) => (pack.name, None),
+            Err(error) => (
+                entry.file_name().to_string_lossy().into_owned(),
+                Some(error.to_string()),
+            ),
+        };
+        entries.push(LibraryEntry { path, name, error });
+    }
+    entries.sort_by(|a, b| a.name.cmp(&b.name).then(a.path.cmp(&b.path)));
+    Ok(entries)
+}
+
+/// Import validated data, never overwrite an existing design or follow a
+/// destination symlink. Reserve suffixes if two packs share the same name.
+pub fn import_into(pack: &RicePack, dir: &Path) -> io::Result<PathBuf> {
+    fs::create_dir_all(dir)?;
+    let slug: String = pack
+        .name
+        .chars()
+        .filter_map(|character| {
+            if character.is_ascii_alphanumeric() {
+                Some(character.to_ascii_lowercase())
+            } else if character == ' ' || character == '-' || character == '_' {
+                Some('-')
+            } else {
+                None
+            }
+        })
+        .take(48)
+        .collect();
+    let slug = slug.trim_matches('-');
+    let slug = if slug.is_empty() { "design" } else { slug };
+    for index in 1..=999 {
+        let name = if index == 1 {
+            format!("{slug}.toml")
+        } else {
+            format!("{slug}-{index}.toml")
+        };
+        let path = dir.join(name);
+        match pack.write_new(&path) {
+            Ok(()) => return Ok(path),
+            Err(error) if error.kind() == io::ErrorKind::AlreadyExists => continue,
+            Err(error) => return Err(error),
+        }
+    }
+    Err(io::Error::new(
+        io::ErrorKind::AlreadyExists,
+        "RicePack library has no available name for this design",
+    ))
+}
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -175,6 +265,34 @@ mod tests {
     use super::*;
 
     const SAMPLE: &str = include_str!("../examples/ricepacks/sea-glass.toml");
+
+    #[test]
+    fn library_import_discovers_packs_and_never_overwrites() {
+        let directory = std::env::temp_dir().join(format!(
+            "taskotto-ricepack-library-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let pack = RicePack::from_toml(SAMPLE).unwrap();
+        assert!(discover_in(&directory).unwrap().is_empty());
+        let first = import_into(&pack, &directory).unwrap();
+        let second = import_into(&pack, &directory).unwrap();
+        assert_ne!(first, second);
+        assert_eq!(RicePack::load(&first).unwrap(), pack);
+        fs::write(directory.join("invalid.toml"), "arbitrary = 1").unwrap();
+        fs::write(directory.join("not-a-pack.txt"), "ignored").unwrap();
+        let entries = discover_in(&directory).unwrap();
+        assert_eq!(entries.len(), 3);
+        assert_eq!(
+            entries.iter().filter(|entry| entry.error.is_some()).count(),
+            1
+        );
+        assert_eq!(RicePack::load(&second).unwrap(), pack);
+        fs::remove_dir_all(directory).unwrap();
+    }
 
     #[test]
     fn example_pack_parses_and_applies_without_changing_monitoring_options() {
