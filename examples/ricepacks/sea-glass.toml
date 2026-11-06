@@ -12,3 +12,10 @@ font_scale = 1.05
 spacing = 9.0
 corner_radius = 10
 row_height = 34.0
+
+[components]
+control = "#D4F2EC"
+hover = "#B6EAE0"
+border = "#80C8BE"
+table = "#F7FFFD"
+selection = "#148E94"

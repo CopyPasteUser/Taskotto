@@ -1330,6 +1330,16 @@ impl TaskottoApp {
             }
             ui.label(RichText::new("Low-contrast text colors automatically fall back to a readable color.").small().weak());
             ui.add_space(18.0);
+            preference_section(ui, "Component colors", xp);
+            ui.label(RichText::new("Optional overrides for controls, borders, tables and selection. Reset each color to keep the rice's original design.").small().weak());
+            let defaults = ui.visuals().clone();
+            let components = &mut self.settings.components;
+            changed |= component_color_picker(ui, "Controls", &mut components.control, defaults.widgets.inactive.bg_fill);
+            changed |= component_color_picker(ui, "Hover", &mut components.hover, defaults.widgets.hovered.bg_fill);
+            changed |= component_color_picker(ui, "Borders", &mut components.border, defaults.widgets.inactive.bg_stroke.color);
+            changed |= component_color_picker(ui, "Table background", &mut components.table, defaults.extreme_bg_color);
+            changed |= component_color_picker(ui, "Selection", &mut components.selection, defaults.selection.bg_fill);
+            ui.add_space(18.0);
             preference_section(ui, "Process table", xp);
             changed |= ui.checkbox(&mut self.settings.show_io_column, "Show I/O rate (wide windows)").changed();
             changed |= ui.checkbox(&mut self.settings.show_user_column, "Show user (wide windows)").changed();
@@ -1724,6 +1734,39 @@ fn preference_section(ui: &mut egui::Ui, title: &str, xp: bool) {
         ui.label(RichText::new(title).size(18.0).strong());
         ui.add_space(3.0);
     }
+}
+
+fn component_color_picker(
+    ui: &mut egui::Ui,
+    label: &str,
+    destination: &mut Option<String>,
+    fallback: Color32,
+) -> bool {
+    let mut changed = false;
+    ui.horizontal(|ui| {
+        ui.add_sized([112.0, 20.0], egui::Label::new(label));
+        let mut color = destination
+            .as_deref()
+            .and_then(crate::theme::parse_hex)
+            .unwrap_or(fallback);
+        if ui.color_edit_button_srgba(&mut color).changed() {
+            *destination = Some(format!(
+                "#{:02X}{:02X}{:02X}",
+                color.r(),
+                color.g(),
+                color.b()
+            ));
+            changed = true;
+        }
+        if ui
+            .add_enabled(destination.is_some(), egui::Button::new("Use preset"))
+            .clicked()
+        {
+            *destination = None;
+            changed = true;
+        }
+    });
+    changed
 }
 
 fn accent_color(settings: &Settings) -> Color32 {

@@ -1,8 +1,14 @@
-# Taskotto 1.0.0-rc.17 — release candidate
+# Taskotto 1.0.0-rc.18 — release candidate
 
 **Date:** 2026-11-06 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
 Rust-only Linux process manager and system monitor. This is a **prerelease**, not a stable 1.0 certification.
+
+## Changes since rc.17
+
+- RicePack v1 now supports optional semantic component colors (`[components]`): control, hover, border, table and selection. Legacy packs still parse and render unchanged; malformed or unknown fields are rejected.
+- Preview, import, export, live reload and settings persistence now carry these colors. Preferences offers interactive color swatches and per-token preset resets. Selection text automatically follows the chosen fill contrast.
+- Refreshed the original Sea Glass example and reproducible Taskotto designer screenshot, with parser and theme-rendering regression tests. Some individually drawn rice widgets still need extraction before fully free-form visual composition.
 
 ## Changes since rc.16
 

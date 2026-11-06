@@ -123,6 +123,72 @@ impl SortBy {
     }
 }
 
+/// Optional semantic widget colors. Absent values keep each rice's own look.
+/// These belong to appearance, not permissions or sampling configuration.
+#[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct ComponentColors {
+    pub control: Option<String>,
+    pub hover: Option<String>,
+    pub border: Option<String>,
+    pub table: Option<String>,
+    pub selection: Option<String>,
+}
+
+impl ComponentColors {
+    pub fn is_empty(&self) -> bool {
+        self.control.is_none()
+            && self.hover.is_none()
+            && self.border.is_none()
+            && self.table.is_none()
+            && self.selection.is_none()
+    }
+
+    pub fn validate(&self) -> Result<(), String> {
+        for (name, color) in [
+            ("control", &self.control),
+            ("hover", &self.hover),
+            ("border", &self.border),
+            ("table", &self.table),
+            ("selection", &self.selection),
+        ] {
+            if color.as_deref().is_some_and(|color| !is_hex_color(color)) {
+                return Err(format!("components.{name} must be #RRGGBB"));
+            }
+        }
+        Ok(())
+    }
+
+    pub fn normalize(&mut self) {
+        for color in [
+            &mut self.control,
+            &mut self.hover,
+            &mut self.border,
+            &mut self.table,
+            &mut self.selection,
+        ] {
+            if color.as_deref().is_some_and(|value| !is_hex_color(value)) {
+                *color = None;
+            }
+        }
+    }
+
+    /// A missing pack token does not erase a user's custom base token.
+    pub fn overlay(&mut self, pack: &Self) {
+        for (target, source) in [
+            (&mut self.control, &pack.control),
+            (&mut self.hover, &pack.hover),
+            (&mut self.border, &pack.border),
+            (&mut self.table, &pack.table),
+            (&mut self.selection, &pack.selection),
+        ] {
+            if let Some(source) = source {
+                *target = Some(source.clone());
+            }
+        }
+    }
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(default)]
 pub struct Settings {
@@ -144,6 +210,8 @@ pub struct Settings {
     pub font_scale: f32,
     pub ui_spacing: f32,
     pub corner_radius: Option<u8>,
+    #[serde(skip_serializing_if = "ComponentColors::is_empty")]
+    pub components: ComponentColors,
     /// Session-only RiceBowl/CLI override; never replace the user's saved theme.
     #[serde(skip)]
     pub launch_theme_original: Option<Theme>,
@@ -166,6 +234,7 @@ pub(crate) struct AppearanceBackup {
     ui_spacing: f32,
     corner_radius: Option<u8>,
     table_row_height: Option<f32>,
+    components: ComponentColors,
 }
 
 impl Default for Settings {
@@ -189,6 +258,7 @@ impl Default for Settings {
             font_scale: 1.0,
             ui_spacing: 8.0,
             corner_radius: None,
+            components: ComponentColors::default(),
             launch_theme_original: None,
             launch_ricepack_original: None,
             launch_ricepack_name: None,
@@ -210,6 +280,7 @@ impl Settings {
                 ui_spacing: self.ui_spacing,
                 corner_radius: self.corner_radius,
                 table_row_height: self.table_row_height,
+                components: self.components.clone(),
             }));
         }
         self.launch_ricepack_name = Some(name.to_owned());
@@ -229,6 +300,7 @@ impl Settings {
             self.ui_spacing = original.ui_spacing;
             self.corner_radius = original.corner_radius;
             self.table_row_height = original.table_row_height;
+            self.components.clone_from(&original.components);
         }
     }
 
@@ -261,6 +333,7 @@ impl Settings {
             .table_row_height
             .filter(|value| value.is_finite())
             .map(|value| value.clamp(22.0, 48.0));
+        self.components.normalize();
     }
 
     pub fn load() -> io::Result<Self> {
@@ -298,6 +371,7 @@ impl Settings {
             persistent.ui_spacing = original.ui_spacing;
             persistent.corner_radius = original.corner_radius;
             persistent.table_row_height = original.table_row_height;
+            persistent.components.clone_from(&original.components);
         }
         if let Some(original) = self.launch_theme_original {
             persistent.theme = original;
@@ -392,6 +466,10 @@ mod tests {
             ui_spacing: -100.0,
             corner_radius: Some(255),
             table_row_height: Some(f32::NEG_INFINITY),
+            components: ComponentColors {
+                control: Some("invalid".into()),
+                ..ComponentColors::default()
+            },
             ..Settings::default()
         };
         config.normalize();
@@ -402,6 +480,7 @@ mod tests {
         assert_eq!(config.ui_spacing, 3.0);
         assert_eq!(config.corner_radius, Some(16));
         assert!(config.table_row_height.is_none());
+        assert!(config.components.control.is_none());
     }
 
     #[test]
@@ -464,6 +543,10 @@ mod tests {
         let mut config = Settings {
             theme: Theme::Windows10,
             accent_hex: Some("#2277CC".into()),
+            components: ComponentColors {
+                border: Some("#123456".into()),
+                ..ComponentColors::default()
+            },
             layout_mode: LayoutMode::Sidebar,
             refresh_ms: 3_000,
             ..Settings::default()
@@ -477,6 +560,8 @@ mod tests {
         assert_eq!(loaded.theme, Theme::Windows10);
         assert_eq!(loaded.layout_mode, LayoutMode::Sidebar);
         assert_eq!(loaded.accent_hex.as_deref(), Some("#2277CC"));
+        assert_eq!(loaded.components.border.as_deref(), Some("#123456"));
+        assert!(loaded.components.selection.is_none());
         assert_eq!(loaded.refresh_ms, 5_000);
         assert!(loaded.launch_ricepack_name.is_none());
         fs::remove_file(path).unwrap();
