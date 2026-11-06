@@ -1,0 +1,14 @@
+format_version = 1
+name = "Aero Lagoon: dark process glass"
+base_theme = "frutiger-aero"
+
+[appearance]
+accent = "#754BD5"
+navigation = "top-tabs"
+
+[components]
+control = "#C8F6F1"
+hover = "#A8E8DC"
+border = "#5A8A9C"
+table = "#22334B"
+selection = "#643FA5"
