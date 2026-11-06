@@ -96,13 +96,15 @@ Taskotto is a **standalone, on-demand Rust system monitor and process manager** 
 
 ## 0.9 — Release candidate
 
-- [x] Buildable `1.0.0-rc.7` candidate with all-profile small/large headless layout and integration tests.
+- [x] Buildable `1.0.0-rc.8` candidate with all-profile small/large headless layout and integration tests.
 - [x] Contributor/security policies, dependency-update configuration and CI checks.
 - [x] Reproducible egui-rendered headless screenshots with real procfs measurements, documented provenance and visual inspection.
 - [x] Consistent network/disk comparison charts (both directions on one scale), early-history width regression coverage and readable navigation labels.
 - [x] Deep, independent XP Luna and Windows 10 task-manager layouts with functional menus, controls, history views, accessible focus and four additional genuine headless screenshots.
 - [x] RC6 visual fidelity pass: classic white XP process pane and statistic groups, compact legacy chrome, hidden-until-requested search, softer Windows 10 history graph fill; fixed `/proc` thread count.
 - [x] RC7 data-backed screens: XP Applications (explicit current-user process approximation), Networking, Users and Properties; Windows 10 Users and ungrouped Details. Five historical XP tabs; focused nine-image README gallery with obsolete captures removed.
+- [x] RC8 Windows 10 layout parity: seven real tabs, horizontally by default; user-selectable vertical sidebar intentionally labeled custom. Data-backed Linux App history (current processes), XDG autostart and asynchronous user systemd services; historic XP New Task dialog.
+- [x] RC8 extended live-data screenshot coverage (14 views), bounded command previews, XDG precedence and systemd parser regression tests, and narrow/wide horizontal/vertical navigation layouts.
 - [x] Linux end-to-end child-signal test of all four signals, PID start-time mismatch and failure handling.
 - [x] Real CLI JSON/error handling and isolated XDG desktop install/reinstall integration tests.
 - [x] Atomic launcher/icon replacement, including regression against symlink-target overwrites.
@@ -111,9 +113,9 @@ Taskotto is a **standalone, on-demand Rust system monitor and process manager** 
 - [ ] Native X11/Wayland screenshots and interaction walkthrough. *The headless captures do not satisfy this hardware gate.*
 - [ ] Complete hardware test checklist (`QA.md`) with recorded results.
 - [ ] Packaging/desktop integration acceptance.
-- [ ] CI green on the rc.7 merge and prerelease commit; review warnings, errors, license/dependencies.
+- [ ] CI green on the rc.8 merge and prerelease commit; review warnings, errors, license/dependencies.
 - [ ] Reference-based, native-resolution visual comparison and correction for XP Luna and Windows 10. *A literal 1:1 claim is not justified by headless renders or default font metrics.*
-- [ ] Evaluate genuine Linux implementations of Windows 10 Startup and Services views; App history requires truthful accounting or must remain absent.
+- [x] Provide truthful Linux analogues for Windows 10 Startup/Services/App history without invented Windows-only data; optional future enhancements include startup enable/disable with recoverable backups and additional user service controls.
 
 **Gate:** no P0/P1 defects, all regression tests passing and no misleading feature claims.
 

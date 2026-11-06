@@ -7,7 +7,10 @@ mod chrome;
 mod details;
 mod performance;
 mod process;
+mod system;
 mod users;
+
+pub(super) use system::SystemPages;
 
 use super::*;
 
@@ -21,6 +24,10 @@ pub(super) fn topbar(app: &mut TaskottoApp, ctx: &egui::Context) {
 
 pub(super) fn navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
     chrome::navigation(app, ctx);
+}
+
+pub(super) fn vertical_navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
+    chrome::vertical_navigation(app, ctx);
 }
 
 pub(super) fn statusbar(app: &mut TaskottoApp, ctx: &egui::Context) {
@@ -49,6 +56,18 @@ pub(super) fn xp_details(app: &mut TaskottoApp, ui: &mut egui::Ui) {
 
 pub(super) fn applications(app: &mut TaskottoApp, ui: &mut egui::Ui) {
     applications::page(app, ui);
+}
+
+pub(super) fn app_history(app: &mut TaskottoApp, ui: &mut egui::Ui) {
+    system::app_history(app, ui);
+}
+
+pub(super) fn startup(app: &mut TaskottoApp, ui: &mut egui::Ui) {
+    system::startup(app, ui);
+}
+
+pub(super) fn services(app: &mut TaskottoApp, ui: &mut egui::Ui) {
+    system::services(app, ui);
 }
 
 fn is_xp(app: &TaskottoApp) -> bool {

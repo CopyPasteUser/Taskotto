@@ -19,9 +19,12 @@ enum Page {
     Applications,
     Processes,
     Performance,
+    AppHistory,
+    Startup,
     Networking,
     Users,
     Details,
+    Services,
     Preferences,
 }
 
@@ -153,6 +156,38 @@ pub struct TaskottoApp {
     theme_text_input: String,
     my_uid: u32,
     users: HashMap<u32, String>,
+    system_pages: rices::SystemPages,
+    new_task: NewTaskDialog,
+}
+
+#[derive(Default)]
+struct NewTaskDialog {
+    open: bool,
+    command: String,
+    error: Option<String>,
+}
+
+fn launch_user_task(command: &str) -> io::Result<()> {
+    if command.trim().is_empty() {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "Enter a command first",
+        ));
+    }
+    // Explicitly user-entered shell input, never an untrusted .desktop Exec
+    // string or a synthesized command. Inherits only normal user permissions.
+    let mut child = std::process::Command::new("/bin/sh")
+        .arg("-c")
+        .arg(command)
+        .stdin(std::process::Stdio::null())
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .spawn()?;
+    // A dropped Child is not reaped on Unix; wait without blocking the GUI.
+    thread::spawn(move || {
+        let _ = child.wait();
+    });
+    Ok(())
 }
 
 impl TaskottoApp {
@@ -182,6 +217,8 @@ impl TaskottoApp {
             theme_text_input: text_input,
             my_uid: unsafe { libc::geteuid() },
             users: load_users(),
+            system_pages: rices::SystemPages::default(),
+            new_task: NewTaskDialog::default(),
         }
     }
 
@@ -369,6 +406,12 @@ impl TaskottoApp {
     }
 
     fn nav(&mut self, ctx: &egui::Context) {
+        if self.settings.theme == Theme::Windows10
+            && self.settings.layout_mode.resolve(self.settings.theme) == LayoutMode::Sidebar
+        {
+            rices::vertical_navigation(self, ctx);
+            return;
+        }
         if rices::supports(self.settings.theme)
             && self.settings.layout_mode.resolve(self.settings.theme) == LayoutMode::TopTabs
         {
@@ -382,9 +425,12 @@ impl TaskottoApp {
                         (Page::Applications, "Applications"),
                         (Page::Processes, "Processes"),
                         (Page::Performance, "Performance"),
+                        (Page::AppHistory, "App history"),
+                        (Page::Startup, "Startup"),
                         (Page::Networking, "Network"),
                         (Page::Users, "Users"),
                         (Page::Details, "Details"),
+                        (Page::Services, "Services"),
                         (Page::Preferences, "Preferences"),
                     ] {
                         if ui.selectable_label(self.page == page, label).clicked() {
@@ -406,9 +452,12 @@ impl TaskottoApp {
                     (Page::Applications, "Applications"),
                     (Page::Processes, "Processes"),
                     (Page::Performance, "Performance"),
+                    (Page::AppHistory, "App history"),
+                    (Page::Startup, "Startup"),
                     (Page::Networking, "Network"),
                     (Page::Users, "Users"),
                     (Page::Details, "Details"),
+                    (Page::Services, "Services"),
                     (Page::Preferences, "⚙  Preferences"),
                 ] {
                     if ui
@@ -999,6 +1048,79 @@ impl TaskottoApp {
         }
     }
 
+    fn new_task_dialog(&mut self, ctx: &egui::Context) {
+        if !self.new_task.open {
+            return;
+        }
+        let mut open = true;
+        let mut run = false;
+        egui::Window::new("Create New Task")
+            .collapsible(false)
+            .resizable(false)
+            .anchor(egui::Align2::CENTER_CENTER, Vec2::ZERO)
+            .frame(
+                egui::Frame::window(&ctx.style())
+                    .fill(if self.settings.theme == Theme::XpLuna {
+                        Color32::from_rgb(236, 233, 216)
+                    } else {
+                        Color32::WHITE
+                    })
+                    .stroke(Stroke::new(
+                        2.0_f32,
+                        if self.settings.theme == Theme::XpLuna {
+                            Color32::from_rgb(51, 94, 169)
+                        } else {
+                            Color32::from_rgb(168, 168, 168)
+                        },
+                    )),
+            )
+            .open(&mut open)
+            .show(ctx, |ui| {
+                ui.set_min_width(340.0);
+                ui.label("Type the name of a program or command to open.");
+                ui.add_space(7.0);
+                ui.horizontal(|ui| {
+                    ui.label("Open:");
+                    let response = ui.add(
+                        egui::TextEdit::singleline(&mut self.new_task.command).desired_width(280.0),
+                    );
+                    if response.lost_focus()
+                        && ui.input(|input| input.key_pressed(egui::Key::Enter))
+                    {
+                        run = true;
+                    }
+                });
+                if let Some(message) = &self.new_task.error {
+                    ui.colored_label(Color32::from_rgb(156, 65, 24), message);
+                }
+                ui.label(
+                    RichText::new("Runs as your current Linux user; no administrator elevation.")
+                        .small()
+                        .weak(),
+                );
+                ui.horizontal(|ui| {
+                    if ui.button("Run").clicked() {
+                        run = true;
+                    }
+                    if ui.button("Cancel").clicked() {
+                        self.new_task.open = false;
+                    }
+                });
+            });
+        if run {
+            let command = self.new_task.command.trim();
+            match launch_user_task(command) {
+                Ok(()) => {
+                    self.new_task.error = None;
+                    self.new_task.open = false;
+                }
+                Err(err) => self.new_task.error = Some(format!("Could not start task: {err}")),
+            }
+        } else {
+            self.new_task.open &= open;
+        }
+    }
+
     fn draw_contents(&mut self, ctx: &egui::Context) {
         self.topbar(ctx);
         self.nav(ctx);
@@ -1029,13 +1151,17 @@ impl TaskottoApp {
                 Page::Applications => rices::applications(self, ui),
                 Page::Processes => self.processes_page(ui),
                 Page::Performance => self.performance_page(ui),
+                Page::AppHistory => rices::app_history(self, ui),
+                Page::Startup => rices::startup(self, ui),
                 Page::Networking => rices::networking(self, ui),
                 Page::Users => rices::users(self, ui),
                 Page::Details => self.details_page(ui),
+                Page::Services => rices::services(self, ui),
                 Page::Preferences => self.preferences_page(ui),
             }
         });
         self.confirmation_dialog(ctx);
+        self.new_task_dialog(ctx);
     }
 }
 
@@ -1210,6 +1336,12 @@ mod tests {
     use super::*;
 
     #[test]
+    fn new_task_requires_explicit_command_and_uses_regular_user_launcher() {
+        assert!(launch_user_task("   ").is_err());
+        assert!(launch_user_task("/bin/true").is_ok());
+    }
+
+    #[test]
     fn missing_user_data_does_not_crash() {
         assert_eq!(state_name('Z'), "Zombie");
         assert_eq!(state_name('?'), "Other");
@@ -1360,6 +1492,8 @@ mod tests {
             theme_text_input: String::new(),
             my_uid: 1000,
             users: HashMap::new(),
+            system_pages: rices::SystemPages::default(),
+            new_task: NewTaskDialog::default(),
         };
         let input = egui::RawInput {
             screen_rect: Some(egui::Rect::from_min_size(
@@ -1399,6 +1533,8 @@ mod tests {
             theme_text_input: String::new(),
             my_uid: 1000,
             users: HashMap::new(),
+            system_pages: rices::SystemPages::default(),
+            new_task: NewTaskDialog::default(),
         };
         for theme in Theme::ALL {
             for dimensions in [(650.0, 420.0), (1440.0, 900.0)] {
@@ -1461,47 +1597,59 @@ mod tests {
             theme_text_input: String::new(),
             my_uid: 1000,
             users: HashMap::new(),
+            system_pages: rices::SystemPages::default(),
+            new_task: NewTaskDialog::default(),
         };
         for theme in [Theme::XpLuna, Theme::Windows10] {
-            app.settings.theme = theme;
-            apply_theme(&ctx, &app.settings);
-            for page in [
-                Page::Applications,
-                Page::Processes,
-                Page::Performance,
-                Page::Networking,
-                Page::Users,
-                Page::Details,
-                Page::Preferences,
-            ] {
-                app.page = page;
-                app.selected = if page == Page::Details {
-                    Some((3300, 0))
-                } else {
-                    None
-                };
-                for focus in [
-                    PerformanceFocus::Cpu,
-                    PerformanceFocus::Memory,
-                    PerformanceFocus::Disk,
-                    PerformanceFocus::Network,
+            for &navigation in if theme == Theme::Windows10 {
+                &[LayoutMode::TopTabs, LayoutMode::Sidebar][..]
+            } else {
+                &[LayoutMode::TopTabs][..]
+            } {
+                app.settings.theme = theme;
+                app.settings.layout_mode = navigation;
+                apply_theme(&ctx, &app.settings);
+                for page in [
+                    Page::Applications,
+                    Page::Processes,
+                    Page::Performance,
+                    Page::AppHistory,
+                    Page::Startup,
+                    Page::Networking,
+                    Page::Users,
+                    Page::Details,
+                    Page::Services,
+                    Page::Preferences,
                 ] {
-                    app.performance_focus = focus;
-                    for (width, height) in [(650.0, 420.0), (1280.0, 800.0)] {
-                        let output = ctx.run(
-                            egui::RawInput {
-                                screen_rect: Some(egui::Rect::from_min_size(
-                                    egui::Pos2::ZERO,
-                                    Vec2::new(width, height),
-                                )),
-                                ..Default::default()
-                            },
-                            |ctx| app.draw_contents(ctx),
-                        );
-                        assert!(
-                            !output.shapes.is_empty(),
-                            "missing {theme:?} {page:?} paint commands"
-                        );
+                    app.page = page;
+                    app.selected = if page == Page::Details {
+                        Some((3300, 0))
+                    } else {
+                        None
+                    };
+                    for focus in [
+                        PerformanceFocus::Cpu,
+                        PerformanceFocus::Memory,
+                        PerformanceFocus::Disk,
+                        PerformanceFocus::Network,
+                    ] {
+                        app.performance_focus = focus;
+                        for (width, height) in [(650.0, 420.0), (1280.0, 800.0)] {
+                            let output = ctx.run(
+                                egui::RawInput {
+                                    screen_rect: Some(egui::Rect::from_min_size(
+                                        egui::Pos2::ZERO,
+                                        Vec2::new(width, height),
+                                    )),
+                                    ..Default::default()
+                                },
+                                |ctx| app.draw_contents(ctx),
+                            );
+                            assert!(
+                                !output.shapes.is_empty(),
+                                "missing {theme:?} {page:?} paint commands"
+                            );
+                        }
                     }
                 }
             }
