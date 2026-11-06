@@ -2,6 +2,16 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.6] — 2026-11-06
+
+- Windows 10 and XP Luna task-manager views receive a closer historical layout: slimmer title/menu/navigation chrome, table-first process pages, refined tabs, and a search field opened only by Ctrl+F or the View menu.
+- XP Luna uses its white full-height process-list surface, era-appropriate column headings and row heights, the all-users checkbox and grouped CPU/RAM/swap/thread statistics.
+- Windows 10 process heatmaps and focused performance history retain real Linux values with a subtle tinted history fill and clearer legend labels.
+- Fixed `/proc/PID/stat` thread-count parsing (field 20 was read as field 19); a regression test confirms correct values.
+- Refreshed four real, headless egui process/performance screenshots using live Linux data. No Windows assets, fake data or native-GUI validation claims.
+- Rust 1.88 formatting, 41 automated tests (including the ignored screenshot generator) and warning-free Clippy passed locally; real hardware acceptance is still outstanding.
+- Follow-up CI compatibility fix: explicitly type seven egui stroke widths as `f32` for newer Rust's strict floating-point inference.
+
 ## [1.0.0-rc.5] — 2026-11-06
 
 - End-to-end Linux tests exercise real child-process pause/resume/terminate/kill, stale PID start-time rejection, CLI JSON output and invalid argument handling.

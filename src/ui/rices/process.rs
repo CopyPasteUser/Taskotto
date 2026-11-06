@@ -30,19 +30,25 @@ struct TableColumns {
 }
 
 impl TableColumns {
-    fn new(available: f32, app: &TaskottoApp) -> Self {
-        let width = available.max(440.0);
-        let xp = is_xp(app);
+    fn new(available: f32, settings: &Settings) -> Self {
+        let available = available.max(390.0);
+        let xp = settings.theme == Theme::XpLuna;
+        // XP uses a fixed-width report-view header. The list itself fills the
+        // window, but stretching "Image Name" across a large monitor would
+        // look unlike the classic Win32 control.
+        let width = if xp { available.min(800.0) } else { available };
+        let min_io_width = if xp { 840.0 } else { 875.0 };
+        let min_user_width = if xp { 700.0 } else { 1040.0 };
         let mut columns = vec![
-            (Column::Pid, if xp { 80.0 } else { 78.0 }),
-            (Column::Cpu, if xp { 95.0 } else { 106.0 }),
-            (Column::Memory, 128.0),
+            (Column::Pid, if xp { 65.0 } else { 75.0 }),
+            (Column::Cpu, if xp { 62.0 } else { 104.0 }),
+            (Column::Memory, if xp { 113.0 } else { 126.0 }),
         ];
-        if app.settings.show_io_column && width >= 875.0 {
-            columns.push((Column::Io, 133.0));
+        if settings.show_io_column && available >= min_io_width {
+            columns.push((Column::Io, if xp { 115.0 } else { 133.0 }));
         }
-        if app.settings.show_user_column && width >= 1040.0 {
-            columns.push((Column::User, 128.0));
+        if settings.show_user_column && available >= min_user_width {
+            columns.push((Column::User, if xp { 120.0 } else { 128.0 }));
         }
         let other: f32 = columns.iter().map(|(_, w)| w).sum();
         columns.insert(0, (Column::Name, (width - other).max(140.0)));
@@ -88,44 +94,27 @@ fn grouped_rows(app: &TaskottoApp, rows: Vec<ProcessRow>) -> Vec<Entry> {
 
 pub(super) fn page(app: &mut TaskottoApp, ui: &mut egui::Ui) {
     let xp = is_xp(app);
-    if xp {
-        ui.label(RichText::new("Processes").size(13.0).strong());
-    } else {
-        ui.add_space(5.0);
-        ui.heading(RichText::new("Processes").size(30.0));
-        ui.add_space(8.0);
-    }
-    ui.horizontal_wrapped(|ui| {
-        let search = ui.add_sized(
-            [
-                ui.available_width().min(if xp { 250.0 } else { 300.0 }),
-                26.0,
-            ],
-            egui::TextEdit::singleline(&mut app.query).hint_text("Search processes…"),
-        );
-        if app.focus_search {
-            search.request_focus();
-            app.focus_search = false;
-        }
-        if ui.button("Refresh").clicked() {
-            let _ = app.worker.commands.send(Command::Refresh);
-        }
-        if ui
-            .selectable_label(app.settings.tree_view, "Process tree")
-            .clicked()
-        {
-            app.settings.tree_view = !app.settings.tree_view;
-            app.save_preferences(ui.ctx());
-        }
-        if !xp {
-            ui.label(
-                RichText::new("Click a column to sort · right-click for actions")
-                    .small()
-                    .weak(),
+    // Windows 10's Processes tab and XP's report view begin directly with
+    // the column headers. The large heading belongs to Performance, not here.
+    // Both historical task managers show their table immediately. Keep the
+    // extra Linux search available with Ctrl+F / View rather than inserting a
+    // permanent toolbar that changes the silhouette of either application.
+    if app.focus_search || !app.query.is_empty() {
+        ui.horizontal(|ui| {
+            let search = ui.add_sized(
+                [ui.available_width().min(300.0), 24.0],
+                egui::TextEdit::singleline(&mut app.query).hint_text("Filter processes (Ctrl+F)"),
             );
-        }
-    });
-    ui.add_space(if xp { 5.0 } else { 12.0 });
+            if app.focus_search {
+                search.request_focus();
+                app.focus_search = false;
+            }
+            if ui.small_button("Clear ×").clicked() {
+                app.query.clear();
+            }
+        });
+    }
+    ui.add_space(if xp { 2.0 } else { 5.0 });
     if app.snapshot.is_none() {
         ui.spinner();
         ui.label("Loading Linux process information…");
@@ -133,38 +122,75 @@ pub(super) fn page(app: &mut TaskottoApp, ui: &mut egui::Ui) {
     }
     let rows = app.processes();
     if rows.is_empty() {
-        ui.add_space(32.0);
-        ui.vertical_centered(|ui| {
-            ui.heading("No matching processes");
-            if ui.button("Clear search").clicked() {
-                app.query.clear();
-            }
-        });
+        egui::Frame::new()
+            .fill(Color32::WHITE)
+            .stroke(Stroke::new(1.0_f32, Color32::from_rgb(173, 173, 173)))
+            .show(ui, |ui| {
+                ui.set_min_height((ui.available_height() - 12.0).max(100.0));
+                ui.add_space(32.0);
+                ui.vertical_centered(|ui| {
+                    ui.label("No matching processes");
+                    if ui.button("Clear filter").clicked() {
+                        app.query.clear();
+                    }
+                });
+            });
         return;
     }
-    let layout = TableColumns::new(ui.available_width() - 16.0, app);
-    header(app, ui, &layout);
-    let entries = grouped_rows(app, rows);
-    let row_height = app
-        .settings
-        .table_row_height
-        .unwrap_or(if xp { 27.0 } else { 37.0 });
-    egui::ScrollArea::vertical()
-        .auto_shrink([false, false])
-        .show_rows(ui, row_height, entries.len(), |ui, range| {
-            for index in range {
-                match &entries[index] {
-                    Entry::Section(label, count) => section(ui, &layout, label, *count, row_height),
-                    Entry::Process(row) => process_row(app, ui, &layout, row, index, row_height),
-                }
-            }
+    let footer_height = if xp { 32.0 } else { 0.0 };
+    let table_height = (ui.available_height() - footer_height - 6.0).max(100.0);
+    egui::Frame::new()
+        .fill(Color32::WHITE)
+        .stroke(Stroke::new(
+            1.0_f32,
+            if xp {
+                Color32::from_rgb(128, 128, 128)
+            } else {
+                Color32::from_rgb(218, 218, 218)
+            },
+        ))
+        .show(ui, |ui| {
+            ui.set_min_height(table_height);
+            let layout = TableColumns::new(ui.available_width() - 14.0, &app.settings);
+            header(app, ui, &layout);
+            let entries = grouped_rows(app, rows);
+            let row_height = app
+                .settings
+                .table_row_height
+                .unwrap_or(if xp { 21.0 } else { 33.0 });
+            egui::ScrollArea::vertical()
+                .auto_shrink([false, false])
+                .max_height((table_height - if xp { 25.0 } else { 66.0 }).max(60.0))
+                .show_rows(ui, row_height, entries.len(), |ui, range| {
+                    for index in range {
+                        match &entries[index] {
+                            Entry::Section(label, count) => {
+                                section(ui, &layout, label, *count, row_height)
+                            }
+                            Entry::Process(row) => {
+                                process_row(app, ui, &layout, row, index, row_height)
+                            }
+                        }
+                    }
+                });
         });
+    if xp {
+        ui.add_space(4.0);
+        let mut all_users = !app.settings.only_my_processes;
+        if ui
+            .checkbox(&mut all_users, "Show processes from all users")
+            .changed()
+        {
+            app.settings.only_my_processes = !all_users;
+            app.save_preferences(ui.ctx());
+        }
+    }
 }
 
 fn header(app: &mut TaskottoApp, ui: &mut egui::Ui, layout: &TableColumns) {
     let xp = is_xp(app);
     let (rect, _) = ui.allocate_exact_size(
-        egui::vec2(layout.width, if xp { 30.0 } else { 69.0 }),
+        egui::vec2(layout.width, if xp { 23.0 } else { 65.0 }),
         Sense::hover(),
     );
     ui.painter().rect_filled(rect, 0.0, Color32::WHITE);
@@ -195,12 +221,36 @@ fn header(app: &mut TaskottoApp, ui: &mut egui::Ui, layout: &TableColumns) {
             );
         }
         let label = match column {
-            Column::Name => "Name",
+            Column::Name => {
+                if xp {
+                    "Image Name"
+                } else {
+                    "Name"
+                }
+            }
             Column::Pid => "PID",
             Column::Cpu => "CPU",
-            Column::Memory => "Memory",
-            Column::Io => "Disk I/O",
-            Column::User => "User",
+            Column::Memory => {
+                if xp {
+                    "Mem Usage"
+                } else {
+                    "Memory"
+                }
+            }
+            Column::Io => {
+                if xp {
+                    "I/O Bytes"
+                } else {
+                    "Disk I/O"
+                }
+            }
+            Column::User => {
+                if xp {
+                    "User Name"
+                } else {
+                    "User"
+                }
+            }
         };
         if !xp && matches!(column, Column::Cpu | Column::Memory) {
             let percent = match column {
@@ -334,6 +384,17 @@ fn process_row(
     let font = FontId::proportional(if xp { 12.0 } else { 13.5 });
     let memory_used = app.snapshot.as_ref().map_or(1, |s| s.memory.used()).max(1);
     for (column, cell) in layout.cells(rect) {
+        if !xp && matches!(column, Column::Name) {
+            // Original generic app mark: Linux process identities do not
+            // provide a Windows executable icon or imply a desktop window.
+            let icon = Rect::from_min_size(
+                egui::pos2(cell.left() + 9.0, cell.center().y - 7.0),
+                egui::vec2(14.0, 14.0),
+            );
+            ui.painter().rect_filled(icon, 1.0, accent(app));
+            ui.painter()
+                .rect_filled(icon.shrink(4.0), 0.0, Color32::WHITE);
+        }
         if !selected && !xp && matches!(column, Column::Cpu | Column::Memory) {
             let intensity = match column {
                 Column::Cpu => (p.cpu_percent / 100.0).clamp(0.0, 1.0),
@@ -361,8 +422,20 @@ fn process_row(
                 format!("{prefix}{}", p.name)
             }
             Column::Pid => p.pid.to_string(),
-            Column::Cpu => format!("{:.1}%", p.cpu_percent),
-            Column::Memory => format::bytes(p.resident_bytes),
+            Column::Cpu => {
+                if xp {
+                    format!("{:.0}", p.cpu_percent)
+                } else {
+                    format!("{:.1}%", p.cpu_percent)
+                }
+            }
+            Column::Memory => {
+                if xp {
+                    format!("{} K", p.resident_bytes.div_ceil(1024))
+                } else {
+                    format::bytes(p.resident_bytes)
+                }
+            }
             Column::Io => {
                 if p.io_accessible {
                     format::rate(process_io_rate(p))
@@ -377,7 +450,17 @@ fn process_row(
                 .unwrap_or_else(|| p.user_id.to_string()),
         };
         ui.painter().with_clip_rect(cell.shrink(3.0)).text(
-            egui::pos2(cell.left() + if xp { 7.0 } else { 10.0 }, cell.center().y),
+            egui::pos2(
+                cell.left()
+                    + if xp {
+                        7.0
+                    } else if matches!(column, Column::Name) {
+                        30.0
+                    } else {
+                        10.0
+                    },
+                cell.center().y,
+            ),
             Align2::LEFT_CENTER,
             value,
             font.clone(),
@@ -438,5 +521,34 @@ mod tests {
     fn heat_scale_is_bounded_for_outlier_percentages() {
         assert_eq!(heat_color(-20.0, false), heat_color(0.0, false));
         assert_eq!(heat_color(200.0, false), heat_color(1.0, false));
+    }
+
+    #[test]
+    fn xp_report_columns_stay_compact_without_disabling_optional_io() {
+        let settings = Settings {
+            theme: Theme::XpLuna,
+            show_io_column: true,
+            show_user_column: true,
+            ..Settings::default()
+        };
+        let wide = TableColumns::new(1200.0, &settings);
+        assert_eq!(wide.width, 800.0);
+        assert!(
+            wide.columns
+                .iter()
+                .any(|(column, _)| matches!(column, Column::Io))
+        );
+        assert!(
+            wide.columns
+                .iter()
+                .any(|(column, _)| matches!(column, Column::User))
+        );
+        let narrow = TableColumns::new(650.0, &settings);
+        assert!(
+            narrow
+                .columns
+                .iter()
+                .all(|(column, _)| !matches!(column, Column::Io))
+        );
     }
 }

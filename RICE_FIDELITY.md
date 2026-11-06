@@ -19,6 +19,10 @@ and fonts are **not** copied or bundled.
 ## XP Luna
 
 - Blue vertical-gradient, original app-mark and cream menu strip.
+- Compact 32 px title chrome, raised tabs, a white list surface filling the
+  process pane, and XP-era `Image Name`, `Mem Usage` and `User Name` headers.
+- The optional Taskotto process filter appears on Ctrl+F or View → Find,
+  keeping the default view close to the period's table-first design.
 - File, Options, View, Help menus with functional refresh, filtering, tree,
   column, preferences and close actions.
 - Square, beveled tabs and clickable, sortable white process-table headers.
@@ -26,12 +30,14 @@ and fonts are **not** copied or bundled.
   the normal confirmation flow.
 - Fixed bottom status strip: process count, CPU, memory and End Process.
 - Classic high-contrast green-on-black CPU and memory history with usage gauges
-  and a hardware summary.
+  and accurately labeled Total, Thread, Memory and Swap summary groups.
 
 ## Windows 10
 
 - Light, restrained task-manager chrome, thin dividers, flat active tabs and
   familiar menu hierarchy.
+- Table-first Processes page; optional find field does not occupy default
+  screen space. The performance graph now uses a soft fill under the live line.
 - Dense process rows, accurate aggregate CPU/memory header figures,
   proportional blue resource-cell heatmaps and sortable column headers.
 - Actual Linux owner-based grouping into **User processes** and **Other
@@ -52,6 +58,9 @@ and fonts are **not** copied or bundled.
   Linux data and behavior.
 - Fonts use Taskotto/egui's redistributable default glyphs. Exact proprietary
   Windows text rasterization, asset sets and system dialogs are out of scope.
+- Historical controls are approximated, not pixel-identical; egui font metrics,
+  system window decorations, OS-only categories, and unavailable Windows APIs
+  prevent a literal 1:1 match. This is a fidelity target, **not a certification**.
 - Profile style is configurable; custom palettes and the explicit layout
   override remain supported, so a user can depart from the historical look.
 - Headless screenshot renders prove actual egui layout/paint commands and real

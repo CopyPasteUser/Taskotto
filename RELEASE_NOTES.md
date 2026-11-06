@@ -1,17 +1,27 @@
-# Taskotto 1.0.0-rc.5 — release candidate
+# Taskotto 1.0.0-rc.6 — release candidate
 
 **Date:** 2026-11-06 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
 Rust-only Linux process manager and system monitor. This is a **prerelease**, not a stable 1.0 certification.
 
-## Changes since rc.4
+## Changes since rc.5
+
+- Both Taskotto legacy task-manager rices were refined against historical XP Luna and Windows 10 UI patterns: slimmer window/menu/tab chrome, default table-first process display and era-specific colors, sizing and structure.
+- XP now has a white full-height process pane, classic `Image Name`/`Mem Usage` headings, compact rows and grouped CPU, memory, swap and thread statistics; the all-users toggle remains functional.
+- Windows 10 has cleaner process grouping and CPU/memory heatmaps, and the performance history line has a translucent area fill.
+- The optional Linux search is exposed on Ctrl+F and View → Find rather than always occupying space; action menus, safety confirmations and theme overrides remain functional.
+- Corrected a genuine `/proc/PID/stat` bug where the process's nice value was displayed as its number of threads. Added a failing-then-passing regression assertion.
+- Replaced four real egui/process snapshots in the README and retained provenance; hardware acceptance and pixel fidelity are not claimed.
+- Declared egui stroke widths explicitly as `f32` after newer GitHub CI Rust caught inference fallback that the Rust 1.88 compatibility build still permitted.
+
+## Earlier changes (rc.4 → rc.5)
 
 - Tests now launch real disposable Linux processes and verify all four pidfd signal actions, stale start-tick rejection and safe cleanup.
 - End-to-end executable tests check JSON snapshots, malformed CLI options, XDG desktop installation and repeat installation.
 - Desktop launcher and icon are atomically replaced, including an automated symlink-target safety regression.
 - CI checks Rust 1.88 compatibility and warning-free documentation and pins upstream GitHub Actions to verified revision hashes.
 - Release archives use stable ordering/ownership/commit timestamps and undergo checksum verification, extraction, CLI smoke test and user-local desktop install before GitHub publication.
-- Source functionality and the Windows 10 / XP Luna rice appearance remain unchanged from rc.4; screenshots have been regenerated from rc.5's real egui renderer.
+- Source functionality and the Windows 10 / XP Luna rice appearance were unchanged from rc.4; screenshots were regenerated from rc.5's real egui renderer before the rc.6 fidelity pass.
 - RC5 locally stripped Linux x86_64 binary: **10,892,944 bytes** (`stat -c %s target/release/taskotto`). This is executable file size, not runtime RSS.
 
 ## Earlier changes (rc.3 → rc.4)

@@ -4,7 +4,7 @@ use egui::{Align2, FontId, Frame, Margin, Rect};
 pub(super) fn topbar(app: &mut TaskottoApp, ctx: &egui::Context) {
     let xp = is_xp(app);
     let base = accent(app);
-    let height = if xp { 42.0 } else { 39.0 };
+    let height = 32.0;
     egui::TopBottomPanel::top("rice-title-strip")
         .frame(Frame::NONE)
         .show(ctx, |ui| {
@@ -14,41 +14,55 @@ pub(super) fn topbar(app: &mut TaskottoApp, ctx: &egui::Context) {
             if xp {
                 // The XP title gradient is drawn, not imported from OS bitmaps.
                 // Honor the rice's custom accent so generated palettes work.
-                for step in 0..42 {
-                    let top = rect.top() + rect.height() * step as f32 / 42.0;
-                    let bottom = rect.top() + rect.height() * (step + 1) as f32 / 42.0;
-                    let t = step as f32 / 41.0;
+                for step in 0..32 {
+                    let top = rect.top() + rect.height() * step as f32 / 32.0;
+                    let bottom = rect.top() + rect.height() * (step + 1) as f32 / 32.0;
+                    let t = step as f32 / 31.0;
+                    let highlight = if t < 0.43 { (0.43 - t) * 0.35 } else { 0.0 };
                     painter.rect_filled(
                         Rect::from_min_max(
                             egui::pos2(rect.left(), top),
                             egui::pos2(rect.right(), bottom),
                         ),
                         0.0,
-                        mix(Color32::from_rgb(57, 144, 248), base, t * 0.78),
+                        mix(
+                            mix(Color32::from_rgb(68, 156, 254), Color32::WHITE, highlight),
+                            base,
+                            t * 0.92,
+                        ),
                     );
                 }
+                // Luna's bright top rim and deep lower edge are paint primitives,
+                // so the theme remains asset-free and tintable.
+                painter.line_segment(
+                    [
+                        rect.left_top() + egui::vec2(0.0, 1.0),
+                        rect.right_top() + egui::vec2(0.0, 1.0),
+                    ],
+                    Stroke::new(1.0_f32, Color32::from_rgb(118, 194, 255)),
+                );
                 painter.rect_filled(
-                    Rect::from_min_size(rect.min + egui::vec2(12.0, 11.0), egui::vec2(19.0, 18.0)),
+                    Rect::from_min_size(rect.min + egui::vec2(8.0, 7.0), egui::vec2(17.0, 17.0)),
                     2.0,
                     Color32::from_rgb(237, 243, 255),
                 );
                 for (x, y, color) in [
-                    (15.0, 14.0, Color32::from_rgb(52, 138, 218)),
-                    (23.0, 14.0, Color32::from_rgb(31, 113, 196)),
-                    (15.0, 21.0, Color32::from_rgb(91, 190, 113)),
-                    (23.0, 21.0, Color32::from_rgb(54, 150, 82)),
+                    (11.0, 10.0, Color32::from_rgb(52, 138, 218)),
+                    (18.0, 10.0, Color32::from_rgb(31, 113, 196)),
+                    (11.0, 17.0, Color32::from_rgb(91, 190, 113)),
+                    (18.0, 17.0, Color32::from_rgb(54, 150, 82)),
                 ] {
                     painter.rect_filled(
-                        Rect::from_min_size(rect.min + egui::vec2(x, y), egui::vec2(5.0, 5.0)),
+                        Rect::from_min_size(rect.min + egui::vec2(x, y), egui::vec2(4.0, 4.0)),
                         0.0,
                         color,
                     );
                 }
                 painter.text(
-                    rect.min + egui::vec2(40.0, height / 2.0),
+                    rect.min + egui::vec2(32.0, height / 2.0),
                     Align2::LEFT_CENTER,
                     "Taskotto Task Manager",
-                    FontId::proportional(18.0),
+                    FontId::proportional(15.0),
                     Color32::WHITE,
                 );
                 painter.line_segment(
@@ -59,23 +73,23 @@ pub(super) fn topbar(app: &mut TaskottoApp, ctx: &egui::Context) {
                 painter.rect_filled(rect, 0.0, Color32::from_rgb(255, 255, 255));
                 // Original minimalist window mark; no Microsoft icon.
                 painter.rect_stroke(
-                    Rect::from_min_size(rect.min + egui::vec2(14.0, 12.0), egui::vec2(15.0, 15.0)),
+                    Rect::from_min_size(rect.min + egui::vec2(10.0, 9.0), egui::vec2(14.0, 14.0)),
                     0.0,
                     Stroke::new(1.5_f32, base),
                     egui::StrokeKind::Inside,
                 );
                 painter.line_segment(
                     [
-                        rect.min + egui::vec2(21.5, 13.0),
-                        rect.min + egui::vec2(21.5, 26.0),
+                        rect.min + egui::vec2(17.0, 10.0),
+                        rect.min + egui::vec2(17.0, 22.0),
                     ],
                     Stroke::new(1.0_f32, base),
                 );
                 painter.text(
-                    rect.min + egui::vec2(39.0, height / 2.0),
+                    rect.min + egui::vec2(32.0, height / 2.0),
                     Align2::LEFT_CENTER,
                     "Taskotto Task Manager",
-                    FontId::proportional(15.0),
+                    FontId::proportional(12.5),
                     Color32::from_rgb(34, 34, 34),
                 );
                 painter.line_segment(
@@ -98,11 +112,11 @@ fn menu_bar(app: &mut TaskottoApp, ctx: &egui::Context) {
         .frame(
             Frame::NONE
                 .fill(surface)
-                .inner_margin(Margin::symmetric(10, 3)),
+                .inner_margin(Margin::symmetric(if xp { 6 } else { 8 }, 2)),
         )
         .show(ctx, |ui| {
             ui.horizontal(|ui| {
-                ui.spacing_mut().item_spacing.x = if xp { 14.0 } else { 20.0 };
+                ui.spacing_mut().item_spacing.x = if xp { 5.0 } else { 10.0 };
                 ui.menu_button("File", |ui| {
                     if ui.button("Refresh now   F5").clicked() {
                         let _ = app.worker.commands.send(Command::Refresh);
@@ -148,6 +162,12 @@ fn menu_bar(app: &mut TaskottoApp, ctx: &egui::Context) {
                     });
                 });
                 ui.menu_button("View", |ui| {
+                    if ui.button("Find processes…    Ctrl+F").clicked() {
+                        app.page = Page::Processes;
+                        app.focus_search = true;
+                        ui.close();
+                    }
+                    ui.separator();
                     if ui
                         .checkbox(&mut app.settings.tree_view, "Process tree")
                         .changed()
@@ -196,7 +216,7 @@ pub(super) fn navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
         .frame(
             Frame::NONE
                 .fill(surface)
-                .inner_margin(Margin::symmetric(8, 3)),
+                .inner_margin(Margin::symmetric(8, if xp { 1 } else { 2 })),
         )
         .show(ctx, |ui| {
             ui.horizontal_wrapped(|ui| {
@@ -223,7 +243,28 @@ pub(super) fn navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
                             .stroke(Stroke::NONE)
                             .corner_radius(0)
                     };
-                    let response = ui.add_sized([if xp { 109.0 } else { 111.0 }, 29.0], button);
+                    let response = ui.add_sized(
+                        [if xp { 95.0 } else { 99.0 }, if xp { 26.0 } else { 30.0 }],
+                        button,
+                    );
+                    if xp && selected {
+                        // A raised selected tab joins the cream body below.
+                        let r = response.rect;
+                        ui.painter().line_segment(
+                            [
+                                r.left_top() + egui::vec2(1.0, 1.0),
+                                r.right_top() + egui::vec2(-1.0, 1.0),
+                            ],
+                            Stroke::new(1.0_f32, Color32::WHITE),
+                        );
+                        ui.painter().line_segment(
+                            [
+                                r.left_bottom() + egui::vec2(2.0, -1.0),
+                                r.right_bottom() + egui::vec2(-2.0, -1.0),
+                            ],
+                            Stroke::new(2.0_f32, Color32::WHITE),
+                        );
+                    }
                     if !xp && selected {
                         let r = response.rect;
                         ui.painter().rect_filled(

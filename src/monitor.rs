@@ -415,7 +415,8 @@ fn parse_process_stat(pid: i32, stat: &str, page_size: u64) -> io::Result<Proces
         command: name.clone(),
         name,
         state: fields[0].chars().next().unwrap_or('?'),
-        threads: field(16)?.min(u32::MAX as u64) as u32,
+        // /proc/PID/stat field 20 (num_threads): offset 17 from field 3.
+        threads: field(17)?.min(u32::MAX as u64) as u32,
         resident_bytes: field(21)?.saturating_mul(page_size),
         virtual_bytes: field(20)?,
         cpu_percent: 0.0,
@@ -449,6 +450,7 @@ mod tests {
         assert_eq!(p.total_ticks, 50);
         assert_eq!(p.start_ticks, 1000);
         assert_eq!(p.resident_bytes, 49_152);
+        assert_eq!(p.threads, 3);
     }
 
     #[test]
