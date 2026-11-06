@@ -1,6 +1,6 @@
 # Screenshot provenance and reproduction
 
-[**View all 45 screenshots in the expandable README gallery**](README.md#screenshots).
+[**View all 46 screenshots in the expandable README gallery**](README.md#screenshots).
 The gallery groups every image by rice, including the supplementary pages
 and alternate layouts; click any preview to see its full-resolution PNG.
 
@@ -23,7 +23,7 @@ The restricted capture environment currently exposes few processes and very
 little I/O; this is why some screenshots look sparse. They are not evidence of
 hardware compatibility or GUI performance.
 
-To regenerate all 45 images on Linux:
+To regenerate all 46 images on Linux:
 
 ```bash
 TASKOTTO_SCREENSHOT_DIR=assets/screenshots \
@@ -51,6 +51,7 @@ The command samples real system activity and writes:
 ### Windows 98 (Close Program and optional advanced tools)
 
 - `assets/screenshots/taskotto-win98-close-program.png` — authentic compact dialog layout, white inset list of current-user Linux processes, 3D controls and confirmation-backed End Task.
+- `assets/screenshots/taskotto-win98-violet-ricepack.png` — original Violet RicePack recolors the genuine Close Program list, selection and era-specific beveled action buttons while preserving live unprivileged Linux process actions.
 - `assets/screenshots/taskotto-win98-new-task.png` — user-entered New Task command dialog; no elevation or background service.
 - `assets/screenshots/taskotto-win98-processes.png` — optional classic process report with real PID/CPU/RSS data, search, sorting and safe actions.
 - `assets/screenshots/taskotto-win98-performance.png` — real Linux CPU/memory history in classic high-contrast graphs.

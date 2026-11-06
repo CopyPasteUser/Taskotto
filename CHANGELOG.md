@@ -2,6 +2,12 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.25] — 2026-11-06
+
+- Connected Classic 98's original beveled action/navigation buttons, focus outlines, sunken list border, selected/hovered Close Program entries and optional advanced process report to the shared validated RicePack component-color contract. Defaults keep the original grayscale Win98 feel; real window controls remain the window manager's responsibility.
+- Replaced legacy fixed-fill list buttons with focused/clickable egui cells that can reflect actual pointer hover and safely retain PID-aware selection/process actions; dark list and hover fills get readable foreground.
+- Added the original Violet Windows 98 RicePack and a genuine Close Program client screenshot (46 gallery captures), with palette regression coverage. Metric/chart sizing and further secondary-page token extraction remain on P1; native hardware acceptance remains outstanding.
+
 ## [1.0.0-rc.24] — 2026-11-06
 
 - Unified optional RicePack semantic colors across XP Luna/Windows 10 top tabs and shared process reports, XP Applications and the custom Windows 10 sidebar. The original designs remain unchanged when overrides are absent; table, borders, selection, control and hover fills and foreground adapt without scripts or proprietary artwork.

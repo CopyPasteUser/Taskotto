@@ -96,8 +96,9 @@ rice's visual identity.
 `src/theme.rs` resolves optional RicePack tokens; Frutiger Aero custom
 navigation/process/chart surfaces, macOS Activity Monitor's custom tabs/process
 report, ChromeOS's adaptive table palette, Windows 7's classic tab/process
-reports and the shared XP Luna/Windows 10 table and navigation widgets use it
-with era-specific fallbacks.
+reports, the shared XP Luna/Windows 10 table and navigation widgets, and
+Windows 98's beveled buttons and classic Close Program list use it with
+era-specific fallbacks.
 `readable_text` provides contrast-aware
 foreground for user-selected colors. Loading/empty/error states describe the
 real `/proc` state. Keyboard focus is visible, destructive actions require

@@ -1,0 +1,14 @@
+format_version = 1
+name = "Violet: Classic 98 task list"
+base_theme = "windows98"
+
+[appearance]
+accent = "#5546A8"
+navigation = "top-tabs"
+
+[components]
+control = "#DAD3ED"
+hover = "#BFC4E9"
+border = "#76669C"
+table = "#222138"
+selection = "#5544A0"
