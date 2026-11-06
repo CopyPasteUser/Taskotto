@@ -2,6 +2,15 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.7] — 2026-11-06
+
+- XP Luna now uses all five historically recognizable tabs. The new Applications screen explicitly lists the current user's Linux processes rather than pretending to know open Wayland windows; Networking graphs live non-loopback RX/TX traffic and Users groups real processes by UID.
+- Added XP-style selected-process Properties with live PID, owner, memory, threads, timing and I/O fields, plus existing safe/confirmed process signal actions.
+- Windows 10's Users tab expands per-owner process rows with CPU/RSS summaries; Details is an ungrouped live process table with sorting and the existing process actions.
+- Redesigned the XP Applications row selection to align names left and bounded command previews in Properties to prevent very long arguments stretching the layout.
+- Rebuilt the README gallery around nine fresh XP/Windows 10 screenshots generated from actual egui paint commands and live procfs samples. Removed three obsolete dark/Classic 98/Seven PNGs from the focused gallery and source tree; other rice presets remain functional.
+- Native X11/Wayland acceptance and pixel-for-pixel historical verification remain open. No proprietary OS imagery is included.
+
 ## [1.0.0-rc.6] — 2026-11-06
 
 - Windows 10 and XP Luna task-manager views receive a closer historical layout: slimmer title/menu/navigation chrome, table-first process pages, refined tabs, and a search field opened only by Ctrl+F or the View menu.

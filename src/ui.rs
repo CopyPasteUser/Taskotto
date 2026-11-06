@@ -16,8 +16,11 @@ use std::{
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum Page {
+    Applications,
     Processes,
     Performance,
+    Networking,
+    Users,
     Details,
     Preferences,
 }
@@ -376,8 +379,11 @@ impl TaskottoApp {
             egui::TopBottomPanel::top("navigation-tabs").show(ctx, |ui| {
                 ui.horizontal_wrapped(|ui| {
                     for (page, label) in [
+                        (Page::Applications, "Applications"),
                         (Page::Processes, "Processes"),
                         (Page::Performance, "Performance"),
+                        (Page::Networking, "Network"),
+                        (Page::Users, "Users"),
                         (Page::Details, "Details"),
                         (Page::Preferences, "Preferences"),
                     ] {
@@ -397,8 +403,11 @@ impl TaskottoApp {
                 ui.heading("WORKSPACE");
                 ui.add_space(11.0);
                 for (page, label) in [
+                    (Page::Applications, "Applications"),
                     (Page::Processes, "Processes"),
                     (Page::Performance, "Performance"),
+                    (Page::Networking, "Network"),
+                    (Page::Users, "Users"),
                     (Page::Details, "Details"),
                     (Page::Preferences, "⚙  Preferences"),
                 ] {
@@ -678,6 +687,15 @@ impl TaskottoApp {
     }
 
     fn details_page(&mut self, ui: &mut egui::Ui) {
+        if self.settings.theme == Theme::Windows10 {
+            // Modern 10 uses a dense, ungrouped process report for Details.
+            rices::processes(self, ui);
+            return;
+        }
+        if self.settings.theme == Theme::XpLuna {
+            rices::xp_details(self, ui);
+            return;
+        }
         ui.heading("Process details");
         ui.add_space(10.0);
         let Some(process) = self.selected_process().cloned() else {
@@ -767,14 +785,51 @@ impl TaskottoApp {
     }
 
     fn preferences_page(&mut self, ui: &mut egui::Ui) {
-        ui.heading("Preferences");
+        if rices::supports(self.settings.theme) {
+            let xp = self.settings.theme == Theme::XpLuna;
+            egui::Frame::new()
+                .fill(if xp {
+                    Color32::from_rgb(246, 244, 231)
+                } else {
+                    Color32::WHITE
+                })
+                .stroke(Stroke::new(
+                    1.0_f32,
+                    if xp {
+                        Color32::from_rgb(158, 156, 138)
+                    } else {
+                        Color32::from_rgb(218, 218, 218)
+                    },
+                ))
+                .inner_margin(egui::Margin::same(12))
+                .show(ui, |ui| self.preferences_contents(ui));
+        } else {
+            self.preferences_contents(ui);
+        }
+    }
+
+    fn preferences_contents(&mut self, ui: &mut egui::Ui) {
+        let xp = self.settings.theme == Theme::XpLuna;
         ui.label(
-            RichText::new("Local to Taskotto; no root service or session dependencies").weak(),
+            RichText::new(if xp {
+                "Taskotto Properties"
+            } else if self.settings.theme == Theme::Windows10 {
+                "Taskotto Settings"
+            } else {
+                "Preferences"
+            })
+            .size(if xp { 17.0 } else { 24.0 })
+            .strong(),
         );
-        ui.add_space(16.0);
+        ui.label(
+            RichText::new("Taskotto appearance and monitoring controls · no background service")
+                .small()
+                .weak(),
+        );
+        ui.add_space(if xp { 8.0 } else { 14.0 });
         let mut changed = false;
         egui::ScrollArea::vertical().show(ui, |ui| {
-            ui.heading("Appearance");
+            preference_section(ui, "Appearance", xp);
             ui.horizontal(|ui| {
                 ui.label("Rice profile");
                 egui::ComboBox::from_id_salt("theme-choice")
@@ -849,7 +904,7 @@ impl TaskottoApp {
             }
             ui.label(RichText::new("Low-contrast text colors automatically fall back to a readable color.").small().weak());
             ui.add_space(18.0);
-            ui.heading("Process table");
+            preference_section(ui, "Process table", xp);
             changed |= ui.checkbox(&mut self.settings.show_io_column, "Show I/O rate (wide windows)").changed();
             changed |= ui.checkbox(&mut self.settings.show_user_column, "Show user (wide windows)").changed();
             let mut row_height = self.settings.table_row_height.unwrap_or(if self.settings.density == Density::Compact { 26.0 } else { 34.0 });
@@ -862,7 +917,7 @@ impl TaskottoApp {
                 changed = true;
             }
             ui.add_space(18.0);
-            ui.heading("Monitoring");
+            preference_section(ui, "Monitoring", xp);
             changed |= ui.add(egui::Slider::new(&mut self.settings.refresh_ms, 500..=10_000).text("Refresh interval (ms)")).changed();
             changed |= ui.checkbox(&mut self.settings.only_my_processes, "Show only my processes").changed();
             changed |= ui.checkbox(&mut self.settings.show_kernel_threads, "Show kernel threads").changed();
@@ -971,8 +1026,11 @@ impl TaskottoApp {
                 ui.separator();
             }
             match self.page {
+                Page::Applications => rices::applications(self, ui),
                 Page::Processes => self.processes_page(ui),
                 Page::Performance => self.performance_page(ui),
+                Page::Networking => rices::networking(self, ui),
+                Page::Users => rices::users(self, ui),
                 Page::Details => self.details_page(ui),
                 Page::Preferences => self.preferences_page(ui),
             }
@@ -1123,6 +1181,16 @@ fn graph_max(first: &VecDeque<f32>, second: &VecDeque<f32>) -> f32 {
         .copied()
         .filter(|value| value.is_finite())
         .fold(1.0, f32::max)
+}
+
+fn preference_section(ui: &mut egui::Ui, title: &str, xp: bool) {
+    if xp {
+        ui.label(RichText::new(title).size(13.0).strong());
+        ui.separator();
+    } else {
+        ui.label(RichText::new(title).size(18.0).strong());
+        ui.add_space(3.0);
+    }
 }
 
 fn accent_color(settings: &Settings) -> Color32 {
@@ -1397,8 +1465,21 @@ mod tests {
         for theme in [Theme::XpLuna, Theme::Windows10] {
             app.settings.theme = theme;
             apply_theme(&ctx, &app.settings);
-            for page in [Page::Processes, Page::Performance] {
+            for page in [
+                Page::Applications,
+                Page::Processes,
+                Page::Performance,
+                Page::Networking,
+                Page::Users,
+                Page::Details,
+                Page::Preferences,
+            ] {
                 app.page = page;
+                app.selected = if page == Page::Details {
+                    Some((3300, 0))
+                } else {
+                    None
+                };
                 for focus in [
                     PerformanceFocus::Cpu,
                     PerformanceFocus::Memory,

@@ -14,6 +14,77 @@ pub(super) fn page(app: &mut TaskottoApp, ui: &mut egui::Ui) {
     }
 }
 
+/// XP's Networking tab has an activity graph and adapter list. The Linux
+/// sampler measures aggregate non-loopback bytes, not adapter negotiated link
+/// speeds, so units here are bytes/second rather than an invented percentage.
+pub(super) fn networking_page(app: &TaskottoApp, ui: &mut egui::Ui) {
+    let Some(snapshot) = &app.snapshot else {
+        ui.spinner();
+        ui.label("Reading network activity…");
+        return;
+    };
+    ui.label(RichText::new("Network activity").size(14.0).strong());
+    ui.add_space(8.0);
+    ui.label("All non-loopback interfaces · bytes per second");
+    ui.add_space(4.0);
+    let scale = graph_max(&app.history.received, &app.history.sent);
+    let chart_height = ui.available_height().clamp(185.0, 340.0) * 0.67;
+    let rect = graph_rect(
+        ui,
+        chart_height,
+        Color32::from_rgb(1, 13, 4),
+        Color32::from_rgb(24, 91, 29),
+    );
+    plot_lines(
+        ui,
+        rect.shrink(2.0),
+        &[
+            (&app.history.received, Color32::from_rgb(69, 242, 74)),
+            (&app.history.sent, Color32::from_rgb(244, 226, 59)),
+        ],
+        scale,
+        true,
+    );
+    ui.add_space(8.0);
+    ui.horizontal_wrapped(|ui| {
+        ui.colored_label(Color32::from_rgb(27, 108, 34), "Receive");
+        ui.label(format::rate(snapshot.rates.received_per_second));
+        ui.add_space(16.0);
+        ui.colored_label(Color32::from_rgb(128, 105, 15), "Send");
+        ui.label(format::rate(snapshot.rates.sent_per_second));
+        ui.add_space(16.0);
+        ui.label(format!("Graph scale: {}", format::rate(scale as u64)));
+    });
+    ui.add_space(15.0);
+    ui.label(RichText::new("Connection status").size(12.0).strong());
+    egui::Frame::new()
+        .fill(Color32::WHITE)
+        .stroke(Stroke::new(1.0_f32, Color32::from_rgb(155, 153, 137)))
+        .inner_margin(egui::Margin::same(10))
+        .show(ui, |ui| {
+            egui::Grid::new("xp-network-summary")
+                .num_columns(2)
+                .spacing([30.0, 8.0])
+                .show(ui, |ui| {
+                    for (name, value) in [
+                        ("Monitored interfaces", "Non-loopback aggregate".to_owned()),
+                        (
+                            "Data received",
+                            format::rate(snapshot.rates.received_per_second),
+                        ),
+                        ("Data sent", format::rate(snapshot.rates.sent_per_second)),
+                        ("History samples", app.history.received.len().to_string()),
+                    ] {
+                        ui.label(name);
+                        ui.label(value);
+                        ui.end_row();
+                    }
+                });
+        });
+    ui.add_space(10.0);
+    ui.label(RichText::new("Virtual interfaces can double-count traffic. Link speed and connection state are not inferred from byte counters.").small().weak());
+}
+
 fn modern_performance(app: &mut TaskottoApp, ui: &mut egui::Ui) {
     let wide = ui.available_width() > 800.0;
     ui.add_space(4.0);

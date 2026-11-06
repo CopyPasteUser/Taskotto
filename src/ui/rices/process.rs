@@ -72,7 +72,7 @@ enum Entry {
 }
 
 fn grouped_rows(app: &TaskottoApp, rows: Vec<ProcessRow>) -> Vec<Entry> {
-    if is_xp(app) || app.settings.tree_view {
+    if app.page == Page::Details || is_xp(app) || app.settings.tree_view {
         return rows.into_iter().map(Entry::Process).collect();
     }
     // Windows 10-style sectioning with truthful Linux semantics. Grouping by
@@ -189,8 +189,9 @@ pub(super) fn page(app: &mut TaskottoApp, ui: &mut egui::Ui) {
 
 fn header(app: &mut TaskottoApp, ui: &mut egui::Ui, layout: &TableColumns) {
     let xp = is_xp(app);
+    let details = app.page == Page::Details;
     let (rect, _) = ui.allocate_exact_size(
-        egui::vec2(layout.width, if xp { 23.0 } else { 65.0 }),
+        egui::vec2(layout.width, if xp || details { 23.0 } else { 65.0 }),
         Sense::hover(),
     );
     ui.painter().rect_filled(rect, 0.0, Color32::WHITE);
@@ -252,7 +253,7 @@ fn header(app: &mut TaskottoApp, ui: &mut egui::Ui, layout: &TableColumns) {
                 }
             }
         };
-        if !xp && matches!(column, Column::Cpu | Column::Memory) {
+        if !xp && !details && matches!(column, Column::Cpu | Column::Memory) {
             let percent = match column {
                 Column::Cpu => app.snapshot.as_ref().map_or(0.0, |s| s.cpu_percent),
                 _ => app
@@ -280,7 +281,7 @@ fn header(app: &mut TaskottoApp, ui: &mut egui::Ui, layout: &TableColumns) {
             ),
             Align2::LEFT_CENTER,
             label,
-            FontId::proportional(if xp { 12.0 } else { 13.0 }),
+            FontId::proportional(if xp || details { 12.0 } else { 13.0 }),
             Color32::from_rgb(40, 40, 40),
         );
         if let Some(sort) = column.sort() {

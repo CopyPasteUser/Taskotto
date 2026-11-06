@@ -221,12 +221,24 @@ pub(super) fn navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
         .show(ctx, |ui| {
             ui.horizontal_wrapped(|ui| {
                 ui.spacing_mut().item_spacing.x = if xp { 2.0 } else { 0.0 };
-                for (page, label) in [
-                    (Page::Processes, "Processes"),
-                    (Page::Performance, "Performance"),
-                    (Page::Details, "Details"),
-                    (Page::Preferences, "Settings"),
-                ] {
+                let tabs = if xp {
+                    [
+                        (Page::Applications, "Applications"),
+                        (Page::Processes, "Processes"),
+                        (Page::Performance, "Performance"),
+                        (Page::Networking, "Networking"),
+                        (Page::Users, "Users"),
+                    ]
+                } else {
+                    [
+                        (Page::Processes, "Processes"),
+                        (Page::Performance, "Performance"),
+                        (Page::Users, "Users"),
+                        (Page::Details, "Details"),
+                        (Page::Preferences, "Settings"),
+                    ]
+                };
+                for (page, label) in tabs {
                     let selected = app.page == page;
                     let button = if xp {
                         egui::Button::new(label)

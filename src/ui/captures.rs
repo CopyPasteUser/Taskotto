@@ -30,17 +30,6 @@ fn generate_headless_ui_screenshots() {
 
     for (theme, page, file) in [
         (
-            Theme::System,
-            Page::Processes,
-            "taskotto-processes-dark.png",
-        ),
-        (Theme::Windows98, Page::Processes, "taskotto-classic98.png"),
-        (
-            Theme::Windows7,
-            Page::Performance,
-            "taskotto-seven-performance.png",
-        ),
-        (
             Theme::Windows10,
             Page::Processes,
             "taskotto-win10-processes.png",
@@ -49,6 +38,17 @@ fn generate_headless_ui_screenshots() {
             Theme::Windows10,
             Page::Performance,
             "taskotto-win10-performance.png",
+        ),
+        (Theme::Windows10, Page::Users, "taskotto-win10-users.png"),
+        (
+            Theme::Windows10,
+            Page::Details,
+            "taskotto-win10-details.png",
+        ),
+        (
+            Theme::XpLuna,
+            Page::Applications,
+            "taskotto-xp-luna-applications.png",
         ),
         (
             Theme::XpLuna,
@@ -60,6 +60,12 @@ fn generate_headless_ui_screenshots() {
             Page::Performance,
             "taskotto-xp-luna-performance.png",
         ),
+        (
+            Theme::XpLuna,
+            Page::Networking,
+            "taskotto-xp-luna-networking.png",
+        ),
+        (Theme::XpLuna, Page::Details, "taskotto-xp-luna-details.png"),
     ] {
         if let Ok(filter) = std::env::var("TASKOTTO_SCREENSHOT_FILTER")
             && !file.contains(&filter)
@@ -89,7 +95,11 @@ fn generate_headless_ui_screenshots() {
             performance_focus: PerformanceFocus::Cpu,
             query: String::new(),
             focus_search: false,
-            selected: None,
+            selected: if page == Page::Details {
+                snapshot.processes.first().map(|p| (p.pid, p.start_ticks))
+            } else {
+                None
+            },
             pending: None,
             notification: None,
             theme_accent_input: String::new(),
