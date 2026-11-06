@@ -1,10 +1,19 @@
-# Taskotto 1.0.0-rc.6 — release candidate
+# Taskotto 1.0.0-rc.7 — release candidate
 
 **Date:** 2026-11-06 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
 Rust-only Linux process manager and system monitor. This is a **prerelease**, not a stable 1.0 certification.
 
-## Changes since rc.5
+## Changes since rc.6
+
+- XP Luna now exposes Applications, Processes, Performance, Networking and Users, mirroring the historical tab structure. Applications is a clearly labeled **current-user process** approximation, not a graphical window list: portable Wayland procfs data cannot prove window ownership.
+- The XP Networking tab draws genuine receive and send history for non-loopback interfaces. Users groups actual Linux processes by UID, and selected-process Properties uses classic segmented rows and existing confirmation-protected signals.
+- Windows 10 adds a per-user expandable process summary and a separate ungrouped Details process table with existing sort/inspect/action behavior.
+- Improved XP Applications left alignment/selection and truncated oversized Properties command previews to preserve layout.
+- README now leads with two representative current screenshots, offering seven additional XP/Windows 10 captures in an expandable gallery. All nine come from genuine Taskotto egui rendering with live procfs values. Removed the obsolete generic dark, Classic 98, and Seven images from the repository; those rice themes remain available.
+- No visual 1:1 certification is claimed: Windows 10 App history, Startup and Services are not implemented, Windows-native window/process categories do not map directly to Linux, and native X11/Wayland comparison is still a release gate.
+
+## Earlier changes (rc.5 → rc.6)
 
 - Both Taskotto legacy task-manager rices were refined against historical XP Luna and Windows 10 UI patterns: slimmer window/menu/tab chrome, default table-first process display and era-specific colors, sizing and structure.
 - XP now has a white full-height process pane, classic `Image Name`/`Mem Usage` headings, compact rows and grouped CPU, memory, swap and thread statistics; the all-users toggle remains functional.

@@ -6,11 +6,11 @@
 
 A customizable process manager and system monitor written in **Rust**. Runs alone or alongside [RiceBowl](https://github.com/CopyPasteUser/Ricebowl) on **X11 and Wayland**.
 
-![License](https://img.shields.io/badge/license-MIT-blue) ![Rust](https://img.shields.io/badge/language-Rust-orange) ![Status](https://img.shields.io/badge/status-1.0%20RC6-yellow)
+![License](https://img.shields.io/badge/license-MIT-blue) ![Rust](https://img.shields.io/badge/language-Rust-orange) ![Status](https://img.shields.io/badge/status-1.0%20RC7-yellow)
 
 </div>
 
-> **Status:** `1.0.0-rc.6` — the 1.0 code scope and automated process/installer acceptance checks are implemented; final X11/Wayland GUI and resource-use acceptance remain. See [roadmap](ROADMAP.md) and [QA checklist](QA.md). This is **not yet stable 1.0**.
+> **Status:** `1.0.0-rc.7` — live Linux process monitoring and the XP/Windows 10-inspired views are functional. Native X11/Wayland GUI and resource-use acceptance are still outstanding. See [roadmap](ROADMAP.md) and [QA checklist](QA.md). This is **not yet stable 1.0**.
 
 ## Screenshots
 
@@ -18,33 +18,37 @@ A customizable process manager and system monitor written in **Rust**. Runs alon
 
 ![Taskotto in the Windows 10-inspired rice](assets/screenshots/taskotto-win10-processes.png)
 
-**XP Luna-inspired performance view** — recreated blue/cream chrome, black-and-green CPU/RAM history and classic system-statistics groups.
+**XP Luna-inspired performance view** — blue/cream chrome, black-and-green CPU/RAM history and classic system-statistics groups.
 
 ![Taskotto in the XP Luna-inspired rice](assets/screenshots/taskotto-xp-luna-performance.png)
 
 <details>
-<summary>More screenshots: performance, processes and other rices</summary>
+<summary>Explore 7 more Windows 10 and XP Luna views</summary>
 
 ![Windows 10-inspired performance page](assets/screenshots/taskotto-win10-performance.png)
 
-![XP Luna-inspired process page](assets/screenshots/taskotto-xp-luna-processes.png)
+![Windows 10-inspired users page with live owner group](assets/screenshots/taskotto-win10-users.png)
 
-![Windows 7-inspired performance page](assets/screenshots/taskotto-seven-performance.png)
+![Windows 10-inspired detailed process list](assets/screenshots/taskotto-win10-details.png)
 
-![Taskotto dark process manager](assets/screenshots/taskotto-processes-dark.png)
+![XP Luna-inspired applications-style page](assets/screenshots/taskotto-xp-luna-applications.png)
 
-![Taskotto Classic 98 process manager](assets/screenshots/taskotto-classic98.png)
+![XP Luna-inspired process list](assets/screenshots/taskotto-xp-luna-processes.png)
+
+![XP Luna-inspired networking graphs](assets/screenshots/taskotto-xp-luna-networking.png)
+
+![XP Luna-inspired process properties](assets/screenshots/taskotto-xp-luna-details.png)
 
 </details>
 
-*Real Taskotto egui rendering with live Linux `/proc` readings, captured headlessly; the isolated test environment exposes only a few processes. Native X11/Wayland window captures are still pending. [Capture details](SCREENSHOTS.md) · [Rice fidelity and boundaries](RICE_FIDELITY.md).*
+*All nine images are real Taskotto egui renders with live Linux `/proc` readings, captured headlessly. The isolated environment exposes few processes. Native X11/Wayland window captures are pending; visual fidelity is not yet pixel-verified. [Capture details](SCREENSHOTS.md) · [Fidelity boundaries](RICE_FIDELITY.md).*
 
 ## What works
 
 - **Processes:** searchable live list, CPU/RAM/I/O/PID/name sort, tree, user filter, process start/runtime and per-process I/O rates.
 - **Safe actions:** terminate, force kill, pause and resume with confirmation and PID-reuse protection via Linux `pidfd`.
 - **Performance:** CPU/core load, RAM/swap, network RX/TX and disk read/write rates, bounded comparative rolling graphs.
-- **Riceable:** 8 profiles, including distinct, refined Windows 10-inspired and XP Luna-inspired task-manager layouts; custom colors, layout, spacing, fonts, table columns/row height, density and persistent TOML preferences.
+- **Riceable:** 8 profiles, with functional Windows 10-inspired Users/Details and XP Luna-inspired Applications/Networking/Users pages; custom colors, layout, spacing, fonts, table columns/row height, density and persistent TOML preferences.
 - **Independent:** no root service, no resident daemon, no RiceBowl or desktop-shell dependency.
 - **Headless:** `--snapshot --json` is available without a graphical session.
 

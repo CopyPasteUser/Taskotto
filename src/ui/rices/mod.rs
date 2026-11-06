@@ -2,9 +2,12 @@
 //! languages. They share the existing procfs sampler, process actions, and
 //! settings; only drawing/navigation is specialized.
 
+mod applications;
 mod chrome;
+mod details;
 mod performance;
 mod process;
+mod users;
 
 use super::*;
 
@@ -30,6 +33,22 @@ pub(super) fn processes(app: &mut TaskottoApp, ui: &mut egui::Ui) {
 
 pub(super) fn performance(app: &mut TaskottoApp, ui: &mut egui::Ui) {
     performance::page(app, ui);
+}
+
+pub(super) fn networking(app: &mut TaskottoApp, ui: &mut egui::Ui) {
+    performance::networking_page(app, ui);
+}
+
+pub(super) fn users(app: &mut TaskottoApp, ui: &mut egui::Ui) {
+    users::page(app, ui);
+}
+
+pub(super) fn xp_details(app: &mut TaskottoApp, ui: &mut egui::Ui) {
+    details::xp_page(app, ui);
+}
+
+pub(super) fn applications(app: &mut TaskottoApp, ui: &mut egui::Ui) {
+    applications::page(app, ui);
 }
 
 fn is_xp(app: &TaskottoApp) -> bool {
