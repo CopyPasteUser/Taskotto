@@ -43,6 +43,29 @@ taskotto --check-ricepack my-rice.toml
 taskotto --ricepack my-rice.toml
 ```
 
+### In-app library and preview (RC17)
+
+Open **Preferences → RicePack library**. The local library lives in
+`$XDG_CONFIG_HOME/taskotto/ricepacks/` (normally
+`~/.config/taskotto/ricepacks/`). Taskotto discovers up to 128 `.toml`
+files without scanning subdirectories, reports invalid files, and excludes
+symlinks. Click **Refresh library** after adding files yourself, or select
+a design in the list. You can also enter a RicePack file path directly.
+
+- **Preview design** temporarily switches Taskotto's current appearance;
+  **Revert preview** restores the previous appearance and active file watcher.
+- **Keep for session** applies the preview for this run and resumes live
+  reloads. Neither preview nor keep silently changes saved appearance.
+- **Import to library** validates a source file and creates a distinct new
+  file. Repeated imports get numbered suffixes; existing files are untouched.
+- **Export current appearance** writes the visible settings to a new file.
+  You choose the destination; an existing file is never overwritten.
+
+This is an interactive editor for the **v1 supported appearance tokens**, not
+arbitrary UI widget placement. The separate RiceBowl desktop RicePack
+JSON/ZIP formats cannot be loaded as Taskotto TOML; RiceBowl must export a
+`taskotto-rice.toml` and pass its absolute path through the environment.
+
 While Taskotto stays open with a RicePack, edited files are checked about every
 **two seconds**. Only fully valid, changed packs are applied; a missing,
 partial or malformed file leaves the last valid appearance running and shows a

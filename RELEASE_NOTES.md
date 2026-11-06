@@ -1,8 +1,15 @@
-# Taskotto 1.0.0-rc.16 — release candidate
+# Taskotto 1.0.0-rc.17 — release candidate
 
 **Date:** 2026-11-06 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
 Rust-only Linux process manager and system monitor. This is a **prerelease**, not a stable 1.0 certification.
+
+## Changes since rc.16
+
+- Added an in-app RicePack library to Preferences, including bounded local TOML discovery, invalid-file feedback, path-based import and overwrite-safe export. No additional GUI toolkit or runtime dependency is needed.
+- Added reversible live preview: users can temporarily apply a design, restore the previous appearance and watcher, or keep a valid design for the current session with live reload. Monitoring settings retain their persistence behavior.
+- Added an authentic egui-rendered Sea Glass preview screenshot (38 total), unit tests for import/overwrite, preview rollback and preserved CLI theme precedence. RiceBowl's distinct desktop pack format still needs a versioned interop fixture.
+- The stable 1.0 release remains gated by physical X11/Wayland/labwc QA, GUI resource measurements and signed-off packaging.
 
 ## Changes since rc.15
 

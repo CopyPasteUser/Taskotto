@@ -6,7 +6,7 @@ fn readme_all_screenshots_gallery_contains_every_capture() {
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
     let readme = include_str!("../README.md");
     let (_, tail) = readme
-        .split_once("<summary><strong>All screenshots (37)</strong>")
+        .split_once("<summary><strong>All screenshots (38)</strong>")
         .expect("README should expose a discoverable All screenshots section");
     let (gallery, _) = tail
         .split_once("</details>")
@@ -18,8 +18,8 @@ fn readme_all_screenshots_gallery_contains_every_capture() {
         .collect::<Vec<_>>();
     assert_eq!(
         files.len(),
-        37,
-        "expected the complete rc.13 screenshot set"
+        38,
+        "expected all historical views and the rc.17 designer scene"
     );
     for file in files {
         let path = format!("assets/screenshots/{}", file.to_string_lossy());

@@ -2,6 +2,13 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.17] — 2026-11-06
+
+- Added a local RicePack library browser with bounded non-recursive discovery, explicit invalid-pack errors and safe, uniquely named import without overwriting designs.
+- Preferences now offers live, reversible RicePack preview, Keep for session with file watching, and no-overwrite export of the current appearance. Original packs and monitoring preferences survive preview rollback.
+- Added 38th genuine egui/process-data capture for the Sea Glass preview editor; expanded gallery, workflow documentation, roadmap and state regression tests. RiceBowl's JSON desktop manifest is explicitly not treated as Taskotto TOML.
+- Real Mint/X11, KDE/Wayland, labwc acceptance and stable 1.0 certification remain outstanding.
+
 ## [1.0.0-rc.16] — 2026-11-06
 
 - Added optional **live RicePack file reload** to GUI sessions launched with a design. Valid changes to a RicePack's theme/tokens appear about two seconds after saving, without restarting Taskotto.

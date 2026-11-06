@@ -1,6 +1,6 @@
 # Screenshot provenance and reproduction
 
-[**View all 37 screenshots in the expandable README gallery**](README.md#screenshots).
+[**View all 38 screenshots in the expandable README gallery**](README.md#screenshots).
 The gallery groups every image by rice, including the supplementary pages
 and alternate layouts; click any preview to see its full-resolution PNG.
 
@@ -23,7 +23,7 @@ The restricted capture environment currently exposes few processes and very
 little I/O; this is why some screenshots look sparse. They are not evidence of
 hardware compatibility or GUI performance.
 
-To regenerate all 37 images on Linux:
+To regenerate all 38 images on Linux:
 
 ```bash
 TASKOTTO_SCREENSHOT_DIR=assets/screenshots \
@@ -43,6 +43,7 @@ The command samples real system activity and writes:
 - `assets/screenshots/taskotto-frutiger-aero-sidebar.png` — optional custom vertical navigation with the same process report.
 - `assets/screenshots/taskotto-frutiger-aero-performance.png` — four live CPU, RAM, disk and network graphs plus actual memory/CPU gauges.
 - `assets/screenshots/taskotto-frutiger-aero-network.png` — measured aggregate non-loopback RX/TX with explicit scope caveat.
+- `assets/screenshots/taskotto-frutiger-aero-ricepack-editor.png` — actual Taskotto Preferences screen showing the bundled Sea Glass RicePack in reversible session-only preview; no desktop frame or external file chooser is implied.
 
 ### Windows 98 (Close Program and optional advanced tools)
 

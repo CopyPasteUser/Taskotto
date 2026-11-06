@@ -188,6 +188,11 @@ fn generate_headless_ui_screenshots() {
             Page::Networking,
             "taskotto-frutiger-aero-network.png",
         ),
+        (
+            Theme::FrutigerAero,
+            Page::Preferences,
+            "taskotto-frutiger-aero-ricepack-editor.png",
+        ),
     ] {
         if let Ok(filter) = std::env::var("TASKOTTO_SCREENSHOT_FILTER")
             && !file.contains(&filter)
@@ -254,9 +259,14 @@ fn generate_headless_ui_screenshots() {
             new_task: NewTaskDialog::default(),
             mac_info_open: file.contains("macos-info"),
             ricepack_watcher: None,
+            ricepack_library: RicePackLibraryUi::default(),
         };
         if file.contains("new-task") {
             app.new_task.open = true;
+        }
+        if file.contains("ricepack-editor") {
+            app.ricepack_library.source_path = "examples/ricepacks/sea-glass.toml".into();
+            app.preview_ricepack(&ctx);
         }
         let size = if theme == Theme::Windows98 {
             CLASSIC98_SIZE
