@@ -25,6 +25,8 @@ enum Page {
     Users,
     Details,
     Services,
+    MacEnergy,
+    MacDisk,
     Preferences,
 }
 
@@ -168,6 +170,7 @@ pub struct TaskottoApp {
     users: HashMap<u32, String>,
     system_pages: rices::SystemPages,
     new_task: NewTaskDialog,
+    mac_info_open: bool,
 }
 
 #[derive(Default)]
@@ -229,6 +232,7 @@ impl TaskottoApp {
             users: load_users(),
             system_pages: rices::SystemPages::default(),
             new_task: NewTaskDialog::default(),
+            mac_info_open: false,
         }
     }
 
@@ -416,6 +420,12 @@ impl TaskottoApp {
     }
 
     fn nav(&mut self, ctx: &egui::Context) {
+        if self.settings.theme == Theme::Macos
+            && self.settings.layout_mode.resolve(self.settings.theme) == LayoutMode::Sidebar
+        {
+            rices::vertical_navigation(self, ctx);
+            return;
+        }
         if self.settings.theme == Theme::Windows10
             && self.settings.layout_mode.resolve(self.settings.theme) == LayoutMode::Sidebar
         {
@@ -870,6 +880,8 @@ impl TaskottoApp {
                 "Taskotto Settings"
             } else if self.settings.theme == Theme::Windows7 {
                 "Taskotto Options"
+            } else if self.settings.theme == Theme::Macos {
+                "Taskotto Preferences"
             } else {
                 "Preferences"
             })
@@ -1164,11 +1176,16 @@ impl TaskottoApp {
                 Page::Details if self.settings.theme == Theme::Windows7 => self.processes_page(ui),
                 Page::Details => self.details_page(ui),
                 Page::Services => rices::services(self, ui),
+                Page::MacEnergy => rices::mac_energy(self, ui),
+                Page::MacDisk => rices::mac_disk(self, ui),
                 Page::Preferences => self.preferences_page(ui),
             }
         });
         if self.settings.theme == Theme::Windows7 && self.page == Page::Details {
             rices::seven_properties_dialog(self, ctx);
+        }
+        if self.settings.theme == Theme::Macos && self.mac_info_open {
+            rices::mac_info_dialog(self, ctx);
         }
         self.confirmation_dialog(ctx);
         self.new_task_dialog(ctx);
@@ -1183,11 +1200,15 @@ impl eframe::App for TaskottoApp {
                 let _ = self.worker.commands.send(Command::Refresh);
             }
             if input.modifiers.command && input.key_pressed(egui::Key::F) {
-                self.page = Page::Processes;
+                if self.settings.theme != Theme::Macos {
+                    self.page = Page::Processes;
+                }
                 self.focus_search = true;
             }
             if input.key_pressed(egui::Key::Escape) && self.pending.is_none() {
-                if self.settings.theme == Theme::Windows7 && self.page == Page::Details {
+                if self.settings.theme == Theme::Macos && self.mac_info_open {
+                    self.mac_info_open = false;
+                } else if self.settings.theme == Theme::Windows7 && self.page == Page::Details {
                     self.page = Page::Processes;
                 } else {
                     self.query.clear();
@@ -1515,6 +1536,7 @@ mod tests {
             users: HashMap::new(),
             system_pages: rices::SystemPages::default(),
             new_task: NewTaskDialog::default(),
+            mac_info_open: false,
         };
         let input = egui::RawInput {
             screen_rect: Some(egui::Rect::from_min_size(
@@ -1556,6 +1578,7 @@ mod tests {
             users: HashMap::new(),
             system_pages: rices::SystemPages::default(),
             new_task: NewTaskDialog::default(),
+            mac_info_open: false,
         };
         for theme in Theme::ALL {
             for dimensions in [(650.0, 420.0), (1440.0, 900.0)] {
@@ -1572,6 +1595,87 @@ mod tests {
                 let _ = ctx.run(input, |ctx| {
                     app.draw_contents(ctx);
                 });
+            }
+        }
+    }
+
+    #[test]
+    fn macos_five_views_and_process_info_layout_at_two_sizes() {
+        let ctx = egui::Context::default();
+        let mut app = TaskottoApp {
+            worker: Worker::start(10_000, ctx.clone()),
+            settings: Settings {
+                theme: Theme::Macos,
+                ..Settings::default()
+            },
+            snapshot: Some(Snapshot {
+                cpu_percent: 24.0,
+                cores_percent: vec![24.0, 5.0],
+                memory: crate::monitor::Memory {
+                    total: 8 * 1024 * 1024 * 1024,
+                    available: 4 * 1024 * 1024 * 1024,
+                    swap_total: 0,
+                    swap_free: 0,
+                },
+                rates: Default::default(),
+                uptime_seconds: 100.0,
+                processes: vec![Process {
+                    pid: 3300,
+                    parent_pid: 1,
+                    name: "example-worker".into(),
+                    command: "/usr/bin/example-worker --test".into(),
+                    resident_bytes: 90 * 1024 * 1024,
+                    cpu_percent: 12.0,
+                    ..Process::default()
+                }],
+                logical_cpus: 2,
+            }),
+            history: History::default(),
+            page: Page::Processes,
+            performance_focus: PerformanceFocus::Cpu,
+            query: String::new(),
+            focus_search: false,
+            selected: None,
+            pending: None,
+            notification: None,
+            theme_accent_input: String::new(),
+            theme_surface_input: String::new(),
+            theme_text_input: String::new(),
+            my_uid: 1000,
+            users: HashMap::new(),
+            system_pages: rices::SystemPages::default(),
+            new_task: NewTaskDialog::default(),
+            mac_info_open: false,
+        };
+        for layout in [LayoutMode::TopTabs, LayoutMode::Sidebar] {
+            app.settings.layout_mode = layout;
+            apply_theme(&ctx, &app.settings);
+            for page in [
+                Page::Processes,
+                Page::Performance,
+                Page::MacEnergy,
+                Page::MacDisk,
+                Page::Networking,
+            ] {
+                app.page = page;
+                app.selected = Some((3300, 0));
+                app.mac_info_open = page == Page::Processes;
+                for (width, height) in [(650.0, 420.0), (1280.0, 800.0)] {
+                    let output = ctx.run(
+                        egui::RawInput {
+                            screen_rect: Some(egui::Rect::from_min_size(
+                                egui::Pos2::ZERO,
+                                Vec2::new(width, height),
+                            )),
+                            ..Default::default()
+                        },
+                        |ctx| app.draw_contents(ctx),
+                    );
+                    assert!(
+                        !output.shapes.is_empty(),
+                        "missing macOS {page:?} {layout:?} paint commands"
+                    );
+                }
             }
         }
     }
@@ -1620,6 +1724,7 @@ mod tests {
             users: HashMap::new(),
             system_pages: rices::SystemPages::default(),
             new_task: NewTaskDialog::default(),
+            mac_info_open: false,
         };
         for theme in [Theme::XpLuna, Theme::Windows7, Theme::Windows10] {
             for &navigation in if theme == Theme::Windows10 {

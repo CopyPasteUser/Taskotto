@@ -27,7 +27,8 @@ archive and invokes its binary and local desktop installer before publishing.
 - [ ] XP Luna: verify blue chrome, raised tabs, File/Options/View/Help menus, classic CPU/RAM history, process sorting and status strip; use keyboard focus and resize to minimum.
 - [ ] Windows 7: verify Aero-like title chrome and six historical tabs; compact report sorting/filtering, per-core CPU histories, blue memory graph, process confirmation, service unavailable/available states, and selection via keyboard at 650×420 and a large size.
 - [ ] Windows 10: verify light tabs, process grouping, CPU/memory heatmap, sorting, context menus, and switching CPU/Memory/Disk/Network in the Performance sidebar.
-- [ ] Both rices: right-click a disposable process, open Details, Pause/Resume and End task after confirmation; verify no unintended actions or stale PID targets.
+- [ ] macOS Activity Monitor: verify five horizontal CPU/Memory/Energy/Disk/Network segments, toolbar View filters, search, process selection, double-click Info, context-menu actions and continuously updated bottom history. Switch to optional Sidebar and back; resize to 650×420 and 1280×800. Note that Energy is a CPU proxy and Network is global-only by design.
+- [ ] All four dedicated rices: right-click a disposable process, open Details/Info, Pause/Resume and End task after confirmation; verify no unintended actions or stale PID targets.
 - [ ] Capture and review a native Taskotto window screenshot on X11, KDE Wayland and labwc. The [headless README images](SCREENSHOTS.md) do not certify display-server rendering.
 - [ ] Linux Mint / X11: launch via `.desktop` menu, resize, minimize, close, reopen.
 - [ ] Fedora KDE / Wayland: repeat and test clipboard/focus.

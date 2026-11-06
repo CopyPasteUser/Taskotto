@@ -15,7 +15,7 @@ The restricted capture environment currently exposes few processes and very
 little I/O; this is why some screenshots look sparse. They are not evidence of
 hardware compatibility or GUI performance.
 
-To regenerate all 21 images on Linux:
+To regenerate all 27 images on Linux:
 
 ```bash
 TASKOTTO_SCREENSHOT_DIR=assets/screenshots \
@@ -23,6 +23,15 @@ TASKOTTO_SCREENSHOT_DIR=assets/screenshots \
 ```
 
 The command samples real system activity for about four seconds and writes:
+
+### macOS Activity Monitor (five views and process information)
+
+- `assets/screenshots/taskotto-macos-cpu.png` — sortable CPU report, process actions, search and genuine CPU load history.
+- `assets/screenshots/taskotto-macos-memory.png` — RSS/virtual-memory process report, aggregate Linux physical and swap usage; not Apple's private memory or Memory Pressure algorithm.
+- `assets/screenshots/taskotto-macos-energy.png` — per-process CPU activity as an **explicitly labeled proxy**, because macOS Energy Impact / App Nap are not available from portable Linux procfs.
+- `assets/screenshots/taskotto-macos-disk.png` — permission-sensitive real `/proc/PID/io` process bytes and aggregate block-device rates.
+- `assets/screenshots/taskotto-macos-network.png` — real non-loopback system-wide traffic history; no imaginary per-process counters.
+- `assets/screenshots/taskotto-macos-info.png` — modal process information from the currently selected actual PID.
 
 ### Windows 7 (six historical tabs)
 
@@ -58,8 +67,8 @@ The old dark, Classic 98 and Seven gallery captures were removed in the RC7
 focused fidelity pass. Their original styles remain available in Taskotto.
 
 To regenerate only one rice's screenshots (and preserve the others), set
-`TASKOTTO_SCREENSHOT_FILTER=win7`, `TASKOTTO_SCREENSHOT_FILTER=win10`
-or `TASKOTTO_SCREENSHOT_FILTER=xp-luna`
+`TASKOTTO_SCREENSHOT_FILTER=win7`, `TASKOTTO_SCREENSHOT_FILTER=win10`,
+`TASKOTTO_SCREENSHOT_FILTER=xp-luna` or `TASKOTTO_SCREENSHOT_FILTER=macos`
 before the same command.
 
 Captures are pinned to 1280 × 800 pixels. Re-running on another machine will

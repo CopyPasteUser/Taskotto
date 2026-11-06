@@ -2,6 +2,13 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.10] — 2026-11-06
+
+- Gave macOS its own Activity Monitor-inspired UI: original-drawn toolbar, process Stop/Info/View controls, always-available search, familiar five horizontal CPU/Memory/Energy/Disk/Network segments, compact sortable alternating-row process report and process-inspection dialog.
+- Reused the authoritative Linux monitor, bounded CPU/memory/disk/network history and PID-reuse-protected confirmation actions. Energy reports measured CPU activity as an openly labeled *proxy*, not invented Apple Energy Impact; Network displays real system-wide traffic without invented per-process attribution.
+- Added a macOS-specific light color palette, optional custom sidebar, narrow/wide responsive columns and five-view/two-layout process/info regression coverage.
+- Added six live-Linux-procfs egui screenshots for the five tabs and process information. Refreshed the compact README gallery and screenshot/fidelity/QA notes (27 headless scenes total). Pixel-level 95% fidelity, native window visuals, performance and hardware acceptance are still unverified.
+
 ## [1.0.0-rc.9] — 2026-11-06
 
 - Added a separate, era-specific Windows 7-style task manager: original-drawn Aero chrome and six horizontal classic tabs (Applications, Processes, Services, Performance, Networking, Users).

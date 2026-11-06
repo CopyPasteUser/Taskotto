@@ -85,9 +85,11 @@ impl LayoutMode {
     pub fn resolve(self, theme: Theme) -> Self {
         match self {
             Self::Auto => match theme {
-                Theme::Windows98 | Theme::XpLuna | Theme::Windows7 | Theme::Windows10 => {
-                    Self::TopTabs
-                }
+                Theme::Windows98
+                | Theme::XpLuna
+                | Theme::Windows7
+                | Theme::Windows10
+                | Theme::Macos => Self::TopTabs,
                 _ => Self::Sidebar,
             },
             mode => mode,
