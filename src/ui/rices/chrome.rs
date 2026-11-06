@@ -39,7 +39,7 @@ pub(super) fn topbar(app: &mut TaskottoApp, ctx: &egui::Context) {
                         rect.left_top() + egui::vec2(0.0, 1.0),
                         rect.right_top() + egui::vec2(0.0, 1.0),
                     ],
-                    Stroke::new(1.0, Color32::from_rgb(118, 194, 255)),
+                    Stroke::new(1.0_f32, Color32::from_rgb(118, 194, 255)),
                 );
                 painter.rect_filled(
                     Rect::from_min_size(rect.min + egui::vec2(8.0, 7.0), egui::vec2(17.0, 17.0)),
@@ -255,14 +255,14 @@ pub(super) fn navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
                                 r.left_top() + egui::vec2(1.0, 1.0),
                                 r.right_top() + egui::vec2(-1.0, 1.0),
                             ],
-                            Stroke::new(1.0, Color32::WHITE),
+                            Stroke::new(1.0_f32, Color32::WHITE),
                         );
                         ui.painter().line_segment(
                             [
                                 r.left_bottom() + egui::vec2(2.0, -1.0),
                                 r.right_bottom() + egui::vec2(-2.0, -1.0),
                             ],
-                            Stroke::new(2.0, Color32::WHITE),
+                            Stroke::new(2.0_f32, Color32::WHITE),
                         );
                     }
                     if !xp && selected {

@@ -124,7 +124,7 @@ pub(super) fn page(app: &mut TaskottoApp, ui: &mut egui::Ui) {
     if rows.is_empty() {
         egui::Frame::new()
             .fill(Color32::WHITE)
-            .stroke(Stroke::new(1.0, Color32::from_rgb(173, 173, 173)))
+            .stroke(Stroke::new(1.0_f32, Color32::from_rgb(173, 173, 173)))
             .show(ui, |ui| {
                 ui.set_min_height((ui.available_height() - 12.0).max(100.0));
                 ui.add_space(32.0);
@@ -142,7 +142,7 @@ pub(super) fn page(app: &mut TaskottoApp, ui: &mut egui::Ui) {
     egui::Frame::new()
         .fill(Color32::WHITE)
         .stroke(Stroke::new(
-            1.0,
+            1.0_f32,
             if xp {
                 Color32::from_rgb(128, 128, 128)
             } else {

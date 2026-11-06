@@ -405,7 +405,7 @@ fn xp_performance(app: &TaskottoApp, ui: &mut egui::Ui) {
 fn xp_stat_group(ui: &mut egui::Ui, title: &str, values: &[(&str, String)]) {
     ui.label(RichText::new(title).size(12.0).strong());
     egui::Frame::new()
-        .stroke(Stroke::new(1.0, Color32::from_rgb(166, 162, 145)))
+        .stroke(Stroke::new(1.0_f32, Color32::from_rgb(166, 162, 145)))
         .fill(Color32::from_rgb(245, 243, 231))
         .inner_margin(egui::Margin::same(7))
         .show(ui, |ui| {
@@ -430,7 +430,7 @@ fn xp_graph(ui: &mut egui::Ui, title: &str, fraction: f32, history: &VecDeque<f3
             ui.painter()
                 .rect_filled(bar, 0.0, Color32::from_rgb(2, 12, 5));
             ui.painter()
-                .rect_stroke(bar, 0.0, Stroke::new(2.0, frame), StrokeKind::Inside);
+                .rect_stroke(bar, 0.0, Stroke::new(2.0_f32, frame), StrokeKind::Inside);
             let filled = (bar.height() - 10.0) * (fraction / 100.0).clamp(0.0, 1.0);
             if filled > 1.0 {
                 ui.painter().rect_filled(

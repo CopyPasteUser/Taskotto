@@ -12,6 +12,7 @@ Rust-only Linux process manager and system monitor. This is a **prerelease**, no
 - The optional Linux search is exposed on Ctrl+F and View → Find rather than always occupying space; action menus, safety confirmations and theme overrides remain functional.
 - Corrected a genuine `/proc/PID/stat` bug where the process's nice value was displayed as its number of threads. Added a failing-then-passing regression assertion.
 - Replaced four real egui/process snapshots in the README and retained provenance; hardware acceptance and pixel fidelity are not claimed.
+- Declared egui stroke widths explicitly as `f32` after newer GitHub CI Rust caught inference fallback that the Rust 1.88 compatibility build still permitted.
 
 ## Earlier changes (rc.4 → rc.5)
 

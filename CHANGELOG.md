@@ -10,6 +10,7 @@ Taskotto follows semantic versioning; hardware-dependent stable-release gates ar
 - Fixed `/proc/PID/stat` thread-count parsing (field 20 was read as field 19); a regression test confirms correct values.
 - Refreshed four real, headless egui process/performance screenshots using live Linux data. No Windows assets, fake data or native-GUI validation claims.
 - Rust 1.88 formatting, 41 automated tests (including the ignored screenshot generator) and warning-free Clippy passed locally; real hardware acceptance is still outstanding.
+- Follow-up CI compatibility fix: explicitly type seven egui stroke widths as `f32` for newer Rust's strict floating-point inference.
 
 ## [1.0.0-rc.5] — 2026-11-06
 
