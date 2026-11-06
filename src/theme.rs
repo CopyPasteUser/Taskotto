@@ -167,6 +167,36 @@ impl ThemeStyle {
             }
             _ => {}
         }
+        // Component-level RicePack tokens are applied *after* a preset's
+        // semantic defaults. Missing fields retain the original rice styling.
+        let components = &settings.components;
+        if let Some(color) = components.control.as_deref().and_then(parse_hex) {
+            visuals.widgets.inactive.bg_fill = color;
+            visuals.widgets.open.bg_fill = color;
+            visuals.widgets.inactive.fg_stroke.color = readable_text(color);
+            visuals.widgets.open.fg_stroke.color = readable_text(color);
+        }
+        if let Some(color) = components.hover.as_deref().and_then(parse_hex) {
+            visuals.widgets.hovered.bg_fill = color;
+            visuals.widgets.hovered.fg_stroke.color = readable_text(color);
+        }
+        if let Some(color) = components.border.as_deref().and_then(parse_hex) {
+            visuals.widgets.inactive.bg_stroke.color = color;
+            visuals.widgets.noninteractive.bg_stroke.color = color;
+            visuals.widgets.open.bg_stroke.color = color;
+        }
+        if let Some(color) = components.table.as_deref().and_then(parse_hex) {
+            // Table text in historical client widgets inherits the global
+            // foreground; keep it legible instead of honoring an unsafe fill.
+            if contrast_ratio(self.text, color) >= 4.5 {
+                visuals.extreme_bg_color = color;
+                visuals.faint_bg_color = color;
+            }
+        }
+        if let Some(color) = components.selection.as_deref().and_then(parse_hex) {
+            visuals.selection.bg_fill = color;
+            visuals.selection.stroke.color = readable_text(color);
+        }
         let rounding = egui::CornerRadius::same(self.rounding);
         visuals.widgets.noninteractive.corner_radius = rounding;
         visuals.widgets.inactive.corner_radius = rounding;
@@ -218,7 +248,7 @@ fn rgb((r, g, b): (u8, u8, u8)) -> Color32 {
     Color32::from_rgb(r, g, b)
 }
 
-fn parse_hex(hex: &str) -> Option<Color32> {
+pub(crate) fn parse_hex(hex: &str) -> Option<Color32> {
     if !crate::config::is_hex_color(hex) {
         return None;
     }
@@ -290,6 +320,47 @@ mod tests {
         assert_eq!(tokens.text, Color32::BLACK);
         assert_eq!(tokens.accent, Color32::from_rgb(51, 85, 238));
         assert!(!tokens.dark);
+    }
+
+    #[test]
+    fn component_tokens_override_widgets_and_keep_selection_readable() {
+        let settings = Settings {
+            theme: Theme::Windows7,
+            components: crate::config::ComponentColors {
+                control: Some("#112233".into()),
+                hover: Some("#223344".into()),
+                border: Some("#334455".into()),
+                table: Some("#E5F1F2".into()),
+                selection: Some("#F5F5F5".into()),
+            },
+            ..Settings::default()
+        };
+        let ctx = egui::Context::default();
+        ThemeStyle::from_settings(&settings).apply(&ctx, &settings);
+        let visuals = &ctx.style().visuals;
+        assert_eq!(
+            visuals.widgets.inactive.bg_fill,
+            Color32::from_rgb(17, 34, 51)
+        );
+        assert_eq!(
+            visuals.widgets.hovered.bg_fill,
+            Color32::from_rgb(34, 51, 68)
+        );
+        assert_eq!(
+            visuals.widgets.inactive.bg_stroke.color,
+            Color32::from_rgb(51, 68, 85)
+        );
+        assert_eq!(visuals.extreme_bg_color, Color32::from_rgb(229, 241, 242));
+        assert_eq!(visuals.widgets.inactive.fg_stroke.color, Color32::WHITE);
+        assert_eq!(visuals.selection.stroke.color, Color32::BLACK);
+
+        let mut unreadable = settings.clone();
+        unreadable.components.table = Some("#223344".into());
+        ThemeStyle::from_settings(&unreadable).apply(&ctx, &unreadable);
+        assert_ne!(
+            ctx.style().visuals.extreme_bg_color,
+            Color32::from_rgb(34, 51, 68)
+        );
     }
 
     #[test]

@@ -2,6 +2,13 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.18] — 2026-11-06
+
+- Added five optional, strictly validated semantic component colors to RicePack v1: control, hover, border, table and selection. Existing packs remain compatible; no code/scripts/assets or monitoring rights can be supplied by a pack.
+- Extended session-only config backups, file reload and CLI export roundtrips to include semantic tokens; new color swatches in Preferences support a per-token return to built-in values.
+- Applied component overrides after rice-specific default egui styles, added readable control/selection text and rejected visually unsafe table fills. Re-rendered the genuine Sea Glass in-app preview and added parser/reload/token-style regression coverage.
+- More fine-grained custom rice drawings still need token extraction; cross-repository RiceBowl contract and physical GUI acceptance are not claimed complete.
+
 ## [1.0.0-rc.17] — 2026-11-06
 
 - Added a local RicePack library browser with bounded non-recursive discovery, explicit invalid-pack errors and safe, uniquely named import without overwriting designs.

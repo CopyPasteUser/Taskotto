@@ -2,7 +2,7 @@
 //!
 //! RiceBowl and generative tools can select an existing client layout and
 //! override its supported tokens without loading executable code or assets.
-use crate::config::{Density, LayoutMode, Settings, Theme, is_hex_color};
+use crate::config::{ComponentColors, Density, LayoutMode, Settings, Theme, is_hex_color};
 use serde::{Deserialize, Serialize};
 use std::{
     fs::{self, File, OpenOptions},
@@ -111,6 +111,8 @@ pub struct RicePack {
     pub base_theme: Theme,
     #[serde(default)]
     pub appearance: Appearance,
+    #[serde(default, skip_serializing_if = "ComponentColors::is_empty")]
+    pub components: ComponentColors,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
@@ -144,6 +146,7 @@ impl RicePack {
                 corner_radius: settings.corner_radius,
                 row_height: settings.table_row_height,
             },
+            components: settings.components.clone(),
         }
     }
 
@@ -208,6 +211,7 @@ impl RicePack {
         {
             return Err("appearance.corner_radius must be between 0 and 16".to_owned());
         }
+        pack.components.validate()?;
         Ok(pack)
     }
 
@@ -257,6 +261,7 @@ impl RicePack {
         if let Some(value) = appearance.row_height {
             settings.table_row_height = Some(value);
         }
+        settings.components.overlay(&self.components);
     }
 }
 
@@ -308,6 +313,8 @@ mod tests {
         assert_eq!(settings.accent_hex.as_deref(), Some("#159DA4"));
         assert_eq!(settings.refresh_ms, 5_000);
         assert_eq!(settings.launch_ricepack_name.as_deref(), Some("Sea Glass"));
+        assert_eq!(settings.components.control.as_deref(), Some("#D4F2EC"));
+        assert_eq!(settings.components.selection.as_deref(), Some("#148E94"));
         let style = crate::theme::ThemeStyle::from_settings(&settings);
         assert_eq!(style.accent, eframe::egui::Color32::from_rgb(21, 157, 164));
     }
@@ -319,6 +326,11 @@ mod tests {
             SAMPLE.replace("#159DA4", "#not-hex"),
             SAMPLE.replace("font_scale = 1.05", "font_scale = 500"),
             SAMPLE.replace("Sea Glass", ""),
+            SAMPLE.replace("#B6EAE0", "#bad"),
+            SAMPLE.replace(
+                "selection = \"#148E94\"",
+                "selection = \"#148E94\"\nunknown = \"#FFFFFF\"",
+            ),
             format!("{SAMPLE}\nunknown = true"),
         ] {
             assert!(RicePack::from_toml(&source).is_err(), "{source}");
@@ -350,6 +362,10 @@ mod tests {
             accent_hex: Some("#123ABC".into()),
             layout_mode: LayoutMode::Sidebar,
             ui_spacing: 11.0,
+            components: ComponentColors {
+                control: Some("#C0FFEE".into()),
+                ..ComponentColors::default()
+            },
             ..Settings::default()
         };
         let pack = RicePack::from_settings(&settings);
@@ -359,9 +375,11 @@ mod tests {
         assert_eq!(loaded.appearance.accent.as_deref(), Some("#123ABC"));
         assert_eq!(loaded.appearance.navigation, Some(LayoutMode::Sidebar));
         assert_eq!(loaded.appearance.spacing, Some(11.0));
+        assert_eq!(loaded.components.control.as_deref(), Some("#C0FFEE"));
         let mut restored = Settings::default();
         loaded.apply(&mut restored);
         assert_eq!(restored.theme, settings.theme);
         assert_eq!(restored.accent_hex, settings.accent_hex);
+        assert_eq!(restored.components, settings.components);
     }
 }

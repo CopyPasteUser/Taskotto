@@ -49,6 +49,9 @@ Development on later milestones may proceed while user-hardware QA is pending.
   fixture supplied by that repository.
 - [x] Add pack discovery, in-app visual preview and non-destructive
   import/export from the Taskotto UI.
+- [x] Extend the v1 design with backwards-compatible semantic colors for
+  controls, hover, borders, tables and selection. Expose them in Preferences,
+  validate them strictly and preserve them across preview/revert/export.
 - [ ] Separate all palette/size tokens from hardcoded rice widget styles;
   make component overrides available without recompilation.
 
@@ -138,9 +141,9 @@ lean, offline-capable and independent from RiceBowl.
 
 ## Work order
 
-1. **Delivered (RC14–17):** P1 format/loader/CLI, secure reference pack,
+1. **Delivered (RC14–18):** P1 format/loader/CLI, secure reference pack,
    headless export/check/re-import, live file reload and in-app library,
-   session-only preview/revert/import/export workflow.
+   session-only preview/revert/import/export and initial semantic widget tokens.
 2. **Next:** P1 end-to-end RiceBowl interop contract/fixture and component-level
    UI token extraction. RiceBowl's separate JSON desktop pack is not the same
    schema as Taskotto's TOML design; do not pass it directly to the loader.

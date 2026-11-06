@@ -24,6 +24,13 @@ font_scale = 1.05
 spacing = 9.0
 corner_radius = 10
 row_height = 34.0
+
+[components]
+control = "#D4F2EC"
+hover = "#B6EAE0"
+border = "#80C8BE"
+table = "#F7FFFD"
+selection = "#148E94"
 ```
 
 ## Use
@@ -60,6 +67,12 @@ a design in the list. You can also enter a RicePack file path directly.
   file. Repeated imports get numbered suffixes; existing files are untouched.
 - **Export current appearance** writes the visible settings to a new file.
   You choose the destination; an existing file is never overwritten.
+
+The Component colors section includes optional swatches for button/control,
+hover, border, table-background and selection colors. Each field can be reset
+to the original rice preset; older packs without `[components]` keep exactly
+their existing behavior. Control/selection text uses automatic contrast
+fallback; a table fill that would make inherited text unreadable is ignored.
 
 This is an interactive editor for the **v1 supported appearance tokens**, not
 arbitrary UI widget placement. The separate RiceBowl desktop RicePack
@@ -115,6 +128,11 @@ the user's saved design.
 | `appearance.spacing` | No | 3–16 |
 | `appearance.corner_radius` | No | 0–16 |
 | `appearance.row_height` | No | 22–48 |
+| `components.control` | No | `#RRGGBB` default control fill |
+| `components.hover` | No | `#RRGGBB` hover fill |
+| `components.border` | No | `#RRGGBB` control/widget border |
+| `components.table` | No | `#RRGGBB` shared table/content fill |
+| `components.selection` | No | `#RRGGBB` selection fill (contrast-safe text) |
 
 Unknown fields, unrecognized versions, invalid colors, NaN/out-of-range
 values and files larger than **64 KiB** are rejected with a descriptive error.
@@ -126,7 +144,10 @@ RicePacks cannot paint duplicate titlebars or alter window permissions.
 
 ## Roadmap boundary
 
-This contract does not yet support custom icons, fonts, free-form widget
-placement or user-defined data bindings. Those require a separate bounded
+Component tokens apply to shared egui widget visuals; some historical rice
+drawings still contain intentionally hardcoded era-specific colors. Complete
+per-widget token extraction remains on P1. This contract does not yet support
+custom icons, fonts, free-form widget placement or user-defined data bindings.
+Those require a separate bounded
 layout schema, migration tests and visual QA under P1/P2, not unchecked TOML
 keys pretending to implement functionality.
