@@ -2555,10 +2555,11 @@ dependencies = [
 
 [[package]]
 name = "taskotto"
-version = "1.0.0-rc.2"
+version = "1.0.0-rc.3"
 dependencies = [
  "eframe",
  "libc",
+ "png",
  "serde",
  "serde_json",
  "toml",

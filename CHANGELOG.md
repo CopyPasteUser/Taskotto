@@ -2,6 +2,13 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.3] — 2026-11-06
+
+- README gallery with genuine headless egui-rendered screenshots and reproducible, documented live-procfs capture workflow.
+- Shared scale and color distinction for simultaneous network RX/TX and block read/write graphs, with gridlines and full-width early sample history.
+- Readable text navigation and sort controls in place of missing default-font glyphs.
+- Real-desktop screenshot, performance and interaction sign-off remains pending; stable 1.0 is not claimed.
+
 ## [1.0.0-rc.2] — 2026-11-05
 
 - Process start/runtime and per-process I/O rates; network and disk history charts.
