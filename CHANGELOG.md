@@ -2,6 +2,12 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.15] — 2026-11-06
+
+- Added `--export-ricepack PATH` to convert the saved Taskotto appearance into a validated, editable RicePack v1 design. This makes a concrete roundtrip for manual/AI-assisted customization: export → edit → check → apply.
+- Export works headlessly, reads only saved preferences, preserves monitoring settings, never replaces an existing RicePack file, and uses owner-only file permissions on Unix. Added parser roundtrip and binary integration tests for successful export, validation, config preservation, and overwrite protection.
+- Updated the RicePack format guide and expansion roadmap. Live RicePack editing, previews and arbitrary component layouts remain future milestones; stable 1.0 still requires real hardware acceptance.
+
 ## [1.0.0-rc.14] — 2026-11-06
 
 - Published an [expansion roadmap](EXPANSION_ROADMAP.md) covering 1.0 hardware gates and eight subsequent milestones: RicePack contracts, declarative UI, advanced process actions, GPU monitoring, cgroups/containers, pressure diagnosis, dashboards/exports and measured performance.

@@ -3,17 +3,17 @@
 //! RiceBowl and generative tools can select an existing client layout and
 //! override its supported tokens without loading executable code or assets.
 use crate::config::{Density, LayoutMode, Settings, Theme, is_hex_color};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::{
-    fs::File,
-    io::{self, Read},
+    fs::{File, OpenOptions},
+    io::{self, Read, Write},
     path::Path,
 };
 
 const MAX_RICEPACK_BYTES: u64 = 64 * 1024;
 pub const FORMAT_VERSION: u32 = 1;
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct RicePack {
     pub format_version: u32,
@@ -23,7 +23,7 @@ pub struct RicePack {
     pub appearance: Appearance,
 }
 
-#[derive(Clone, Debug, Default, Deserialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct Appearance {
     pub accent: Option<String>,
@@ -38,6 +38,45 @@ pub struct Appearance {
 }
 
 impl RicePack {
+    pub fn from_settings(settings: &Settings) -> Self {
+        Self {
+            format_version: FORMAT_VERSION,
+            name: format!("{} Custom", settings.theme.label()),
+            base_theme: settings.theme,
+            appearance: Appearance {
+                accent: settings.accent_hex.clone(),
+                surface: settings.surface_hex.clone(),
+                text: settings.text_hex.clone(),
+                density: Some(settings.density),
+                navigation: Some(settings.layout_mode),
+                font_scale: Some(settings.font_scale),
+                spacing: Some(settings.ui_spacing),
+                corner_radius: settings.corner_radius,
+                row_height: settings.table_row_height,
+            },
+        }
+    }
+
+    /// Export only to a new path; never truncate an existing user's design.
+    pub fn write_new(&self, path: &Path) -> io::Result<()> {
+        let contents = toml::to_string_pretty(self).map_err(io::Error::other)?;
+        let mut options = OpenOptions::new();
+        options.write(true).create_new(true);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::OpenOptionsExt;
+            options.mode(0o600);
+        }
+        let mut file = options.open(path)?;
+        let result = file
+            .write_all(contents.as_bytes())
+            .and_then(|()| file.sync_all());
+        if result.is_err() {
+            let _ = std::fs::remove_file(path);
+        }
+        result
+    }
+
     pub fn from_toml(source: &str) -> Result<Self, String> {
         let pack: Self = toml::from_str(source).map_err(|err| err.to_string())?;
         if pack.format_version != FORMAT_VERSION {
@@ -184,5 +223,27 @@ mod tests {
         assert_eq!(error.kind(), io::ErrorKind::InvalidData);
         assert!(error.to_string().contains("64 KiB"));
         std::fs::remove_file(path).unwrap();
+    }
+
+    #[test]
+    fn exported_settings_roundtrip_through_the_versioned_pack_schema() {
+        let settings = Settings {
+            theme: Theme::Windows7,
+            accent_hex: Some("#123ABC".into()),
+            layout_mode: LayoutMode::Sidebar,
+            ui_spacing: 11.0,
+            ..Settings::default()
+        };
+        let pack = RicePack::from_settings(&settings);
+        let text = toml::to_string_pretty(&pack).unwrap();
+        let loaded = RicePack::from_toml(&text).unwrap();
+        assert_eq!(loaded.base_theme, Theme::Windows7);
+        assert_eq!(loaded.appearance.accent.as_deref(), Some("#123ABC"));
+        assert_eq!(loaded.appearance.navigation, Some(LayoutMode::Sidebar));
+        assert_eq!(loaded.appearance.spacing, Some(11.0));
+        let mut restored = Settings::default();
+        loaded.apply(&mut restored);
+        assert_eq!(restored.theme, settings.theme);
+        assert_eq!(restored.accent_hex, settings.accent_hex);
     }
 }

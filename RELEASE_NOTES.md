@@ -1,8 +1,14 @@
-# Taskotto 1.0.0-rc.14 — release candidate
+# Taskotto 1.0.0-rc.15 — release candidate
 
 **Date:** 2026-11-06 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
 Rust-only Linux process manager and system monitor. This is a **prerelease**, not a stable 1.0 certification.
+
+## Changes since rc.14
+
+- Implemented `taskotto --export-ricepack my-rice.toml`: export the saved theme and supported design tokens to a new RicePack v1 TOML file, then edit, validate and reload it. This is the first complete, data-only customization roundtrip suitable for AI-generated edits.
+- Export refuses overwriting existing files, preserves user preferences, rejects invalid saved configs, and runs without a display. Added regression coverage and updated the [RicePack guide](RICEPACK_FORMAT.md).
+- Native desktop acceptance, live in-app pack previews and arbitrary AI-generated component layout schemas remain pending.
 
 ## Changes since rc.13
 

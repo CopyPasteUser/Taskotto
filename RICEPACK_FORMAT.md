@@ -33,6 +33,23 @@ taskotto --check-ricepack examples/ricepacks/sea-glass.toml
 taskotto --ricepack examples/ricepacks/sea-glass.toml
 ```
 
+To create a starting point from your **saved** Taskotto appearance, without
+opening the GUI:
+
+```bash
+taskotto --export-ricepack my-rice.toml
+# Edit the exported TOML manually or with an AI, then:
+taskotto --check-ricepack my-rice.toml
+taskotto --ricepack my-rice.toml
+```
+
+Export reads the ordinary Taskotto config (not a temporary active session
+override), writes only supported appearance tokens and never overwrites an
+existing file. It preserves the original config and refuses malformed
+preferences instead of silently exporting defaults. The destination directory
+must already exist; on Linux the new RicePack file is owner-readable/writable.
+Process and monitoring preferences are intentionally **not** part of the pack.
+
 For RiceBowl session integration:
 
 ```bash
