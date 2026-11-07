@@ -34,8 +34,8 @@ The command samples real system activity and writes:
 
 ### Generated functional screens (P2 foundation)
 
-- `assets/screenshots/taskotto-diagnostic-studio-ricepack.png` — original two-tab Diagnostic Studio composed entirely from a validated TOML RicePack. Displays genuine host CPU and a live Linux process list; the process-control confirmation path is shared with the historical clients.
-- `assets/screenshots/taskotto-diagnostic-studio-traffic.png` — the second generated tab of the same TOML layout: actual network receive and disk-write rates, history and real Linux threads/PID report; no new source-code widget implementation for the second tab.
+- `assets/screenshots/taskotto-diagnostic-studio-ricepack.png` — original two-tab Diagnostic Studio composed entirely from a validated TOML RicePack. Includes safe refresh/search/termination actions, genuine host CPU, a memory percentage gauge, a live Linux process list and a real-value status strip. Process termination uses the existing PID-safe confirmation path.
+- `assets/screenshots/taskotto-diagnostic-studio-traffic.png` — the second generated tab of the same TOML layout: actual network receive and disk-write rates, history, a live I/O status strip and real Linux threads/PID report; no theme-specific Rust module is needed for this second tab.
 
 ### ChromeOS Task manager (primary task table and supplementary tools)
 

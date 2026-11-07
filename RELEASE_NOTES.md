@@ -1,8 +1,14 @@
-# Taskotto 1.0.0-rc.29 — release candidate
+# Taskotto 1.0.0-rc.30 — release candidate
 
 **Date:** 2026-11-07 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
 Rust-only Linux process manager and system monitor. This is a **prerelease**, not a stable 1.0 certification.
+
+## Changes since rc.29
+
+- Finished the first bounded screen-component palette in P2: generated TOML layouts now include percentage gauges (actual CPU/RAM), status strips (real named Linux metrics) and a restricted functional toolbar for refresh, process search and PID-safe confirmed termination.
+- Reject unknown, duplicated or oversized toolbar/status values; missing samples show a loading state. Search opens with focus and separate process lists avoid duplicating the toolbar's End Process control.
+- Refreshed both Diagnostic Studio screenshots, schema tests and docs. In-app layout editing, theme capability fallbacks and physical desktop QA are still outstanding.
 
 ## Changes since rc.28
 

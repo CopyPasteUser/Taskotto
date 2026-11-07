@@ -2,7 +2,7 @@
 //! No scripts, external assets, custom commands or hidden privileges.
 use super::*;
 use crate::{
-    layout::{Metric, Plot, ProcessColumn, Widget},
+    layout::{Gauge, Metric, Plot, ProcessColumn, ToolbarAction, Widget},
     theme::ComponentPaint,
 };
 use egui::{Align2, FontId, Frame, Margin, StrokeKind};
@@ -55,6 +55,10 @@ pub(in crate::ui) fn render(app: &mut TaskottoApp, ui: &mut egui::Ui) {
         .auto_shrink([false, false])
         .show(ui, |ui| {
             let widgets = &layout.pages[current].widgets;
+            let end_in_toolbar = widgets.iter().any(|widget| match widget {
+                Widget::Toolbar { actions } => actions.contains(&ToolbarAction::EndProcess),
+                _ => false,
+            });
             let mut index = 0;
             while index < widgets.len() {
                 if matches!(widgets[index], Widget::Metric { .. }) {
@@ -84,8 +88,17 @@ pub(in crate::ui) fn render(app: &mut TaskottoApp, ui: &mut egui::Ui) {
                             ui.label(egui::RichText::new(label).strong());
                             plot(app, ui, *binding, paint);
                         }
+                        Widget::Gauge { label, binding } => {
+                            gauge(app, ui, label, *binding, paint);
+                        }
+                        Widget::StatusStrip { bindings } => {
+                            status_strip(app, ui, bindings, paint);
+                        }
+                        Widget::Toolbar { actions } => {
+                            toolbar(app, ui, actions, paint);
+                        }
                         Widget::ProcessList { columns } => {
-                            process_list(app, ui, columns, paint);
+                            process_list(app, ui, columns, paint, !end_in_toolbar);
                         }
                         Widget::Metric { .. } => {}
                     });
@@ -147,6 +160,122 @@ fn metric_value(snapshot: Option<&Snapshot>, binding: Metric) -> String {
     }
 }
 
+fn gauge(app: &TaskottoApp, ui: &mut egui::Ui, label: &str, binding: Gauge, paint: ComponentPaint) {
+    let actual = gauge_percent(app.snapshot.as_ref(), binding);
+    ui.label(egui::RichText::new(label).strong());
+    if let Some(percent) = actual {
+        let progress = (percent / 100.0).clamp(0.0, 1.0);
+        let fill = paint.selection(ThemeStyle::from_settings(&app.settings).accent);
+        ui.add(
+            egui::ProgressBar::new(progress)
+                .fill(fill)
+                .desired_width(ui.available_width().clamp(145.0, 540.0))
+                .text(format!("{percent:.1}%")),
+        );
+    } else {
+        ui.horizontal(|ui| {
+            ui.spinner();
+            ui.label("Waiting for measured CPU/memory data…");
+        });
+    }
+}
+
+fn gauge_percent(snapshot: Option<&Snapshot>, binding: Gauge) -> Option<f32> {
+    snapshot.map(|snapshot| match binding {
+        Gauge::CpuPercent => snapshot.cpu_percent,
+        Gauge::MemoryPercent => snapshot.memory.used_fraction() * 100.0,
+    })
+}
+
+fn status_strip(app: &TaskottoApp, ui: &mut egui::Ui, bindings: &[Metric], paint: ComponentPaint) {
+    Frame::new()
+        .fill(paint.table(ui.visuals().faint_bg_color))
+        .stroke(egui::Stroke::new(
+            1.0_f32,
+            paint.border(ui.visuals().widgets.noninteractive.bg_stroke.color),
+        ))
+        .inner_margin(Margin::symmetric(10, 8))
+        .show(ui, |ui| {
+            if paint.table.is_some() {
+                ui.visuals_mut().override_text_color =
+                    Some(paint.on_table(ui.visuals().text_color()));
+            }
+            ui.horizontal_wrapped(|ui| {
+                for (index, binding) in bindings.iter().enumerate() {
+                    if index > 0 {
+                        ui.separator();
+                    }
+                    ui.label(format!(
+                        "{}: {}",
+                        binding.label(),
+                        metric_value(app.snapshot.as_ref(), *binding)
+                    ));
+                }
+            });
+        });
+}
+
+fn toolbar(
+    app: &mut TaskottoApp,
+    ui: &mut egui::Ui,
+    actions: &[ToolbarAction],
+    paint: ComponentPaint,
+) {
+    let id = egui::Id::new("taskotto-declarative-toolbar-search");
+    let mut search_open = ui
+        .ctx()
+        .data(|data| data.get_temp::<bool>(id).unwrap_or(false));
+    let mut focus_now = false;
+    Frame::new()
+        .fill(paint.control(ui.visuals().faint_bg_color))
+        .inner_margin(Margin::symmetric(8, 5))
+        .show(ui, |ui| {
+            ui.horizontal_wrapped(|ui| {
+                for action in actions {
+                    match action {
+                        ToolbarAction::Refresh => {
+                            if ui.button("Refresh now").clicked()
+                                && app.worker.commands.send(Command::Refresh).is_err()
+                            {
+                                app.notification =
+                                    Some("Could not request a monitor refresh".into());
+                            }
+                        }
+                        ToolbarAction::FocusSearch => {
+                            if ui.button("Search processes").clicked() {
+                                search_open = !search_open;
+                                focus_now = search_open;
+                                ui.ctx().data_mut(|data| data.insert_temp(id, search_open));
+                            }
+                        }
+                        ToolbarAction::EndProcess => {
+                            if ui
+                                .add_enabled(
+                                    app.selected_process().is_some_and(can_signal_process),
+                                    egui::Button::new("End selected process…"),
+                                )
+                                .on_hover_text("Requires PID-safe confirmation")
+                                .clicked()
+                            {
+                                app.queue_action(SignalAction::Terminate);
+                            }
+                        }
+                    }
+                }
+            });
+            if search_open && actions.contains(&ToolbarAction::FocusSearch) {
+                let response = ui.add(
+                    egui::TextEdit::singleline(&mut app.query)
+                        .hint_text("Filter name, command, PID or user…")
+                        .desired_width(ui.available_width().clamp(160.0, 360.0)),
+                );
+                if focus_now {
+                    response.request_focus();
+                }
+            }
+        });
+}
+
 fn plot(app: &TaskottoApp, ui: &mut egui::Ui, binding: Plot, paint: ComponentPaint) {
     let (series, max, color) = match binding {
         Plot::Cpu => (&app.history.cpu, 100.0, Color32::from_rgb(45, 169, 115)),
@@ -202,6 +331,7 @@ fn process_list(
     ui: &mut egui::Ui,
     columns: &[ProcessColumn],
     paint: ComponentPaint,
+    show_end_action: bool,
 ) {
     let rows = app.processes();
     let width = ui.available_width();
@@ -289,10 +419,11 @@ fn process_list(
         });
     ui.horizontal(|ui| {
         let selected = app.selected_process().is_some_and(can_signal_process);
-        if ui
-            .add_enabled(selected, egui::Button::new("End selected process…"))
-            .on_hover_text("Uses the usual PID-safe Linux confirmation dialog")
-            .clicked()
+        if show_end_action
+            && ui
+                .add_enabled(selected, egui::Button::new("End selected process…"))
+                .on_hover_text("Uses the usual PID-safe Linux confirmation dialog")
+                .clicked()
         {
             app.queue_action(SignalAction::Terminate);
         }
@@ -310,6 +441,7 @@ mod tests {
             metric_value(None, Metric::CpuPercent),
             "Reading Linux data…"
         );
+        assert_eq!(gauge_percent(None, Gauge::CpuPercent), None);
         let sample = Snapshot {
             cpu_percent: 25.0,
             cores_percent: vec![],
@@ -326,5 +458,9 @@ mod tests {
         };
         assert_eq!(metric_value(Some(&sample), Metric::CpuPercent), "25.0%");
         assert_eq!(metric_value(Some(&sample), Metric::Processes), "0");
+        assert_eq!(
+            gauge_percent(Some(&sample), Gauge::MemoryPercent),
+            Some(75.0)
+        );
     }
 }

@@ -26,10 +26,13 @@ pub enum Widget {
     Heading { text: String },
     Metric { label: String, binding: Metric },
     Plot { label: String, binding: Plot },
+    Gauge { label: String, binding: Gauge },
+    StatusStrip { bindings: Vec<Metric> },
+    Toolbar { actions: Vec<ToolbarAction> },
     ProcessList { columns: Vec<ProcessColumn> },
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum Metric {
     CpuPercent,
@@ -42,6 +45,38 @@ pub enum Metric {
     NetworkSent,
     DiskRead,
     DiskWrite,
+}
+
+impl Metric {
+    pub fn label(self) -> &'static str {
+        match self {
+            Self::CpuPercent => "CPU",
+            Self::MemoryUsed => "Memory used",
+            Self::MemoryTotal => "Memory total",
+            Self::MemoryPercent => "RAM",
+            Self::Processes => "Processes",
+            Self::Uptime => "Uptime",
+            Self::NetworkReceived => "Receive",
+            Self::NetworkSent => "Send",
+            Self::DiskRead => "Disk read",
+            Self::DiskWrite => "Disk write",
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum Gauge {
+    CpuPercent,
+    MemoryPercent,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum ToolbarAction {
+    Refresh,
+    FocusSearch,
+    EndProcess,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -105,8 +140,28 @@ impl LayoutSpec {
             for widget in &screen.widgets {
                 match widget {
                     Widget::Heading { text } => valid_caption(text, 120, "heading text")?,
-                    Widget::Metric { label, .. } | Widget::Plot { label, .. } => {
+                    Widget::Metric { label, .. }
+                    | Widget::Plot { label, .. }
+                    | Widget::Gauge { label, .. } => {
                         valid_caption(label, 48, "widget label")?;
+                    }
+                    Widget::StatusStrip { bindings } => {
+                        if bindings.is_empty() || bindings.len() > 5 {
+                            return Err("status-strip requires 1–5 named metrics".into());
+                        }
+                        let mut seen = HashSet::new();
+                        if bindings.iter().any(|binding| !seen.insert(*binding)) {
+                            return Err("status-strip contains duplicate metrics".into());
+                        }
+                    }
+                    Widget::Toolbar { actions } => {
+                        if actions.is_empty() || actions.len() > 3 {
+                            return Err("toolbar requires 1–3 predefined actions".into());
+                        }
+                        let mut seen = HashSet::new();
+                        if actions.iter().any(|action| !seen.insert(*action)) {
+                            return Err("toolbar contains duplicate actions".into());
+                        }
                     }
                     Widget::ProcessList { columns } => {
                         if columns.is_empty() || columns.len() > 5 {
@@ -173,9 +228,21 @@ mod tests {
             columns: vec![ProcessColumn::Pid],
         };
         assert!(bad.validate().is_err());
+        bad = good.clone();
+        bad.pages[0].widgets.push(Widget::Toolbar {
+            actions: vec![ToolbarAction::Refresh, ToolbarAction::Refresh],
+        });
+        assert!(bad.validate().is_err());
+        bad = good.clone();
+        bad.pages[0].widgets.push(Widget::StatusStrip {
+            bindings: vec![Metric::CpuPercent, Metric::CpuPercent],
+        });
+        assert!(bad.validate().is_err());
         let malicious = r#"{"kind":"metric","label":"CPU","binding":"shell-command"}"#;
         assert!(serde_json::from_str::<Widget>(malicious).is_err());
         let unknown = r#"{"kind":"heading","text":"hi","script":"launch"}"#;
         assert!(serde_json::from_str::<Widget>(unknown).is_err());
+        let shell = r#"{"kind":"toolbar","actions":["shell"]}"#;
+        assert!(serde_json::from_str::<Widget>(shell).is_err());
     }
 }
