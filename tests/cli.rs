@@ -82,6 +82,18 @@ fn ricepack_can_be_validated_headlessly_and_invalid_files_are_rejected() {
         String::from_utf8_lossy(&interoperable.stderr)
     );
     assert!(String::from_utf8_lossy(&interoperable.stdout).contains("RiceBowl"));
+
+    let declarative_fixture = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/examples/ricepacks/diagnostic-studio.toml"
+    );
+    let declarative = run(&["--check-ricepack", declarative_fixture]);
+    assert!(
+        declarative.status.success(),
+        "{}",
+        String::from_utf8_lossy(&declarative.stderr)
+    );
+    assert!(String::from_utf8_lossy(&declarative.stdout).contains("Diagnostic Studio"));
 }
 
 #[test]

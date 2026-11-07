@@ -7,6 +7,7 @@ mod applications;
 mod chrome;
 mod chromeos;
 mod classic98;
+mod declarative;
 mod details;
 mod macos;
 mod performance;
@@ -15,6 +16,7 @@ mod seven;
 mod system;
 mod users;
 
+pub(super) use declarative::render as declarative_processes;
 pub(super) use system::SystemPages;
 
 use super::*;

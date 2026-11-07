@@ -4,6 +4,7 @@ pub mod actions;
 pub mod config;
 pub mod desktop;
 pub mod format;
+pub mod layout;
 pub mod monitor;
 pub mod ricepack;
 pub mod theme;

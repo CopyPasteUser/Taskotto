@@ -88,6 +88,13 @@ Rust changes, while the legacy presets render and behave identically.
 
 - [ ] Typed and bounded layout schema for lists, tabs, status strips,
   toolbars, gauges and plots with named data bindings.
+  - [x] RC29 foundation: strictly typed 1–4 screens with 1–16 widgets per
+    screen; named live Linux metrics, session history plots, original headings
+    and virtualized PID-safe process lists. Malformed/oversized/unknown fields
+    fail CLI validation. An AI-authored TOML pack can build and switch a new
+    two-screen functional client without theme-specific Rust changes.
+  - [ ] Add bounded, data-bound status strips, toolbars and percentage gauges
+    to the same schema; prevent arbitrary commands or fabricated counters.
 - [ ] Theme capabilities and fallbacks for compact and large screens.
 - [ ] User-driven layout editor and reusable component presets.
 - [ ] Visual regression captures, accessibility/focus checks and pack
@@ -167,12 +174,13 @@ lean, offline-capable and independent from RiceBowl.
 
 ## Work order
 
-1. **Delivered (RC14–28):** P1 format/loader/CLI, secure reference pack,
+1. **Delivered (RC14–29):** P1 format/loader/CLI, secure reference pack,
    headless export/check/re-import, live file reload and in-app library,
    session-only preview/revert/import/export, semantic widget tokens, an
    explicit RiceBowl export fixture and tokenized core and many secondary
    clients for all seven rices.
-2. **Next:** P1 component-level UI token extraction. RiceBowl's separate JSON
+2. **Next:** Finish the P1 intentional widget-artwork audit and expand the P2
+   declarative widget vocabulary and layout editor. RiceBowl's separate JSON
    desktop pack still is not Taskotto TOML; the explicit RiceBowl exporter is
    the validated conversion boundary.
 3. **Then:** P2 data-bound layout schema; P3 real process controls; P4/P5

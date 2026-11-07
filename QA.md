@@ -41,6 +41,7 @@ archive and invokes its binary and local desktop installer before publishing.
 - [ ] Validate `examples/ricepacks/sea-glass.toml` with `--check-ricepack`, then run `--ricepack` on a real desktop. Verify base theme, palette/spacing/navigation and normal process actions; restart without the pack and ensure saved appearance is unchanged.
 - [ ] Launch with `RICEBOWL_TASKOTTO_RICEPACK=/absolute/path/taskotto-rice.toml` and confirm the desktop's RiceBowl rice remains optional. Test malformed, oversized and inaccessible packs (clear error, no GUI crash), and confirm an explicit `--theme` overrides only the pack's base theme.
 - [ ] With a pack active, change refresh interval and save. Check that monitoring options persist while temporary RicePack colors/layout do not; appearance edits made during that session remain temporary.
+- [ ] Load `examples/ricepacks/diagnostic-studio.toml` on X11, KDE Wayland and labwc. Switch its two generated tabs; compare CPU, memory, network and disk values with `/proc`, confirm compact/wide layouts and that Process List selection followed by End Process still asks for confirmation. Exit without the pack and confirm the original rice returned. Reject a manually added `kind = "script"` widget via `--check-ricepack`.
 - [ ] Confirm the launcher override does not replace the saved theme after changing another setting.
 - [ ] Test malformed `config.toml`: error shown, defaults active; original saved as `config.invalid-*.toml` after editing preferences.
 

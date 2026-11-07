@@ -3,8 +3,9 @@
 RicePacks are portable **data-only** TOML design presets for Taskotto.
 RiceBowl, a user or an AI generator can create them. A pack does not contain
 code, shell commands, downloaded assets or monitoring permissions.
-This first format covers **shared** tokens; theme-specific hardcoded widget
-art and entirely new layouts remain on the
+This format covers validated appearance tokens and an optional, strictly
+bounded set of **data-bound custom screens**. Entirely arbitrary components,
+artwork and programmatic layouts remain on the
 [expansion roadmap](EXPANSION_ROADMAP.md).
 
 Example: [Sea Glass](examples/ricepacks/sea-glass.toml)
@@ -32,6 +33,56 @@ hover = "#B6EAE0"
 border = "#80C8BE"
 table = "#F7FFFD"
 selection = "#148E94"
+```
+
+### Custom screens (P2 foundation, RC29)
+
+If `[layout]` is absent, all original rice screens remain unchanged. When it
+is present, the active RicePack replaces only the **Processes client page**
+with its data-defined mini-dashboard; the existing Preferences and other
+functional pages remain available. This is an appearance/session override,
+not a change to sampling rights or saved preferences.
+
+```toml
+[[layout.pages]]
+id = "overview"
+title = "Overview"
+
+[[layout.pages.widgets]]
+kind = "metric"
+label = "CPU load"
+binding = "cpu-percent"
+
+[[layout.pages.widgets]]
+kind = "plot"
+label = "Recent CPU activity"
+binding = "cpu"
+
+[[layout.pages.widgets]]
+kind = "process-list"
+columns = ["name", "cpu", "memory", "pid"]
+```
+
+- `layout.pages`: 1–4 tabs. Each `id` is a unique lowercase ASCII slug
+  (1–24 characters: `a-z`, `0-9`, `-`); `title` is 1–40 printable characters.
+- Each tab has 1–16 widgets. `heading` accepts `text` (1–120 printable
+  characters), `metric` and `plot` accept `label` (1–48) and a typed `binding`.
+- `metric` bindings: `cpu-percent`, `memory-used`, `memory-total`,
+  `memory-percent`, `processes`, `uptime`, `network-received`, `network-sent`,
+  `disk-read`, `disk-write`.
+- `plot` bindings: `cpu`, `memory`, `network-received`, `network-sent`,
+  `disk-read`, `disk-write` (observed session samples, no invented counters).
+- `process-list` accepts 1–5 unique columns chosen from `name`, `pid`, `cpu`,
+  `memory`, `threads` (including required clickable `name`). Rows are
+  virtualized. Selection and End Process follow
+  the same PID/start-tick safety check and confirmation flow as built-in rices.
+
+All other fields, kinds, bindings, scripts and shell hooks are rejected.
+Try the complete two-tab [Diagnostic Studio](examples/ricepacks/diagnostic-studio.toml):
+
+```bash
+taskotto --check-ricepack examples/ricepacks/diagnostic-studio.toml
+taskotto --ricepack examples/ricepacks/diagnostic-studio.toml
 ```
 
 ## Use
@@ -152,6 +203,7 @@ the user's saved design.
 | `components.border` | No | `#RRGGBB` control/widget border |
 | `components.table` | No | `#RRGGBB` shared table/content fill |
 | `components.selection` | No | `#RRGGBB` selection fill (contrast-safe text) |
+| `layout.pages` | No | 1–4 strictly typed screens with at most 16 supported widgets each |
 
 Unknown fields, unrecognized versions, invalid colors, NaN/out-of-range
 values and files larger than **64 KiB** are rejected with a descriptive error.
@@ -183,7 +235,8 @@ table tokens while preserving their normal era-specific defaults. Try
 [Violet](examples/ricepacks/win98-violet.toml) for contrasting original
 designs without Rust edits. Complete per-widget
 token extraction across the remaining rices remains on P1. This contract does not yet support
-custom icons, fonts, free-form widget placement or user-defined data bindings.
+custom icons, fonts, free-form widget placement or arbitrary user-defined data
+bindings; screen data can only use the explicit, verifiable bindings above.
 Those require a separate bounded
 layout schema, migration tests and visual QA under P1/P2, not unchecked TOML
 keys pretending to implement functionality.

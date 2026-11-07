@@ -1,8 +1,14 @@
-# Taskotto 1.0.0-rc.28 — release candidate
+# Taskotto 1.0.0-rc.29 — release candidate
 
 **Date:** 2026-11-07 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
 Rust-only Linux process manager and system monitor. This is a **prerelease**, not a stable 1.0 certification.
+
+## Changes since rc.28
+
+- Added the first P2 declarative client-screen renderer and safe typed TOML schema. A RicePack can now supply 1–4 screen tabs with headings, named real Linux metric bindings, measured history plots and virtualized process lists with selected columns. PID+start-tick process actions still use the existing explicit confirmation flow.
+- Bundled the original two-screen `Diagnostic Studio` data-only layout and automatic validation; preview/revert/export/live reload carry the layout only in the active RicePack session. Existing original rice layouts remain unchanged when the optional `[layout]` is absent.
+- Tests cover strict schema limits, unknown/script-like fields, round-trip/no preference leakage, CLI validation and real-snapshot rendering of both new screens at compact and wide widths. The P2 editor, additional widget types and native GUI hardware acceptance remain open.
 
 ## Changes since rc.27
 
