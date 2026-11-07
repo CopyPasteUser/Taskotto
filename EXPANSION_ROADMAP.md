@@ -195,6 +195,9 @@ attribution, graceful behavior when cgroups or container APIs are unavailable.
     compact UI and no false utilization or unsupported field defaults.
   - [ ] Correlate PSI trends with process/cgroup pressure and actual resource
     history before emitting bounded, evidence-based bottleneck hypotheses.
+  - [x] RC43: per-source bounded 120-point PSI trends for CPU SOME,
+    memory SOME/FULL and I/O SOME/FULL; no fabricated gap zeros or false
+    causal attribution.
 - [ ] Expose process/cgroup throttling, memory pressure and I/O congestion.
 - [ ] Evidence-first diagnostic explanations; clearly label hypotheses.
 - [ ] No claim of measuring the cause of a slowdown from a single percentage.

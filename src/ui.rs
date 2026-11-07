@@ -104,6 +104,11 @@ struct History {
     sent: VecDeque<f32>,
     disk_read: VecDeque<f32>,
     disk_write: VecDeque<f32>,
+    psi_cpu_some: VecDeque<f32>,
+    psi_memory_some: VecDeque<f32>,
+    psi_memory_full: VecDeque<f32>,
+    psi_io_some: VecDeque<f32>,
+    psi_io_full: VecDeque<f32>,
     process_follow: Option<ProcessFollow>,
     pss_inspection: Option<PssInspection>,
     cgroup_inspection: Option<CgroupInspection>,
@@ -222,6 +227,26 @@ impl History {
                 queue.pop_front();
             }
             queue.push_back(value);
+        }
+        for (queue, measured) in [
+            (&mut self.psi_cpu_some, snapshot.pressure.cpu_some.as_ref()),
+            (
+                &mut self.psi_memory_some,
+                snapshot.pressure.memory_some.as_ref(),
+            ),
+            (
+                &mut self.psi_memory_full,
+                snapshot.pressure.memory_full.as_ref(),
+            ),
+            (&mut self.psi_io_some, snapshot.pressure.io_some.as_ref()),
+            (&mut self.psi_io_full, snapshot.pressure.io_full.as_ref()),
+        ] {
+            if let Some(metric) = measured {
+                if queue.len() == 120 {
+                    queue.pop_front();
+                }
+                queue.push_back(metric.avg10_percent);
+            }
         }
     }
 }
@@ -1645,6 +1670,58 @@ impl TaskottoApp {
                     }
                 });
         }
+        let accent = accent_color(&self.settings);
+        if self.history.psi_cpu_some.len() >= 2 {
+            ui.add_space(8.0);
+            ui.label(
+                RichText::new("CPU SOME · recent 10s rolling pressure samples")
+                    .small()
+                    .strong(),
+            );
+            chart_lines(
+                ui,
+                &[(&self.history.psi_cpu_some, accent)],
+                graph_max(&self.history.psi_cpu_some, &VecDeque::new()).max(1.0),
+            );
+        }
+        if self.history.psi_memory_some.len() >= 2 || self.history.psi_memory_full.len() >= 2 {
+            ui.add_space(8.0);
+            ui.label(
+                RichText::new("Memory stalls · SOME accent / FULL teal")
+                    .small()
+                    .strong(),
+            );
+            chart_lines(
+                ui,
+                &[
+                    (&self.history.psi_memory_some, accent),
+                    (
+                        &self.history.psi_memory_full,
+                        Color32::from_rgb(82, 173, 155),
+                    ),
+                ],
+                graph_max(&self.history.psi_memory_some, &self.history.psi_memory_full).max(1.0),
+            );
+        }
+        if self.history.psi_io_some.len() >= 2 || self.history.psi_io_full.len() >= 2 {
+            ui.add_space(8.0);
+            ui.label(
+                RichText::new("I/O stalls · SOME accent / FULL teal")
+                    .small()
+                    .strong(),
+            );
+            chart_lines(
+                ui,
+                &[
+                    (&self.history.psi_io_some, accent),
+                    (&self.history.psi_io_full, Color32::from_rgb(82, 173, 155)),
+                ],
+                graph_max(&self.history.psi_io_some, &self.history.psi_io_full).max(1.0),
+            );
+        }
+        if self.history.psi_cpu_some.len() >= 2 {
+            ui.label(RichText::new("Each point is a kernel-provided rolling 10-second average at the GUI's sampling interval. Disconnected/missing measurements are not replaced with zero; trends do not prove causality.").small().weak());
+        }
         ui.label(RichText::new("PSI is stalled-task time, not CPU usage, RAM usage, disk throughput or a diagnosis on its own. System-level CPU FULL is deliberately omitted; totals are cumulative since kernel start and may have different scopes in containers.").small().weak());
     }
 
@@ -2680,6 +2757,12 @@ mod tests {
             power: Default::default(),
             pressure: Default::default(),
         };
+        snapshot.pressure.cpu_some = Some(crate::monitor::PressureMetric {
+            avg10_percent: 7.5,
+            avg60_percent: 2.0,
+            avg300_percent: 1.0,
+            total_stall_usec: 123,
+        });
         for _ in 0..200 {
             history.record(&snapshot);
         }
@@ -2688,10 +2771,15 @@ mod tests {
         assert_eq!(history.cores.len(), 2);
         assert_eq!(history.cores[0].len(), 120);
         assert_eq!(history.cores[1].back().copied(), Some(55.0));
+        assert_eq!(history.psi_cpu_some.len(), 120);
+        assert_eq!(history.psi_cpu_some.back().copied(), Some(7.5));
         snapshot.cores_percent = vec![10.0];
+        snapshot.pressure.cpu_some = None;
         history.record(&snapshot);
         assert_eq!(history.cores.len(), 1);
         assert_eq!(history.cores[0].len(), 120);
+        assert_eq!(history.psi_cpu_some.len(), 120);
+        assert_eq!(history.psi_cpu_some.back().copied(), Some(7.5));
     }
 
     #[test]
