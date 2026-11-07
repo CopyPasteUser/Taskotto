@@ -13,7 +13,7 @@ use std::{
     path::PathBuf,
     sync::mpsc::{self, Receiver, Sender, TryRecvError, TrySendError},
     thread::{self, JoinHandle},
-    time::{Duration, Instant},
+    time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -97,6 +97,8 @@ impl Drop for Worker {
 
 #[derive(Default)]
 struct History {
+    /// One timestamp per completed sampler tick; no additional resident timer.
+    sampled_at_unix_ms: VecDeque<Option<u64>>,
     cpu: VecDeque<f32>,
     cores: Vec<VecDeque<f32>>,
     memory: VecDeque<f32>,
@@ -109,10 +111,9 @@ struct History {
     psi_memory_full: VecDeque<f32>,
     psi_io_some: VecDeque<f32>,
     psi_io_full: VecDeque<f32>,
-    /// Last eight consecutive sampler ticks, including absent PSI readings.
-    /// Unlike visual history, this cannot mistake data from before a gap for
-    /// consecutive pressure evidence.
-    psi_diagnostic_recent: VecDeque<[Option<f32>; 5]>,
+    /// Per-tick pressure data retains unavailable fields as None; unlike the
+    /// charts this is aligned with timestamps and never erases missing ticks.
+    psi_ticks: VecDeque<[Option<f32>; 5]>,
     process_follow: Option<ProcessFollow>,
     pss_inspection: Option<PssInspection>,
     cgroup_inspection: Option<CgroupInspection>,
@@ -198,6 +199,18 @@ impl ProcessFollow {
 
 impl History {
     fn record(&mut self, snapshot: &Snapshot) {
+        let timestamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .ok()
+            .and_then(|duration| u64::try_from(duration.as_millis()).ok());
+        self.record_at(snapshot, timestamp);
+    }
+
+    fn record_at(&mut self, snapshot: &Snapshot, timestamp: Option<u64>) {
+        if self.sampled_at_unix_ms.len() == 120 {
+            self.sampled_at_unix_ms.pop_front();
+        }
+        self.sampled_at_unix_ms.push_back(timestamp);
         if let Some(follow) = &mut self.process_follow {
             follow.record(snapshot);
         }
@@ -252,10 +265,10 @@ impl History {
                 queue.push_back(metric.avg10_percent);
             }
         }
-        if self.psi_diagnostic_recent.len() == 8 {
-            self.psi_diagnostic_recent.pop_front();
+        if self.psi_ticks.len() == 120 {
+            self.psi_ticks.pop_front();
         }
-        self.psi_diagnostic_recent.push_back([
+        self.psi_ticks.push_back([
             snapshot.pressure.cpu_some.as_ref().map(|v| v.avg10_percent),
             snapshot
                 .pressure
@@ -318,6 +331,7 @@ pub struct TaskottoApp {
     worker: Worker,
     snapshot: Option<Snapshot>,
     history: History,
+    history_export_path: String,
     page: Page,
     performance_focus: PerformanceFocus,
     query: String,
@@ -389,6 +403,7 @@ impl TaskottoApp {
             settings,
             snapshot: None,
             history: History::default(),
+            history_export_path: String::new(),
             page: initial_page,
             performance_focus: PerformanceFocus::Cpu,
             query: String::new(),
@@ -1593,6 +1608,22 @@ impl TaskottoApp {
             preference_section(ui, "Linux pressure stalls · PSI", xp);
             self.pressure_telemetry_ui(ui);
             ui.add_space(18.0);
+            preference_section(ui, "Session-only history · explicit export", xp);
+            ui.label(RichText::new(format!("{} system samples visible to this Linux sampler held in RAM (maximum 120). Nothing is saved unless you explicitly export it. No PID, process name or command is included.", self.history.sampled_at_unix_ms.len())).small().weak());
+            ui.horizontal_wrapped(|ui| {
+                ui.label("New CSV or JSON file");
+                ui.add(egui::TextEdit::singleline(&mut self.history_export_path)
+                    .desired_width(350.0).hint_text("/absolute/path/to/taskotto-session.csv"));
+                if ui.button("Export session history").clicked() {
+                    let path = PathBuf::from(self.history_export_path.trim());
+                    match history_export::write_new(&self.history, &path, self.settings.refresh_ms) {
+                        Ok(count) => self.notification = Some(format!("Exported {count} session samples: {}", path.display())),
+                        Err(error) => self.notification = Some(format!("Session export failed: {error}")),
+                    }
+                }
+            });
+            ui.label(RichText::new("The file is created with user-only permissions and never overwrites an existing path. Timestamps mark GUI receipt, not exact kernel read times; the interval is nominal. Containers may have restricted system visibility. Missing PSI is blank/null, not zero.").small().weak());
+            ui.add_space(18.0);
             preference_section(ui, "Monitoring", xp);
             changed |= ui.add(egui::Slider::new(&mut self.settings.refresh_ms, 500..=10_000).text("Refresh interval (ms)")).changed();
             changed |= ui.checkbox(&mut self.settings.only_my_processes, "Show only my processes").changed();
@@ -2590,6 +2621,7 @@ fn apply_theme(ctx: &egui::Context, settings: &Settings) {
 #[cfg(test)]
 mod captures;
 mod diagnostics;
+mod history_export;
 mod layout_editor;
 mod rices;
 
@@ -2673,6 +2705,7 @@ mod tests {
                 pressure: Default::default(),
             }),
             history: History::default(),
+            history_export_path: String::new(),
             page: Page::Processes,
             performance_focus: PerformanceFocus::Cpu,
             query: String::new(),
@@ -2804,11 +2837,13 @@ mod tests {
             history.record(&snapshot);
         }
         assert_eq!(history.cpu.len(), 120);
+        assert_eq!(history.sampled_at_unix_ms.len(), 120);
         assert_eq!(history.disk_read.len(), 120);
         assert_eq!(history.cores.len(), 2);
         assert_eq!(history.cores[0].len(), 120);
         assert_eq!(history.cores[1].back().copied(), Some(55.0));
         assert_eq!(history.psi_cpu_some.len(), 120);
+        assert_eq!(history.psi_ticks.len(), 120);
         assert_eq!(history.psi_cpu_some.back().copied(), Some(7.5));
         snapshot.cores_percent = vec![10.0];
         snapshot.pressure.cpu_some = None;
@@ -2817,6 +2852,7 @@ mod tests {
         assert_eq!(history.cores[0].len(), 120);
         assert_eq!(history.psi_cpu_some.len(), 120);
         assert_eq!(history.psi_cpu_some.back().copied(), Some(7.5));
+        assert!(history.psi_ticks.back().unwrap()[0].is_none());
     }
 
     #[test]
@@ -2916,6 +2952,7 @@ mod tests {
                 pressure: Default::default(),
             }),
             history: History::default(),
+            history_export_path: String::new(),
             page: Page::Processes,
             performance_focus: PerformanceFocus::Cpu,
             query: String::new(),
@@ -2979,6 +3016,7 @@ mod tests {
             settings: saved,
             snapshot: None,
             history: History::default(),
+            history_export_path: String::new(),
             page: Page::Processes,
             performance_focus: PerformanceFocus::Cpu,
             query: String::new(),
@@ -3083,6 +3121,7 @@ mod tests {
             settings: settings.clone(),
             snapshot: None,
             history: History::default(),
+            history_export_path: String::new(),
             page: Page::Processes,
             performance_focus: PerformanceFocus::Cpu,
             query: String::new(),
@@ -3155,6 +3194,7 @@ mod tests {
             settings: Settings::default(),
             snapshot: None,
             history: History::default(),
+            history_export_path: String::new(),
             page: Page::Processes,
             performance_focus: PerformanceFocus::Cpu,
             query: String::new(),
@@ -3238,6 +3278,7 @@ mod tests {
             settings,
             snapshot: Some(snapshot),
             history,
+            history_export_path: String::new(),
             page: Page::Processes,
             performance_focus: PerformanceFocus::Cpu,
             query: String::new(),
@@ -3345,6 +3386,7 @@ mod tests {
                 pressure: Default::default(),
             }),
             history: History::default(),
+            history_export_path: String::new(),
             page: Page::Processes,
             performance_focus: PerformanceFocus::Cpu,
             query: String::new(),
@@ -3456,6 +3498,7 @@ mod tests {
                 pressure: Default::default(),
             }),
             history: History::default(),
+            history_export_path: String::new(),
             page: Page::Processes,
             performance_focus: PerformanceFocus::Cpu,
             query: String::new(),

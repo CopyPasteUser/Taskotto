@@ -1,4 +1,12 @@
-# Taskotto 1.0.0-rc.44 — release candidate
+# Taskotto 1.0.0-rc.45 — release candidate
+
+## RC45 — Explicit session history export
+
+- Added a user-initiated CSV/JSON export control to the common Preferences surface in every rice. It records at most 120 measured **Linux host aggregate** samples in RAM; never saves automatically, and creates a new file with `0600` permissions and no overwrite of an existing destination.
+- Rows provide GUI-receipt Unix timestamps in milliseconds (not exact kernel read times), CPU/RAM percentages, network and block I/O bytes/s, nullable CPU/memory/I/O PSI 10-second stalled-time percentages, format version, sampler-visible scope and **nominal** configured interval. Real sampling can drift and a container's system view may be restricted; no process identities are exported and absent PSI is never converted to zero.
+- Added deterministic export schema, missing-value, alignment, unsupported-path, no-overwrite and permission regressions. Native live sampling/export acceptance, editable dashboards, historical comparisons and persisted history remain future P7 work.
+
+## RC44 — Evidence-labeled Linux slowdown investigation
 
 ## RC44 — Evidence-labeled Linux slowdown investigation
 
