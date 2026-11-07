@@ -45,6 +45,7 @@ archive and invokes its binary and local desktop installer before publishing.
 - [ ] In Diagnostic Studio, test the generated **Refresh now** button, toggle **Search processes**, type a process filter and verify matching rows; check the **End selected process** button is disabled until a safe process is selected and still requires PID-safe confirmation. Verify memory gauge percentages against `free` and status strips against Linux sampling; the first frame without a sample must show a waiting state, not zero.
 - [ ] Verify custom toolbar, gauge and status strip at 490×340, 650×420 and 1280×800, with keyboard-only navigation. Change custom component colors and check text/background contrast. Reject duplicate toolbar actions and unknown command-like actions with `--check-ricepack`.
 - [ ] Confirm the launcher override does not replace the saved theme after changing another setting.
+- [ ] Resize Diagnostic Studio through the configured 720 px **content-area** breakpoint. Confirm Overview and I/O switch between their distinct verified-metric widget sets, keyboard selection and confirmation remain usable, and old RicePacks without `compact_widgets` do not change appearance. Try malformed `compact_below = 300` and an over-16 compact widget list; CLI validation must reject both.
 - [ ] Test malformed `config.toml`: error shown, defaults active; original saved as `config.invalid-*.toml` after editing preferences.
 
 ## Process data and actions

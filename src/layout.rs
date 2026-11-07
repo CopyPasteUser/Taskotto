@@ -10,6 +10,10 @@ pub const MAX_WIDGETS_PER_PAGE: usize = 16;
 #[serde(deny_unknown_fields)]
 pub struct LayoutSpec {
     pub pages: Vec<Screen>,
+    /// Content area width, excluding client navigation, below which the
+    /// optional compact widget set takes over. Defaults to 680 logical px.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub compact_below: Option<u16>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -18,6 +22,18 @@ pub struct Screen {
     pub id: String,
     pub title: String,
     pub widgets: Vec<Widget>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub compact_widgets: Vec<Widget>,
+}
+
+impl Screen {
+    pub fn widgets_for_width(&self, width: f32, breakpoint: f32) -> &[Widget] {
+        if width < breakpoint && !self.compact_widgets.is_empty() {
+            &self.compact_widgets
+        } else {
+            &self.widgets
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -114,6 +130,12 @@ impl ProcessColumn {
 
 impl LayoutSpec {
     pub fn validate(&self) -> Result<(), String> {
+        if self
+            .compact_below
+            .is_some_and(|width| !(480..=1024).contains(&width))
+        {
+            return Err("layout.compact_below must be 480–1024 logical pixels".into());
+        }
         if self.pages.is_empty() || self.pages.len() > MAX_PAGES {
             return Err(format!("layout.pages must contain 1–{MAX_PAGES} screens"));
         }
@@ -137,49 +159,60 @@ impl LayoutSpec {
                     "layout screen widgets must contain 1–{MAX_WIDGETS_PER_PAGE} items"
                 ));
             }
-            for widget in &screen.widgets {
-                match widget {
-                    Widget::Heading { text } => valid_caption(text, 120, "heading text")?,
-                    Widget::Metric { label, .. }
-                    | Widget::Plot { label, .. }
-                    | Widget::Gauge { label, .. } => {
-                        valid_caption(label, 48, "widget label")?;
-                    }
-                    Widget::StatusStrip { bindings } => {
-                        if bindings.is_empty() || bindings.len() > 5 {
-                            return Err("status-strip requires 1–5 named metrics".into());
-                        }
-                        let mut seen = HashSet::new();
-                        if bindings.iter().any(|binding| !seen.insert(*binding)) {
-                            return Err("status-strip contains duplicate metrics".into());
-                        }
-                    }
-                    Widget::Toolbar { actions } => {
-                        if actions.is_empty() || actions.len() > 3 {
-                            return Err("toolbar requires 1–3 predefined actions".into());
-                        }
-                        let mut seen = HashSet::new();
-                        if actions.iter().any(|action| !seen.insert(*action)) {
-                            return Err("toolbar contains duplicate actions".into());
-                        }
-                    }
-                    Widget::ProcessList { columns } => {
-                        if columns.is_empty() || columns.len() > 5 {
-                            return Err("process-list requires 1–5 named columns".into());
-                        }
-                        if !columns.contains(&ProcessColumn::Name) {
-                            return Err("process-list requires a selectable name column".into());
-                        }
-                        let mut seen = HashSet::new();
-                        if columns.iter().any(|column| !seen.insert(*column)) {
-                            return Err("process-list contains duplicate columns".into());
-                        }
-                    }
-                }
+            validate_widgets(&screen.widgets)?;
+            if screen.compact_widgets.len() > MAX_WIDGETS_PER_PAGE {
+                return Err(format!(
+                    "layout compact_widgets must contain at most {MAX_WIDGETS_PER_PAGE} items"
+                ));
             }
+            validate_widgets(&screen.compact_widgets)?;
         }
         Ok(())
     }
+}
+
+fn validate_widgets(widgets: &[Widget]) -> Result<(), String> {
+    for widget in widgets {
+        match widget {
+            Widget::Heading { text } => valid_caption(text, 120, "heading text")?,
+            Widget::Metric { label, .. }
+            | Widget::Plot { label, .. }
+            | Widget::Gauge { label, .. } => {
+                valid_caption(label, 48, "widget label")?;
+            }
+            Widget::StatusStrip { bindings } => {
+                if bindings.is_empty() || bindings.len() > 5 {
+                    return Err("status-strip requires 1–5 named metrics".into());
+                }
+                let mut seen = HashSet::new();
+                if bindings.iter().any(|binding| !seen.insert(*binding)) {
+                    return Err("status-strip contains duplicate metrics".into());
+                }
+            }
+            Widget::Toolbar { actions } => {
+                if actions.is_empty() || actions.len() > 3 {
+                    return Err("toolbar requires 1–3 predefined actions".into());
+                }
+                let mut seen = HashSet::new();
+                if actions.iter().any(|action| !seen.insert(*action)) {
+                    return Err("toolbar contains duplicate actions".into());
+                }
+            }
+            Widget::ProcessList { columns } => {
+                if columns.is_empty() || columns.len() > 5 {
+                    return Err("process-list requires 1–5 named columns".into());
+                }
+                if !columns.contains(&ProcessColumn::Name) {
+                    return Err("process-list requires a selectable name column".into());
+                }
+                let mut seen = HashSet::new();
+                if columns.iter().any(|column| !seen.insert(*column)) {
+                    return Err("process-list contains duplicate columns".into());
+                }
+            }
+        }
+    }
+    Ok(())
 }
 
 fn valid_caption(value: &str, max: usize, field: &str) -> Result<(), String> {
@@ -209,7 +242,9 @@ mod tests {
                         columns: vec![ProcessColumn::Name, ProcessColumn::Pid],
                     },
                 ],
+                compact_widgets: vec![],
             }],
+            compact_below: None,
         };
         assert!(good.validate().is_ok());
         let mut bad = good.clone();
@@ -244,5 +279,37 @@ mod tests {
         assert!(serde_json::from_str::<Widget>(unknown).is_err());
         let shell = r#"{"kind":"toolbar","actions":["shell"]}"#;
         assert!(serde_json::from_str::<Widget>(shell).is_err());
+        bad = good.clone();
+        bad.compact_below = Some(200);
+        assert!(bad.validate().is_err());
+        bad = good.clone();
+        bad.pages[0].compact_widgets = vec![Widget::Heading {
+            text: "bad\ncompact heading".into(),
+        }];
+        assert!(bad.validate().is_err());
+        bad = good.clone();
+        bad.pages[0].compact_widgets =
+            vec![good.pages[0].widgets[0].clone(); MAX_WIDGETS_PER_PAGE + 1];
+        assert!(bad.validate().is_err());
+        let mut responsive = good.clone();
+        responsive.pages[0].compact_widgets = vec![Widget::Heading {
+            text: "Compact".into(),
+        }];
+        assert_eq!(
+            responsive.pages[0].widgets_for_width(500.0, 680.0),
+            &responsive.pages[0].compact_widgets
+        );
+        assert_eq!(
+            responsive.pages[0].widgets_for_width(900.0, 680.0),
+            &responsive.pages[0].widgets
+        );
+        responsive.pages[0].compact_widgets.clear();
+        assert_eq!(
+            responsive.pages[0].widgets_for_width(500.0, 680.0),
+            &responsive.pages[0].widgets
+        );
+        let encoded = toml::to_string(&good).unwrap();
+        assert!(!encoded.contains("compact_widgets"));
+        assert!(!encoded.contains("compact_below"));
     }
 }

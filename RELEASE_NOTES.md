@@ -1,8 +1,14 @@
-# Taskotto 1.0.0-rc.30 — release candidate
+# Taskotto 1.0.0-rc.31 — release candidate
 
 **Date:** 2026-11-07 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
 Rust-only Linux process manager and system monitor. This is a **prerelease**, not a stable 1.0 certification.
+
+## Changes since rc.30
+
+- Generated TOML screen layouts support an optional validated compact breakpoint and explicit per-screen compact widget fallback. Taskotto switches scenes as the available content width changes; older RicePacks behave exactly as before.
+- Diagnostic Studio demonstrates functional small-screen layouts for Overview and I/O without multiplying source-code UI modules. Added a genuine 720×800 compact capture and schema/round-trip checks; the gallery now includes 49 captures.
+- The graphical layout editor, deeper visual/keyboard QA and native desktop acceptance remain outstanding.
 
 ## Changes since rc.29
 

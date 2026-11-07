@@ -2,6 +2,12 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.31] — 2026-11-07
+
+- Added backwards-compatible, validated responsive RicePack screen variants: an optional 480–1024 px content-area breakpoint (`layout.compact_below`) and up to 16 alternative `compact_widgets` per page, chosen automatically as the Taskotto window resizes. Old packs continue rendering exactly their original widgets.
+- Diagnostic Studio now has original compact overview and traffic compositions with fewer columns, controls and metrics, while preserving accurate Linux data and the existing PID-confirmed process actions. The real egui gallery gains a third, 720 px wide compact capture and strict bound/round-trip tests.
+- P2 in-app drag/drop layout editing and explicit visual/accessibility migration checks remain open; hardware acceptance for a stable 1.0 is still pending.
+
 ## [1.0.0-rc.30] — 2026-11-07
 
 - Completed the initial P2 safe widget vocabulary: generated TOML screens can now compose real CPU/memory percentage gauges, read-only aggregate status strips and a toolbar with only `refresh`, `focus-search` and confirmation-backed `end-process` actions, in addition to the existing live metrics, plots, tabs and process lists.

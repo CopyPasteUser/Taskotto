@@ -119,6 +119,10 @@ measurements. Original clients remain the default unless a pack asks for
 named widgets. A future in-app editor must serialize this exact contract.
 The toolbar vocabulary is fixed to refresh/search/confirmed termination;
 gauges and status strips only bind real, explicitly named host metrics.
+P2 screen variants may supply a bounded `compact_widgets` list at an explicit
+content-width breakpoint. It selects an alternative **validated** composition
+on resize; legacy layouts and all original historical rices retain the
+normal widget list when no compact alternative exists.
 
 The interface is live and honest: charts use measured bounded history;
 labels distinguish system-wide traffic from per-process information. Motion

@@ -17,6 +17,9 @@ border = "#497F83"
 table = "#192C3D"
 selection = "#66DCCA"
 
+[layout]
+compact_below = 720
+
 [[layout.pages]]
 id = "overview"
 title = "Overview"
@@ -57,6 +60,32 @@ columns = ["name", "cpu", "memory", "pid"]
 kind = "status-strip"
 bindings = ["uptime", "memory-used", "memory-total"]
 
+[[layout.pages.compact_widgets]]
+kind = "heading"
+text = "Compact system pulse"
+
+[[layout.pages.compact_widgets]]
+kind = "toolbar"
+actions = ["refresh", "focus-search"]
+
+[[layout.pages.compact_widgets]]
+kind = "metric"
+label = "Current CPU"
+binding = "cpu-percent"
+
+[[layout.pages.compact_widgets]]
+kind = "gauge"
+label = "RAM in use"
+binding = "memory-percent"
+
+[[layout.pages.compact_widgets]]
+kind = "process-list"
+columns = ["name", "pid"]
+
+[[layout.pages.compact_widgets]]
+kind = "status-strip"
+bindings = ["uptime", "processes"]
+
 [[layout.pages]]
 id = "traffic"
 title = "I/O and network"
@@ -83,3 +112,21 @@ bindings = ["network-received", "network-sent", "disk-read", "disk-write"]
 [[layout.pages.widgets]]
 kind = "process-list"
 columns = ["name", "threads", "pid"]
+
+[[layout.pages.compact_widgets]]
+kind = "metric"
+label = "Receiving"
+binding = "network-received"
+
+[[layout.pages.compact_widgets]]
+kind = "plot"
+label = "Network traffic"
+binding = "network-received"
+
+[[layout.pages.compact_widgets]]
+kind = "status-strip"
+bindings = ["network-received", "network-sent"]
+
+[[layout.pages.compact_widgets]]
+kind = "process-list"
+columns = ["name", "pid"]

@@ -290,6 +290,10 @@ mod tests {
         let source = include_str!("../examples/ricepacks/diagnostic-studio.toml");
         let pack = RicePack::from_toml(source).expect("original two-page data layout is valid");
         assert_eq!(pack.layout.as_ref().unwrap().pages.len(), 2);
+        let layout = pack.layout.as_ref().unwrap();
+        assert_eq!(layout.compact_below, Some(720));
+        assert_eq!(layout.pages[0].compact_widgets.len(), 6);
+        assert_eq!(layout.pages[1].compact_widgets.len(), 4);
         let mut settings = Settings {
             refresh_ms: 5_000,
             ..Settings::default()
@@ -308,6 +312,13 @@ mod tests {
         assert!(RicePack::from_toml(&malicious).is_err());
         let unknown = source.replace("kind = \"heading\"", "kind = \"script\"");
         assert!(RicePack::from_toml(&unknown).is_err());
+        let unsafe_breakpoint = source.replace("compact_below = 720", "compact_below = 400");
+        assert!(RicePack::from_toml(&unsafe_breakpoint).is_err());
+        let unknown_compact = source.replace(
+            "text = \"Compact system pulse\"",
+            "text = \"Okay\"\nscript = \"sudo rm\"",
+        );
+        assert!(RicePack::from_toml(&unknown_compact).is_err());
     }
 
     #[test]
