@@ -171,7 +171,9 @@ XP Luna/Windows 10 task tables and navigation, and Classic 98's beveled
 controls and process lists use the shared parser. Windows 7 Users/Services,
 XP networking/performance, Windows 10 performance selector/chart, macOS
 process inspector and Aero network cards also accept semantic table/border
-tokens. Try
+tokens. The original window-manager-owned frame is never recolored by
+Taskotto. Historical menu and status strips also consume optional control or
+table tokens while preserving their normal era-specific defaults. Try
 [Aero Lagoon](examples/ricepacks/aero-lagoon.toml),
 [Nightshift](examples/ricepacks/macos-nightshift.toml),
 [Nocturne](examples/ricepacks/chromeos-nocturne.toml),

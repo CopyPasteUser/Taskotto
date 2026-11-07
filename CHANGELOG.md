@@ -2,6 +2,12 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.28] — 2026-11-07
+
+- Extended validated RicePack control/table/border colors to the Windows 98, XP Luna, Windows 7/10, macOS and Aero status/menu/toolbar strips; preserved original fallback palette and native compositor-owned window frames. ChromeOS retains its existing dynamic dark/light strip palette.
+- Adjusted contrast for custom dark backgrounds on legacy light strips and when only a dark global surface is configured. The macOS bottom timeline and network charts now honor table/border tokens; network labels switch to light text for a dark chosen surface.
+- Added compact/desktop layout regressions for custom dark bars, no-component dark surfaces and all historical clients. P1 intentional illustration/internal per-widget palette audit and P0 real-device QA remain pending.
+
 ## [1.0.0-rc.27] — 2026-11-07
 
 - Continued data-only RicePack component-color propagation into historical secondary pages: Windows 7 Users/Services reports, performance statistic boxes and process properties; XP properties, performance groups and networking summary; Windows 10 focused chart and metric selector; macOS process inspector; Frutiger Aero network activity chips.

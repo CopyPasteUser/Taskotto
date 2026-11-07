@@ -201,16 +201,19 @@ pub(super) fn statusbar(app: &TaskottoApp, ctx: &egui::Context) {
     egui::TopBottomPanel::bottom("frutiger-aero-status")
         .frame(
             Frame::NONE
-                .fill(Color32::from_rgb(229, 249, 244))
+                .fill(palette.table(Color32::from_rgb(229, 249, 244)))
                 .inner_margin(Margin::symmetric(14, 7)),
         )
         .show(ctx, |ui| {
+            if palette.table.is_some() || ThemeStyle::from_settings(&app.settings).dark {
+                ui.visuals_mut().override_text_color = Some(palette.on_table(INK));
+            }
             ui.painter().line_segment(
                 [ui.max_rect().left_top(), ui.max_rect().right_top()],
                 Stroke::new(1.0_f32, palette.border(BORDER)),
             );
             ui.horizontal_wrapped(|ui| {
-                ui.label(RichText::new("Live").strong().color(LEAF));
+                ui.label(RichText::new("Live").strong().color(palette.on_table(LEAF)));
                 if let Some(s) = &app.snapshot {
                     ui.label(format!("{} running processes", s.processes.len()));
                     ui.separator();
@@ -222,7 +225,11 @@ pub(super) fn statusbar(app: &TaskottoApp, ctx: &egui::Context) {
                 }
                 if ui.available_width() > 130.0 {
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        ui.label(RichText::new("Linux /proc · live").small().color(MUTED));
+                        ui.label(
+                            RichText::new("Linux /proc · live")
+                                .small()
+                                .color(palette.on_table(MUTED)),
+                        );
                     });
                 }
             });

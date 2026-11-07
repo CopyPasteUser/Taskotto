@@ -53,8 +53,15 @@ pub(super) fn statusbar(app: &TaskottoApp, ctx: &egui::Context) {
     }
     let paint = ComponentPaint::from_settings(&app.settings);
     egui::TopBottomPanel::bottom("classic98-status")
-        .frame(Frame::NONE.fill(FACE).inner_margin(Margin::symmetric(9, 5)))
+        .frame(
+            Frame::NONE
+                .fill(paint.control(FACE))
+                .inner_margin(Margin::symmetric(9, 5)),
+        )
         .show(ctx, |ui| {
+            if paint.control.is_some() || ThemeStyle::from_settings(&app.settings).dark {
+                ui.visuals_mut().override_text_color = Some(paint.on_control(FACE, BLACK));
+            }
             bevel_line(ui, paint);
             ui.horizontal_wrapped(|ui| {
                 if let Some(snapshot) = &app.snapshot {

@@ -74,8 +74,12 @@ Development on later milestones may proceed while user-hardware QA is pending.
     XP properties/networking/statistics; Win10 performance selection/chart;
     macOS process Info and Aero network chips honor semantic table/border
     colors with contrast-safe text and responsive layout regressions.
-  - [ ] Audit remaining intentional artwork, toolbars/status strips and
-    secondary widgets for hardcoded palette tokens without homogenizing rices.
+  - [x] RC28: historical macOS, Aero, Classic 98 and Windows 7/10/XP menu,
+    navigation and status strip backgrounds consume the control/table palette;
+    macOS timeline and network plots consume table/border tokens, with readable
+    text even when a generated pack only chooses a dark global surface.
+  - [ ] Audit remaining intentional artwork, complex per-widget charts and
+    secondary controls for hardcoded palette tokens without homogenizing rices.
 
 **Gate:** an AI-generated pack can be checked, previewed and applied without
 Rust changes, while the legacy presets render and behave identically.
@@ -163,7 +167,7 @@ lean, offline-capable and independent from RiceBowl.
 
 ## Work order
 
-1. **Delivered (RC14–27):** P1 format/loader/CLI, secure reference pack,
+1. **Delivered (RC14–28):** P1 format/loader/CLI, secure reference pack,
    headless export/check/re-import, live file reload and in-app library,
    session-only preview/revert/import/export, semantic widget tokens, an
    explicit RiceBowl export fixture and tokenized core and many secondary

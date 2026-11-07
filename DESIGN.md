@@ -103,6 +103,10 @@ Windows 98's beveled buttons and classic Close Program list use it with
 era-specific fallbacks. Secondary-page statistics, data grids, process Info
 and performance selectors adopt the same background/border colors and
 contrast-aware text while keeping distinctive era-specific artwork.
+Menu and status strips are native client UI rather than duplicate top-level
+titlebars. Their optional control/table fills and status borders derive from
+the same semantic tokens; dark global surfaces must not make fixed light
+historical strips unreadable.
 `readable_text` provides contrast-aware
 foreground for user-selected colors. Loading/empty/error states describe the
 real `/proc` state. Keyboard focus is visible, destructive actions require
