@@ -506,6 +506,7 @@ mod tests {
             uptime_seconds: 60.0,
             processes: Vec::new(),
             logical_cpus: 1,
+            gpus: vec![],
         };
         assert_eq!(metric_value(Some(&sample), Metric::CpuPercent), "25.0%");
         assert_eq!(metric_value(Some(&sample), Metric::Processes), "0");

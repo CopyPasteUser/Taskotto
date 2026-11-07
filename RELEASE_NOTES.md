@@ -1,8 +1,14 @@
-# Taskotto 1.0.0-rc.38 — release candidate
+# Taskotto 1.0.0-rc.39 — release candidate
 
 **Date:** 2026-11-07 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
 Rust-only Linux process manager and system monitor. This is a **prerelease**, not a stable 1.0 certification.
+
+## Changes since rc.38
+
+- Began P4 with optional, unprivileged GPU discovery from Linux DRM sysfs. AMDGPU drivers expose real `gpu_busy_percent` and VRAM usage/total bytes where available; hwmon and GT capabilities supply temperature, average power and core clock in their documented units. No mandatory SDK, root service or new dependency.
+- All detected AMD, Intel and NVIDIA DRM cards appear in the System Performance page and Preferences of every rice, but **missing** driver metrics explicitly say unavailable. Intel/NVIDIA utilization and per-process GPU usage are not invented; unsupported kernels/no `/sys/class/drm` produce an honest empty state.
+- Deterministic synthetic-sysfs tests verify units, VRAM bounds, matching DRM cards (not output connectors), AMD capability detection and Intel/NVIDIA unavailable states. Physical AMD/Intel/NVIDIA acceptance and sampling overhead benchmarks are pending.
 
 ## Changes since rc.37
 

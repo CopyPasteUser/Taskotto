@@ -1186,6 +1186,8 @@ impl TaskottoApp {
             });
             ui.add_space(12.0);
             ui.label(RichText::new("The first sample has no rate baseline. Network totals can include virtual interfaces; disk data represents block-layer traffic, not filesystem-only I/O.").small().weak());
+            ui.add_space(18.0);
+            self.gpu_telemetry_ui(ui);
         });
     }
 
@@ -1500,6 +1502,9 @@ impl TaskottoApp {
             preference_section(ui, "Proportional memory · on demand", xp);
             self.pss_inspection_controls(ui);
             ui.add_space(18.0);
+            preference_section(ui, "GPU sensors · read only", xp);
+            self.gpu_telemetry_ui(ui);
+            ui.add_space(18.0);
             preference_section(ui, "Monitoring", xp);
             changed |= ui.add(egui::Slider::new(&mut self.settings.refresh_ms, 500..=10_000).text("Refresh interval (ms)")).changed();
             changed |= ui.checkbox(&mut self.settings.only_my_processes, "Show only my processes").changed();
@@ -1526,6 +1531,82 @@ impl TaskottoApp {
         if changed {
             self.save_preferences(ui.ctx());
         }
+    }
+
+    fn gpu_telemetry_ui(&self, ui: &mut egui::Ui) {
+        let Some(snapshot) = &self.snapshot else {
+            ui.label(RichText::new("GPU sensors: waiting for Linux system sample…").weak());
+            return;
+        };
+        if snapshot.gpus.is_empty() {
+            ui.label(
+                RichText::new(
+                    "No DRM GPU device found in /sys/class/drm (or sysfs is unavailable).",
+                )
+                .small()
+                .weak(),
+            );
+            return;
+        }
+        for gpu in &snapshot.gpus {
+            ui.label(
+                RichText::new(format!(
+                    "{} · {} · {}",
+                    gpu.card,
+                    gpu.vendor,
+                    gpu.driver.as_deref().unwrap_or("driver unavailable")
+                ))
+                .strong(),
+            );
+            let unknown = || "Unavailable (driver capability)".to_string();
+            let fields = [
+                (
+                    "GPU busy",
+                    gpu.utilization_percent
+                        .map(|value| format!("{value}%"))
+                        .unwrap_or_else(unknown),
+                ),
+                (
+                    "VRAM used / total",
+                    match (gpu.vram_used_bytes, gpu.vram_total_bytes) {
+                        (Some(used), Some(total)) => {
+                            format!("{} / {}", format::bytes(used), format::bytes(total))
+                        }
+                        _ => unknown(),
+                    },
+                ),
+                (
+                    "Temperature",
+                    gpu.temperature_celsius
+                        .map(|value| format!("{value:.1} °C"))
+                        .unwrap_or_else(unknown),
+                ),
+                (
+                    "Power",
+                    gpu.power_watts
+                        .map(|value| format!("{value:.1} W"))
+                        .unwrap_or_else(unknown),
+                ),
+                (
+                    "Core clock",
+                    gpu.core_clock_mhz
+                        .map(|value| format!("{value:.0} MHz"))
+                        .unwrap_or_else(unknown),
+                ),
+            ];
+            egui::Grid::new(("gpu-telemetry", &gpu.card))
+                .num_columns(2)
+                .spacing([20.0, 6.0])
+                .show(ui, |ui| {
+                    for (name, value) in fields {
+                        ui.label(RichText::new(name).weak());
+                        ui.label(value);
+                        ui.end_row();
+                    }
+                });
+            ui.add_space(8.0);
+        }
+        ui.label(RichText::new("AMDGPU exposes busy/VRAM and optional hwmon values; Intel/NVIDIA utilization requires a supported driver backend. Missing fields are not zero. Some AMD APU power sensors include CPU power.").small().weak());
     }
 
     fn pss_inspection_controls(&mut self, ui: &mut egui::Ui) {
@@ -2182,6 +2263,7 @@ mod tests {
                 rates: Default::default(),
                 uptime_seconds: 0.0,
                 logical_cpus: 1,
+                gpus: vec![],
             }),
             history: History::default(),
             page: Page::Processes,
@@ -2261,6 +2343,7 @@ mod tests {
             rates: Default::default(),
             uptime_seconds: 0.0,
             logical_cpus: 1,
+            gpus: vec![],
         };
         history.process_follow = Some(ProcessFollow::new(&process));
         for _ in 0..200 {
@@ -2298,6 +2381,7 @@ mod tests {
             uptime_seconds: 0.0,
             processes: vec![],
             logical_cpus: 1,
+            gpus: vec![],
         };
         for _ in 0..200 {
             history.record(&snapshot);
@@ -2405,6 +2489,7 @@ mod tests {
                     ..Process::default()
                 }],
                 logical_cpus: 2,
+                gpus: vec![],
             }),
             history: History::default(),
             page: Page::Processes,
@@ -2712,6 +2797,7 @@ mod tests {
                 ..Process::default()
             }],
             logical_cpus: 2,
+            gpus: vec![],
         };
         let mut history = History::default();
         for _ in 0..4 {
@@ -2828,6 +2914,7 @@ mod tests {
                     ..Process::default()
                 }],
                 logical_cpus: 2,
+                gpus: vec![],
             }),
             history: History::default(),
             page: Page::Processes,
@@ -2936,6 +3023,7 @@ mod tests {
                     ..Process::default()
                 }],
                 logical_cpus: 24,
+                gpus: vec![],
             }),
             history: History::default(),
             page: Page::Processes,

@@ -1,6 +1,8 @@
 //! Unprivileged, on-demand Linux /proc sampler. No daemon and no shell commands.
 use serde::Serialize;
+mod gpu;
 pub(crate) mod pss;
+pub use gpu::Gpu;
 use std::{
     collections::{HashMap, HashSet},
     fs, io,
@@ -71,6 +73,8 @@ pub struct Snapshot {
     pub uptime_seconds: f64,
     pub processes: Vec<Process>,
     pub logical_cpus: usize,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub gpus: Vec<Gpu>,
 }
 
 /// Process-inclusive descendant totals from one observed /proc sample.
@@ -262,6 +266,7 @@ impl Monitor {
             uptime_seconds,
             processes,
             logical_cpus,
+            gpus: gpu::sample(),
         })
     }
 }
@@ -641,6 +646,7 @@ mod tests {
                 proc(11, 10, 8, 2.0, 200),
             ],
             logical_cpus: 2,
+            gpus: vec![],
         };
         let summary = snapshot.tree_summary(10, 7).unwrap();
         assert_eq!(summary.process_count, 4);

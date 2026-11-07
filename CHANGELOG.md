@@ -2,6 +2,12 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.39] — 2026-11-07
+
+- Began P4 read-only GPU telemetry with small DRM/sysfs probes inside the existing monitor sampling cycle. AMDGPU busy percentage and VRAM usage/total use documented kernel counters; accessible hwmon temperature, power and core clock and Intel GT clock values use their actual units.
+- All DRM cards with accessible PCI vendor IDs are inventoried (AMD, Intel, NVIDIA or Other). System Performance and all rice Preferences display genuine available sensors and explicit driver-specific **Unavailable** states, with no fake Intel/NVIDIA utilization or per-process GPU attribution. No vendor SDK, subprocess polling or extra dependency is required.
+- Added deterministic mock-sysfs tests for supported AMD values, units and PCI connector filtering, plus Intel/NVIDIA missing-capability behavior. Hardware validation and full Intel/NVIDIA sensor backends remain open.
+
 ## [1.0.0-rc.38] — 2026-11-07
 
 - Added one-shot asynchronous **PSS memory inspection** for the selected Linux process and at most 127 observed descendants using `/proc/PID/smaps_rollup`. Taskotto's usual fast sampler remains unaffected, with no daemon or root service. Accessible via generic Details or Preferences, including historical rices.
