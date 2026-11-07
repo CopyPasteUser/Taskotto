@@ -243,6 +243,11 @@ fn generate_headless_ui_screenshots() {
             Page::Processes,
             "taskotto-diagnostic-studio-traffic.png",
         ),
+        (
+            Theme::System,
+            Page::Processes,
+            "taskotto-diagnostic-studio-compact.png",
+        ),
     ] {
         if let Ok(filter) = std::env::var("TASKOTTO_SCREENSHOT_FILTER")
             && !file.contains(&filter)
@@ -385,7 +390,9 @@ fn generate_headless_ui_screenshots() {
                 data.insert_temp(egui::Id::new("taskotto-declarative-screen"), 1_usize);
             });
         }
-        let size = if theme == Theme::Windows98 {
+        let size = if file.contains("diagnostic-studio-compact") {
+            (720, 800)
+        } else if theme == Theme::Windows98 {
             CLASSIC98_SIZE
         } else {
             (WIDTH, HEIGHT)

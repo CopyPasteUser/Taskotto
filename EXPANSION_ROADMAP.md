@@ -97,7 +97,9 @@ Rust changes, while the legacy presets render and behave identically.
     toolbar limited to refresh/search/confirmed process termination. Unknown,
     duplicate or script-like actions are rejected, and missing samples are
     honestly unavailable rather than displayed as fake zeroes.
-- [ ] Theme capabilities and fallbacks for compact and large screens.
+- [x] Responsive screen capabilities and fallbacks for compact and large screens:
+  RC31 adds an opt-in validated breakpoint and per-screen alternative widget
+  composition; the legacy layout renders unchanged when no fallback is defined.
 - [ ] User-driven layout editor and reusable component presets.
 - [ ] Visual regression captures, accessibility/focus checks and pack
   migration diagnostics for schema upgrades.

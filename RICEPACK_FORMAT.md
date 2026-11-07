@@ -65,6 +65,12 @@ columns = ["name", "cpu", "memory", "pid"]
 
 - `layout.pages`: 1–4 tabs. Each `id` is a unique lowercase ASCII slug
   (1–24 characters: `a-z`, `0-9`, `-`); `title` is 1–40 printable characters.
+- Optional `layout.compact_below` is a **content area** breakpoint of 480–1024
+  logical pixels (default: 680), measured after Taskotto's own navigation.
+  Each page may include up to 16 optional `[[layout.pages.compact_widgets]]`
+  with the exact same validated kinds and bindings as its normal `widgets`.
+  Below the breakpoint Taskotto renders the compact set; if omitted, the
+  normal widgets remain visible at every width, preserving legacy packs.
 - Each tab has 1–16 widgets. `heading` accepts `text` (1–120 printable
   characters), `metric` and `plot` accept `label` (1–48) and a typed `binding`.
 - `metric` bindings: `cpu-percent`, `memory-used`, `memory-total`,
@@ -89,6 +95,28 @@ columns = ["name", "cpu", "memory", "pid"]
 
 All other fields, kinds, bindings, scripts and shell hooks are rejected.
 Try the complete two-tab [Diagnostic Studio](examples/ricepacks/diagnostic-studio.toml):
+
+```toml
+[layout]
+compact_below = 720
+
+[[layout.pages]]
+id = "overview"
+title = "Overview"
+
+[[layout.pages.widgets]]
+kind = "process-list"
+columns = ["name", "cpu", "memory", "pid"]
+
+[[layout.pages.compact_widgets]]
+kind = "process-list"
+columns = ["name", "pid"]
+```
+
+The snippet illustrates the alternative list, not a complete RicePack. When
+the content area is narrow, it shows fewer verified Linux process columns
+without losing selection/confirmation. No CSS/scripts or runtime permissions
+are introduced. At wide sizes the original process table is retained.
 
 ```bash
 taskotto --check-ricepack examples/ricepacks/diagnostic-studio.toml

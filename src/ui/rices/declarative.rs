@@ -54,7 +54,12 @@ pub(in crate::ui) fn render(app: &mut TaskottoApp, ui: &mut egui::Ui) {
     egui::ScrollArea::vertical()
         .auto_shrink([false, false])
         .show(ui, |ui| {
-            let widgets = &layout.pages[current].widgets;
+            // The optional compact scene is a validated, explicitly-authored
+            // fallback. The original scene remains the default at wide sizes.
+            let widgets = layout.pages[current].widgets_for_width(
+                ui.available_width(),
+                layout.compact_below.unwrap_or(680) as f32,
+            );
             let end_in_toolbar = widgets.iter().any(|widget| match widget {
                 Widget::Toolbar { actions } => actions.contains(&ToolbarAction::EndProcess),
                 _ => false,
