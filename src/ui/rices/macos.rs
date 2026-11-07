@@ -850,6 +850,14 @@ pub(super) fn info_dialog(app: &mut TaskottoApp, ctx: &egui::Context) {
                         ui.end_row();
                     }
                 });
+            if let Some(totals) = app.snapshot.as_ref().and_then(|snapshot| {
+                snapshot.tree_summary(process.pid, process.start_ticks)
+            }) {
+                ui.add_space(10.0);
+                ui.label(RichText::new("Observed process tree (Linux)").strong().color(ink));
+                ui.label(format!("{} processes · {:.1}% summed CPU · {} summed RSS", totals.process_count, totals.cpu_percent, format::bytes(totals.summed_rss_bytes)));
+                ui.label(RichText::new("Selected PID and visible descendants only. Summed RSS may overlap shared pages; not unique physical memory.").small().color(muted));
+            }
             ui.add_space(12.0);
             ui.horizontal(|ui| {
                 if ui

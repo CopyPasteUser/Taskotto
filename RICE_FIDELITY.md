@@ -58,6 +58,9 @@ and fonts are **not** copied or bundled.
 - Dedicated light, neutral Activity Monitor-inspired UI rather than the generic
   Taskotto theme: an original activity-wave mark, compact toolbar with **Stop**,
   **Info**, functional **View** menu and a persistent **Search processes** field.
+- The Linux process Info inspector may additionally show an explicitly
+  labeled *observed descendant tree* summary. Summed RSS can overlap shared
+  pages and is not a claim about macOS private/unique memory accounting.
 - Five familiar segments in their original order: **CPU, Memory, Energy, Disk,
   Network**, displayed as horizontal tabs by default. Explicitly choosing a
   sidebar is a Taskotto customization, not a claim about Apple's default.

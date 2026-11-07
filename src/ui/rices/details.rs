@@ -57,6 +57,23 @@ pub(super) fn xp_page(app: &mut TaskottoApp, ui: &mut egui::Ui) {
                 ("Running Time", format::process_age(p.elapsed_seconds)),
             ],
         );
+        if let Some(totals) = app.snapshot.as_ref().and_then(|snapshot| {
+            snapshot.tree_summary(p.pid, p.start_ticks)
+        }) {
+            ui.add_space(9.0);
+            classic_group(
+                ui,
+                seven,
+                paint,
+                "Observed process tree",
+                &[
+                    ("Processes incl. selected", totals.process_count.to_string()),
+                    ("Combined CPU", format!("{:.1}%", totals.cpu_percent)),
+                    ("Summed RSS", format::bytes(totals.summed_rss_bytes)),
+                ],
+            );
+            ui.label(RichText::new("Visible descendants only. Summed RSS may overlap shared memory; it is not unique physical usage.").small().weak());
+        }
         ui.add_space(9.0);
         classic_group(
             ui,

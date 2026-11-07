@@ -121,6 +121,11 @@ with **no new Rust UI module**. No untrusted scripts or arbitrary shell hooks.
   permit, with clear errors and explicit consent for mutations.
 - [ ] Aggregate descendant-tree CPU and memory statistics without double
   counting; show collection scope accurately.
+  - [x] RC34: count each observed descendant PID once, prevent cycles and PID
+    reuse at the selected root, sum actual per-process CPU/RSS with saturation
+    and label limited visibility and shared-RSS page overlap explicitly.
+  - [ ] Where available, add PSS-aware accounting or a verified unique-memory
+    measure; never present summed RSS as unique machine memory.
 - [ ] Optional compositor-specific app/window grouping with real identifiers,
   fallback to process lists when window information is unavailable.
 - [ ] Session history, process-follow and sort-freeze controls.

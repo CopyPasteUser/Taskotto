@@ -55,6 +55,7 @@ archive and invokes its binary and local desktop installer before publishing.
 - [ ] Compare process CPU/RSS, host RAM, per-core CPU, uptime with `top`/`free`/`uptime`.
 - [ ] Compare network and disk rates during a known I/O operation.
 - [ ] Compare process start/runtime and read/write rates against `/proc/<PID>/stat` and `/proc/<PID>/io` for permitted processes.
+- [ ] Launch a parent process with multiple child/grandchild processes. Select its real PID and compare the Details/XP Properties/macOS Info observed-tree process count, CPU sum and **summed** RSS with one snapshot. Verify exiting children disappear on refresh, PID reuse cannot select a stale root, cycles/duplicate entries do not inflate counts, and the UI never claims shared RSS is unique physical memory or PSS.
 - [ ] Search by name, command, PID and user; sort CPU/RAM/I/O/PID/name and toggle tree mode.
 - [ ] Launch a disposable `sleep 1000` process; pause, resume and terminate it after confirmation.
 - [ ] Use the Force kill dialog only on a disposable test process; check warning text.
