@@ -2227,6 +2227,7 @@ impl TaskottoApp {
             &follow.sampled_at_unix_ms,
             follow.view_seconds,
         );
+        let positions = window_positions(&follow.sampled_at_unix_ms, follow.view_seconds);
         if cpu_values.is_empty() || mem_values.is_empty() {
             ui.label(
                 RichText::new("Timestamps unavailable for this history window.")
@@ -2245,7 +2246,7 @@ impl TaskottoApp {
                 follow.cpu.back().unwrap_or(&0.0),
                 cpu_peak
             ));
-            chart(ui, &cpu_values, cpu_max, accent);
+            chart_with_positions(ui, &cpu_values, cpu_max, accent, positions.as_deref());
         };
         let draw_mem = |ui: &mut egui::Ui| {
             ui.label(format!(
@@ -2253,7 +2254,13 @@ impl TaskottoApp {
                 follow.rss_mib.back().unwrap_or(&0.0),
                 mem_peak
             ));
-            chart(ui, &mem_values, mem_max, Color32::from_rgb(82, 173, 155));
+            chart_with_positions(
+                ui,
+                &mem_values,
+                mem_max,
+                Color32::from_rgb(82, 173, 155),
+                positions.as_deref(),
+            );
         };
         if ui.available_width() < 640.0 {
             draw_cpu(ui);
@@ -2606,6 +2613,25 @@ fn chart(ui: &mut egui::Ui, values: &VecDeque<f32>, max_value: f32, color: Color
 }
 
 fn chart_lines(ui: &mut egui::Ui, series: &[(&VecDeque<f32>, Color32)], max_value: f32) {
+    chart_lines_positioned(ui, series, max_value, None);
+}
+
+fn chart_with_positions(
+    ui: &mut egui::Ui,
+    values: &VecDeque<f32>,
+    max_value: f32,
+    color: Color32,
+    positions: Option<&[f32]>,
+) {
+    chart_lines_positioned(ui, &[(values, color)], max_value, positions);
+}
+
+fn chart_lines_positioned(
+    ui: &mut egui::Ui,
+    series: &[(&VecDeque<f32>, Color32)],
+    max_value: f32,
+    positions: Option<&[f32]>,
+) {
     let (rect, _) = ui.allocate_exact_size(Vec2::new(ui.available_width(), 120.0), Sense::hover());
     ui.painter()
         .rect_filled(rect, 6.0, ui.visuals().faint_bg_color);
@@ -2618,12 +2644,35 @@ fn chart_lines(ui: &mut egui::Ui, series: &[(&VecDeque<f32>, Color32)], max_valu
     }
     for &(values, color) in series {
         if values.len() >= 2 {
-            ui.painter().add(egui::Shape::line(
-                chart_points(values, rect, max_value),
-                Stroke::new(2.0_f32, color),
-            ));
+            let points = match positions {
+                Some(xs) if xs.len() == values.len() => {
+                    chart_points_at(values, rect, max_value, xs)
+                }
+                Some(_) => continue, // Missing timing metadata must not fake uniform spacing.
+                None => chart_points(values, rect, max_value),
+            };
+            ui.painter()
+                .add(egui::Shape::line(points, Stroke::new(2.0_f32, color)));
         }
     }
+}
+
+fn chart_points_at(
+    values: &VecDeque<f32>,
+    rect: egui::Rect,
+    max_value: f32,
+    positions: &[f32],
+) -> Vec<egui::Pos2> {
+    values
+        .iter()
+        .zip(positions)
+        .map(|(&value, &position)| {
+            egui::pos2(
+                rect.left() + rect.width() * position.clamp(0.0, 1.0),
+                rect.bottom() - rect.height() * (value / max_value).clamp(0.0, 1.0),
+            )
+        })
+        .collect()
 }
 
 fn chart_points(values: &VecDeque<f32>, rect: egui::Rect, max_value: f32) -> Vec<egui::Pos2> {
@@ -2673,6 +2722,22 @@ fn within_window(
                 .map(|_| *value)
         })
         .collect()
+}
+
+fn window_positions(times: &VecDeque<Option<u64>>, seconds: Option<u64>) -> Option<Vec<f32>> {
+    let duration = seconds?.saturating_mul(1000);
+    let end = times.back().copied().flatten()?;
+    let start = end.saturating_sub(duration);
+    Some(
+        times
+            .iter()
+            .filter_map(|timestamp| {
+                timestamp
+                    .filter(|stamp| *stamp >= start && *stamp <= end)
+                    .map(|stamp| (stamp - start) as f32 / (end - start).max(1) as f32)
+            })
+            .collect(),
+    )
 }
 
 fn preference_section(ui: &mut egui::Ui, title: &str, xp: bool) {
@@ -2999,6 +3064,22 @@ mod tests {
         assert_eq!(points.first().unwrap().x, rect.left());
         assert_eq!(points.last().unwrap().x, rect.right());
         assert_eq!(points.last().unwrap().y, rect.top());
+    }
+
+    #[test]
+    fn timed_chart_uses_observed_x_positions_and_preserves_gaps() {
+        let times = VecDeque::from([Some(0), Some(1_000), None, Some(30_000)]);
+        let values = VecDeque::from([10.0, 20.0, 30.0, 40.0]);
+        let filtered = within_window(&values, &times, Some(30));
+        let positions = window_positions(&times, Some(30)).unwrap();
+        assert_eq!(filtered, VecDeque::from([10.0, 20.0, 40.0]));
+        assert_eq!(positions.len(), filtered.len());
+        let rect = egui::Rect::from_min_size(egui::Pos2::ZERO, Vec2::new(300.0, 100.0));
+        let points = chart_points_at(&filtered, rect, 100.0, &positions);
+        assert_eq!(points[0].x, 0.0);
+        assert!((points[1].x - 10.0).abs() < 0.01);
+        assert_eq!(points[2].x, 300.0);
+        assert_eq!(window_positions(&times, None), None);
     }
 
     #[test]

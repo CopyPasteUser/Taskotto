@@ -9,6 +9,7 @@ Taskotto follows semantic versioning; hardware-dependent stable-release gates ar
 
 ## [1.0.0-rc.48] — 2026-11-07
 
+- Follow-up accuracy fix: timed process-follow charts now place samples at their actual horizontal timestamp offsets. Missing/late sampler ticks preserve proportional horizontal distances instead of evenly spaced points; All samples still shows collection order. Added a deterministic gap-position test.
 - Added optional elapsed 30-second and 2-minute views (or entire session retention) to the opt-in per-PID CPU/RSS follow panel, based on GUI-receipt timestamps rather than assuming equally spaced samples. CPU/RSS peaks reflect the selected window, and missing timestamps cannot masquerade as recent evidence.
 - At narrow widths the two charts stack instead of squeezing into unreadable columns. Existing PID+start-tick identity verification, three-missing-sample expiry, 120-observation memory bound and no-persistence defaults remain intact. Deterministic time-boundary/gap tests added.
 - Regenerated the actual `taskotto-system-process-follow.png` gallery screenshot with the three functional time-window controls visible, and documented targeted screenshot reproduction.
