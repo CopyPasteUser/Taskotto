@@ -98,7 +98,7 @@ pub(super) fn navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
     egui::TopBottomPanel::top("frutiger-aero-tabs")
         .frame(
             Frame::NONE
-                .fill(Color32::from_rgb(214, 242, 235))
+                .fill(palette.control(Color32::from_rgb(214, 242, 235)))
                 .inner_margin(Margin::symmetric(12, 7)),
         )
         .show(ctx, |ui| {
@@ -159,12 +159,17 @@ pub(super) fn sidebar(app: &mut TaskottoApp, ctx: &egui::Context) {
         .exact_width(172.0)
         .frame(
             Frame::NONE
-                .fill(Color32::from_rgb(217, 242, 235))
+                .fill(palette.control(Color32::from_rgb(217, 242, 235)))
                 .inner_margin(11.0),
         )
         .show(ctx, |ui| {
             ui.add_space(20.0);
-            ui.label(RichText::new("EXPLORE").strong().color(MUTED).size(11.0));
+            ui.label(
+                RichText::new("EXPLORE")
+                    .strong()
+                    .color(palette.on_control(Color32::from_rgb(217, 242, 235), MUTED))
+                    .size(11.0),
+            );
             ui.add_space(8.0);
             for (page, label) in PAGES {
                 let active = app.page == page;
@@ -666,7 +671,7 @@ fn hero(
     let height = if width < 710.0 { 102.0 } else { 131.0 };
     let (rect, _) = ui.allocate_exact_size(egui::vec2(width, height), Sense::hover());
     let painter = ui.painter();
-    painter.rect_filled(rect, 19.0, Color32::from_rgb(224, 248, 244));
+    painter.rect_filled(rect, 19.0, palette.table(Color32::from_rgb(224, 248, 244)));
     painter.rect_filled(
         Rect::from_min_max(rect.min, Pos2::new(rect.right(), rect.center().y)),
         egui::CornerRadius {
@@ -675,7 +680,7 @@ fn hero(
             sw: 0,
             se: 0,
         },
-        Color32::from_rgb(241, 255, 254),
+        palette.table(Color32::from_rgb(241, 255, 254)),
     );
     painter.rect_stroke(
         rect,
@@ -708,14 +713,14 @@ fn hero(
         Align2::LEFT_CENTER,
         title,
         FontId::proportional(if width < 710.0 { 17.0 } else { 21.0 }),
-        INK,
+        palette.on_table(INK),
     );
     painter.text(
         rect.min + egui::vec2(22.0, if width < 710.0 { 55.0 } else { 71.0 }),
         Align2::LEFT_CENTER,
         subtitle,
         FontId::proportional(13.0),
-        MUTED,
+        palette.on_table(MUTED),
     );
     painter.line_segment(
         [
@@ -827,7 +832,12 @@ fn chart_panel(ui: &mut egui::Ui, chart: &ChartPanel<'_>, chart_height: f32, pal
             if let Some(other) = chart.secondary {
                 plot(ui, rect.shrink(8.0), other, chart.max, chart.colors[1]);
             }
-            painter.rect_stroke(rect, 9.0, Stroke::new(1.0_f32, BORDER), StrokeKind::Inside);
+            painter.rect_stroke(
+                rect,
+                9.0,
+                Stroke::new(1.0_f32, palette.border(BORDER)),
+                StrokeKind::Inside,
+            );
         });
 }
 

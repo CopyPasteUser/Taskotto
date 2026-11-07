@@ -78,6 +78,10 @@ Development on later milestones may proceed while user-hardware QA is pending.
     navigation and status strip backgrounds consume the control/table palette;
     macOS timeline and network plots consume table/border tokens, with readable
     text even when a generated pack only chooses a dark global surface.
+  - [x] RC47: Aero's secondary horizontal navigation, opt-in sidebar and
+    process/performance hero are now palette-aware with contrast-safe text;
+    chart plot outlines honor the border token. The original Y2K lens and
+    meter artwork stays intentionally distinct when no override is supplied.
   - [ ] Audit remaining intentional artwork, complex per-widget charts and
     secondary controls for hardcoded palette tokens without homogenizing rices.
 
