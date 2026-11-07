@@ -1,6 +1,6 @@
 [package]
 name = "taskotto"
-version = "1.0.0-rc.35"
+version = "1.0.0-rc.36"
 edition = "2024"
 rust-version = "1.88"
 license = "MIT"

@@ -191,6 +191,8 @@ pub struct TaskottoApp {
     performance_focus: PerformanceFocus,
     query: String,
     focus_search: bool,
+    /// Session-only order. PID and start tick together prevent PID-reuse aliasing.
+    frozen_sort_order: Option<HashMap<(i32, u64), usize>>,
     selected: Option<(i32, u64)>,
     pending: Option<PendingAction>,
     notification: Option<String>,
@@ -260,6 +262,7 @@ impl TaskottoApp {
             performance_focus: PerformanceFocus::Cpu,
             query: String::new(),
             focus_search: false,
+            frozen_sort_order: None,
             selected: None,
             pending: None,
             notification: warning,
@@ -611,21 +614,7 @@ impl TaskottoApp {
             .filter(|p| self.process_matches_filters(p, &query))
             .cloned()
             .collect();
-        matches.sort_by(|a, b| {
-            let order = match self.settings.sort_by {
-                SortBy::Cpu => a.cpu_percent.total_cmp(&b.cpu_percent),
-                SortBy::Memory => a.resident_bytes.cmp(&b.resident_bytes),
-                SortBy::Io => process_io_rate(a).cmp(&process_io_rate(b)),
-                SortBy::Name => a.name.to_lowercase().cmp(&b.name.to_lowercase()),
-                SortBy::Pid => a.pid.cmp(&b.pid),
-            };
-            let order = if self.settings.descending {
-                order.reverse()
-            } else {
-                order
-            };
-            order.then_with(|| a.pid.cmp(&b.pid))
-        });
+        matches.sort_by(|a, b| self.compare_process_order(a, b));
         if !self.settings.tree_view {
             return matches
                 .into_iter()
@@ -683,22 +672,37 @@ impl TaskottoApp {
 
     fn sort_pids(&self, processes: Vec<&Process>) -> Vec<i32> {
         let mut rows = processes;
-        rows.sort_by(|a, b| {
-            let cmp = match self.settings.sort_by {
-                SortBy::Cpu => a.cpu_percent.total_cmp(&b.cpu_percent),
-                SortBy::Memory => a.resident_bytes.cmp(&b.resident_bytes),
-                SortBy::Io => process_io_rate(a).cmp(&process_io_rate(b)),
-                SortBy::Name => a.name.to_lowercase().cmp(&b.name.to_lowercase()),
-                SortBy::Pid => a.pid.cmp(&b.pid),
-            };
-            (if self.settings.descending {
-                cmp.reverse()
-            } else {
-                cmp
-            })
-            .then(a.pid.cmp(&b.pid))
-        });
+        rows.sort_by(|a, b| self.compare_process_order(a, b));
         rows.into_iter().map(|p| p.pid).collect()
+    }
+
+    fn compare_process_order(&self, a: &Process, b: &Process) -> std::cmp::Ordering {
+        compare_process_order(
+            a,
+            b,
+            self.settings.sort_by,
+            self.settings.descending,
+            self.frozen_sort_order.as_ref(),
+        )
+    }
+
+    fn set_sort_frozen(&mut self, frozen: bool) {
+        if !frozen {
+            self.frozen_sort_order = None;
+        } else if self.frozen_sort_order.is_none() {
+            if self.snapshot.is_none() {
+                self.notification =
+                    Some("Wait for the first process sample to freeze order".into());
+                return;
+            }
+            let order = self
+                .processes()
+                .iter()
+                .enumerate()
+                .map(|(index, row)| ((row.process.pid, row.process.start_ticks), index))
+                .collect();
+            self.frozen_sort_order = Some(order);
+        }
     }
 
     fn topbar(&mut self, ctx: &egui::Context) {
@@ -885,6 +889,13 @@ impl TaskottoApp {
             {
                 self.settings.descending = !self.settings.descending;
                 self.save_preferences(ui.ctx());
+            }
+            if ui
+                .selectable_label(self.frozen_sort_order.is_some(), "Freeze order")
+                .on_hover_text("Keep the current visible order as CPU and memory values change; Ctrl+Shift+Space")
+                .clicked()
+            {
+                self.set_sort_frozen(self.frozen_sort_order.is_none());
             }
             if ui
                 .selectable_label(self.settings.tree_view, "Tree")
@@ -1375,6 +1386,10 @@ impl TaskottoApp {
             changed |= component_color_picker(ui, "Selection", &mut components.selection, defaults.selection.bg_fill);
             ui.add_space(18.0);
             preference_section(ui, "Process table", xp);
+            let mut frozen = self.frozen_sort_order.is_some();
+            if ui.checkbox(&mut frozen, "Freeze process order (this session)").on_hover_text("Ctrl+Shift+Space. Newly observed processes appear at the end; restarting resets the order.").changed() {
+                self.set_sort_frozen(frozen);
+            }
             changed |= ui.checkbox(&mut self.settings.show_io_column, "Show I/O rate (wide windows)").changed();
             changed |= ui.checkbox(&mut self.settings.show_user_column, "Show user (wide windows)").changed();
             let mut row_height = self.settings.table_row_height.unwrap_or(if self.settings.density == Density::Compact { 26.0 } else { 34.0 });
@@ -1623,6 +1638,12 @@ impl eframe::App for TaskottoApp {
                 }
                 self.focus_search = true;
             }
+            if input.modifiers.command
+                && input.modifiers.shift
+                && input.key_pressed(egui::Key::Space)
+            {
+                self.set_sort_frozen(self.frozen_sort_order.is_none());
+            }
             if input.key_pressed(egui::Key::Escape) && self.pending.is_none() {
                 if self.settings.theme == Theme::Macos && self.mac_info_open {
                     self.mac_info_open = false;
@@ -1674,6 +1695,35 @@ fn process_io_rate(process: &Process) -> u64 {
     process
         .read_per_second
         .saturating_add(process.written_per_second)
+}
+
+fn compare_process_order(
+    a: &Process,
+    b: &Process,
+    sort_by: SortBy,
+    descending: bool,
+    frozen: Option<&HashMap<(i32, u64), usize>>,
+) -> std::cmp::Ordering {
+    if let Some(order) = frozen {
+        // Unknown/new processes go to the end in deterministic PID order;
+        // reused PIDs never inherit a stale process identity's position.
+        let a_rank = order.get(&(a.pid, a.start_ticks));
+        let b_rank = order.get(&(b.pid, b.start_ticks));
+        return match (a_rank, b_rank) {
+            (Some(a), Some(b)) => a.cmp(b),
+            (Some(_), None) => std::cmp::Ordering::Less,
+            (None, Some(_)) => std::cmp::Ordering::Greater,
+            (None, None) => a.pid.cmp(&b.pid),
+        };
+    }
+    let order = match sort_by {
+        SortBy::Cpu => a.cpu_percent.total_cmp(&b.cpu_percent),
+        SortBy::Memory => a.resident_bytes.cmp(&b.resident_bytes),
+        SortBy::Io => process_io_rate(a).cmp(&process_io_rate(b)),
+        SortBy::Name => a.name.to_lowercase().cmp(&b.name.to_lowercase()),
+        SortBy::Pid => a.pid.cmp(&b.pid),
+    };
+    (if descending { order.reverse() } else { order }).then(a.pid.cmp(&b.pid))
 }
 
 fn format_process_io(accessible: bool, value: u64, per_second: bool) -> String {
@@ -1865,6 +1915,95 @@ mod tests {
     }
 
     #[test]
+    fn frozen_process_order_survives_live_metrics_pid_reuse_and_unfreeze() {
+        let ctx = egui::Context::default();
+        let mut app = TaskottoApp {
+            settings: Settings::default(),
+            worker: Worker::start(10_000, ctx),
+            snapshot: Some(Snapshot {
+                processes: vec![
+                    Process {
+                        pid: 42,
+                        start_ticks: 100,
+                        name: "first".into(),
+                        cpu_percent: 80.0,
+                        ..Process::default()
+                    },
+                    Process {
+                        pid: 7,
+                        start_ticks: 200,
+                        name: "second".into(),
+                        cpu_percent: 40.0,
+                        ..Process::default()
+                    },
+                ],
+                cpu_percent: 0.0,
+                cores_percent: vec![],
+                memory: Default::default(),
+                rates: Default::default(),
+                uptime_seconds: 0.0,
+                logical_cpus: 1,
+            }),
+            history: History::default(),
+            page: Page::Processes,
+            performance_focus: PerformanceFocus::Cpu,
+            query: String::new(),
+            focus_search: false,
+            frozen_sort_order: None,
+            selected: None,
+            pending: None,
+            notification: None,
+            theme_accent_input: String::new(),
+            theme_surface_input: String::new(),
+            theme_text_input: String::new(),
+            my_uid: 1000,
+            users: HashMap::new(),
+            system_pages: rices::SystemPages::default(),
+            new_task: NewTaskDialog::default(),
+            mac_info_open: false,
+            ricepack_watcher: None,
+            ricepack_library: RicePackLibraryUi::default(),
+        };
+        let pids = |app: &TaskottoApp| {
+            app.processes()
+                .iter()
+                .map(|row| (row.process.pid, row.process.start_ticks))
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(pids(&app), [(42, 100), (7, 200)]);
+        app.set_sort_frozen(true);
+        assert_eq!(app.frozen_sort_order.as_ref().map(HashMap::len), Some(2));
+
+        let snapshot = app.snapshot.as_mut().unwrap();
+        snapshot.processes[0].cpu_percent = 1.0;
+        snapshot.processes[1].cpu_percent = 99.0;
+        // PID 42 has exited; a different process acquired the same numeric PID.
+        snapshot.processes[0].start_ticks = 300;
+        snapshot.processes.push(Process {
+            pid: 200,
+            start_ticks: 400,
+            cpu_percent: 55.0,
+            ..Process::default()
+        });
+        assert_eq!(pids(&app), [(7, 200), (42, 300), (200, 400)]);
+        app.set_sort_frozen(false);
+        assert_eq!(pids(&app), [(7, 200), (200, 400), (42, 300)]);
+
+        app.settings.tree_view = true;
+        app.set_sort_frozen(true);
+        app.snapshot.as_mut().unwrap().processes[0].parent_pid = 7;
+        // Tree view still preserves the hierarchy; it never sacrifices it
+        // just to reproduce a flat frozen row index.
+        let rows = app.processes();
+        assert_eq!(rows.len(), 3);
+        assert_eq!(
+            rows.iter().map(|row| row.process.pid).collect::<Vec<_>>(),
+            [7, 42, 200]
+        );
+        assert_eq!(rows[1].depth, 1);
+    }
+
+    #[test]
     fn history_stays_bounded() {
         let mut history = History::default();
         let mut snapshot = Snapshot {
@@ -1988,6 +2127,7 @@ mod tests {
             performance_focus: PerformanceFocus::Cpu,
             query: String::new(),
             focus_search: false,
+            frozen_sort_order: None,
             selected: None,
             pending: None,
             notification: None,
@@ -2050,6 +2190,7 @@ mod tests {
             performance_focus: PerformanceFocus::Cpu,
             query: String::new(),
             focus_search: false,
+            frozen_sort_order: None,
             selected: None,
             pending: None,
             notification: None,
@@ -2153,6 +2294,7 @@ mod tests {
             performance_focus: PerformanceFocus::Cpu,
             query: String::new(),
             focus_search: false,
+            frozen_sort_order: None,
             selected: None,
             pending: None,
             notification: None,
@@ -2224,6 +2366,7 @@ mod tests {
             performance_focus: PerformanceFocus::Cpu,
             query: String::new(),
             focus_search: false,
+            frozen_sort_order: None,
             selected: None,
             pending: None,
             notification: None,
@@ -2303,6 +2446,7 @@ mod tests {
             performance_focus: PerformanceFocus::Cpu,
             query: String::new(),
             focus_search: false,
+            frozen_sort_order: None,
             selected: Some((5678, 77)),
             pending: None,
             notification: None,
@@ -2406,6 +2550,7 @@ mod tests {
             performance_focus: PerformanceFocus::Cpu,
             query: String::new(),
             focus_search: false,
+            frozen_sort_order: None,
             selected: None,
             pending: None,
             notification: None,
@@ -2513,6 +2658,7 @@ mod tests {
             performance_focus: PerformanceFocus::Cpu,
             query: String::new(),
             focus_search: false,
+            frozen_sort_order: None,
             selected: None,
             pending: None,
             notification: None,

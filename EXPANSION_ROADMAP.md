@@ -133,6 +133,9 @@ with **no new Rust UI module**. No untrusted scripts or arbitrary shell hooks.
 - [ ] Optional compositor-specific app/window grouping with real identifiers,
   fallback to process lists when window information is unavailable.
 - [ ] Session history, process-follow and sort-freeze controls.
+  - [x] RC36: session-only sort freeze, keyboard toggle, PID+start-time identity,
+    stable new-process insertion, and tree-parent preservation.
+  - [ ] Time-bounded process history and follow-selection with explicit expiry.
 
 **Gate:** no actions on PID reuse, no hidden root service, accurate
 distinction between processes, GUI windows and logical applications.

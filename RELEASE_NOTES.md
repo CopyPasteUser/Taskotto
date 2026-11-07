@@ -1,8 +1,14 @@
-# Taskotto 1.0.0-rc.35 — release candidate
+# Taskotto 1.0.0-rc.36 — release candidate
 
 **Date:** 2026-11-07 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
 Rust-only Linux process manager and system monitor. This is a **prerelease**, not a stable 1.0 certification.
+
+## Changes since rc.35
+
+- Process sorting can now be temporarily **frozen** while live CPU, memory and I/O data keep updating. Use **Ctrl+Shift+Space** in any rice, the plain process table's **Freeze order** button, or **Preferences → Process table**. The preference is deliberately session-only; restarting resumes normal sorting.
+- New processes append deterministically; a recycled numeric PID cannot take the previous process's slot because the freeze records PID **and process start ticks**. Tree mode still keeps descendants under their actual observed parent, and unfreezing resumes configured sorting immediately.
+- Added regression coverage for live metric changes, PID reuse, newly appearing processes and tree hierarchy. No background sampler, process mutation or persistent settings schema was added.
 
 ## Changes since rc.34
 
