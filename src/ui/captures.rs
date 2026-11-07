@@ -29,10 +29,21 @@ fn generate_headless_ui_screenshots() {
     // displayed process/metric comes from the container's real Linux /proc.
     let mut sampler = Monitor::default();
     let mut history = History::default();
+    let mut followed_sample = None;
     let mut latest = None;
     for _ in 0..24 {
         let snapshot = sampler.sample().expect("read live Linux procfs");
         history.record(&snapshot);
+        if followed_sample.is_none() {
+            followed_sample = snapshot
+                .processes
+                .iter()
+                .find(|process| process.pid == sample_pid)
+                .map(ProcessFollow::new);
+        }
+        if let Some(follow) = &mut followed_sample {
+            follow.record(&snapshot);
+        }
         latest = Some(snapshot);
         thread::sleep(Duration::from_millis(150));
     }
@@ -253,6 +264,11 @@ fn generate_headless_ui_screenshots() {
             Page::Processes,
             "taskotto-diagnostic-studio-compact.png",
         ),
+        (
+            Theme::System,
+            Page::Details,
+            "taskotto-system-process-follow.png",
+        ),
     ] {
         if let Ok(filter) = std::env::var("TASKOTTO_SCREENSHOT_FILTER")
             && !file.contains(&filter)
@@ -341,6 +357,7 @@ fn generate_headless_ui_screenshots() {
                 sent: history.sent.clone(),
                 disk_read: history.disk_read.clone(),
                 disk_write: history.disk_write.clone(),
+                process_follow: None,
             },
             page,
             performance_focus: PerformanceFocus::Cpu,
@@ -356,6 +373,7 @@ fn generate_headless_ui_screenshots() {
                 || file.contains("midnight-ricepack")
                 || file.contains("indigo-ricepack")
                 || file.contains("diagnostic-studio")
+                || file.contains("process-follow")
             {
                 snapshot
                     .processes
@@ -384,6 +402,9 @@ fn generate_headless_ui_screenshots() {
             ricepack_watcher: None,
             ricepack_library: RicePackLibraryUi::default(),
         };
+        if file.contains("process-follow") {
+            app.history.process_follow = followed_sample.take();
+        }
         if file.contains("new-task") {
             app.new_task.open = true;
         }

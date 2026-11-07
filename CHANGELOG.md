@@ -2,6 +2,12 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.37] — 2026-11-07
+
+- Added explicit **Follow selected process** in generic Details and Preferences; at most one exact PID+start-time identity is tracked per open window, storing a maximum of 120 real CPU and RSS samples entirely in memory. No idle sampler, daemon, file write or extra permission is involved.
+- Missing process samples are not replaced by fake zeros; three consecutive misses end tracking without reattaching to reused PIDs. The user can clear ended history or follow a new selection. History charts report actual last and peak values, not chart-scale maxima.
+- New true-egui screenshot `taskotto-system-process-follow.png` captures a real disposable Linux child and the bounded graphs. Regression tests cover bounds, expiry and PID reuse. This completes a first session-history/follow slice of P3, not its advanced privileged controls, PSS attribution or compositor-specific grouping.
+
 ## [1.0.0-rc.36] — 2026-11-07
 
 - Added **session-only process sort freeze**: the visible row order stays stable while CPU/RAM/I/O measurements update. Toggle with Ctrl+Shift+Space in all eight profiles, the generic process toolbar or Preferences → Process table. Settings and saved RicePacks remain unchanged.

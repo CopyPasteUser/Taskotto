@@ -37,6 +37,7 @@ archive and invokes its binary and local desktop installer before publishing.
 - [ ] At 650×420, at Win98 minimum 490×340, and at a large desktop resolution, all controls remain reachable.
 - [ ] Tab through controls and use Ctrl+F, F5, Escape.
 - [ ] With a live process list, press Ctrl+Shift+Space (and use Preferences → Process table) to freeze ordering. Verify values still change, a new child stays under its parent in tree mode, and unfreeze immediately restores the configured sort. Restart Taskotto to confirm freeze is not persisted. Check the generic **Freeze order** button as well.
+- [ ] In generic Details or Preferences → Process follow, select a disposable process and click **Follow selected process**. Verify real CPU/RSS trends, stop/clear/retarget, window resize and keyboard navigation. Exit the process: no invented zero samples; after three missed samples tracking ends and never attaches to a reused PID. Restart: history is gone.
 - [ ] Switch all 8 profiles, density, custom accent/surface/text, font scale, spacing, corners, table columns/row height and sidebar/top-tabs; reopen and verify persistence.
 - [ ] Launch with `RICEBOWL_RICE=windows7 taskotto` and explicit `--theme xp-luna` override.
 - [ ] Validate `examples/ricepacks/sea-glass.toml` with `--check-ricepack`, then run `--ricepack` on a real desktop. Verify base theme, palette/spacing/navigation and normal process actions; restart without the pack and ensure saved appearance is unchanged.

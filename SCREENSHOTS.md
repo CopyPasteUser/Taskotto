@@ -1,6 +1,6 @@
 # Screenshot provenance and reproduction
 
-[**View all 50 screenshots in the expandable README gallery**](README.md#screenshots).
+[**View all 51 screenshots in the expandable README gallery**](README.md#screenshots).
 The gallery groups every image by rice, including the supplementary pages
 and alternate layouts; click any preview to see its full-resolution PNG.
 
@@ -27,7 +27,7 @@ The restricted capture environment currently exposes few processes and very
 little I/O; this is why some screenshots look sparse. They are not evidence of
 hardware compatibility or GUI performance.
 
-To regenerate all 50 images on Linux:
+To regenerate all 51 images on Linux:
 
 ```bash
 TASKOTTO_SCREENSHOT_DIR=assets/screenshots \
@@ -37,6 +37,8 @@ TASKOTTO_SCREENSHOT_DIR=assets/screenshots \
 The command samples real system activity and writes:
 
 ### Generated functional screens (P2 foundation)
+
+- `assets/screenshots/taskotto-system-process-follow.png` — genuine generic inspector with an explicitly followed real disposable Linux process; CPU and RSS graph samples come from matching `/proc` PID/start-tick observations, not fabricated demo curves. Session-only history is capped at 120 samples.
 
 - `assets/screenshots/taskotto-diagnostic-studio-ricepack.png` — original two-tab Diagnostic Studio composed entirely from a validated TOML RicePack. Includes safe refresh/search/termination actions, genuine host CPU, a memory percentage gauge, a live Linux process list and a real-value status strip. Process termination uses the existing PID-safe confirmation path.
 - `assets/screenshots/taskotto-diagnostic-studio-traffic.png` — the second generated tab of the same TOML layout: actual network receive and disk-write rates, history, a live I/O status strip and real Linux threads/PID report; no theme-specific Rust module is needed for this second tab.

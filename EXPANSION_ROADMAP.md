@@ -136,6 +136,11 @@ with **no new Rust UI module**. No untrusted scripts or arbitrary shell hooks.
   - [x] RC36: session-only sort freeze, keyboard toggle, PID+start-time identity,
     stable new-process insertion, and tree-parent preservation.
   - [ ] Time-bounded process history and follow-selection with explicit expiry.
+  - [x] RC37: opt-in process-follow with 120-sample CPU/RSS trends in the
+    generic inspector and Preferences, expiry after repeated missing samples,
+    and PID+start-time isolation; no persisted data.
+  - [ ] Optional time-window selection, explicit session export and native
+    lifetime/follow QA remain open.
 
 **Gate:** no actions on PID reuse, no hidden root service, accurate
 distinction between processes, GUI windows and logical applications.
