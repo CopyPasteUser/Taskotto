@@ -2,6 +2,11 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.44] — 2026-11-07
+
+- Added evidence-first, explicitly tentative CPU/memory/I/O pressure investigation hints. They use thresholded 10s/60s PSI and at least six above-threshold observations among eight consecutive sampler ticks; missing readings cannot masquerade as sustained pressure.
+- Hints describe measured evidence and a safe human follow-up, never assert causal attribution or trigger process actions. Synthetic tests cover thresholds, low sample counts, data gaps, non-finite values and mixed resources. Native controlled-workload validation remains a P6 gate.
+
 ## [1.0.0-rc.43] — 2026-11-07
 
 - Extended Linux PSI telemetry into history-backed CPU SOME, memory SOME/FULL and I/O SOME/FULL trend plots using the existing sampler and chart primitives. The five rolling series retain at most 120 measured observations each and do not invent missing samples or imply separate independent stall events.

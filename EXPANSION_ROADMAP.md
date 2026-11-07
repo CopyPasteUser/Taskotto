@@ -200,6 +200,11 @@ attribution, graceful behavior when cgroups or container APIs are unavailable.
     causal attribution.
 - [ ] Expose process/cgroup throttling, memory pressure and I/O congestion.
 - [ ] Evidence-first diagnostic explanations; clearly label hypotheses.
+  - [x] RC44: non-actionable CPU, memory and I/O investigation hints require
+    repeated PSI readings from eight consecutive monitor samples plus a
+    supporting 60-second average. Missing ticks cannot imply continuity;
+    explain observed numbers and suggested *human* checks, never a root cause.
+    Native workload/false-positive acceptance remains outstanding.
 - [ ] No claim of measuring the cause of a slowdown from a single percentage.
 
 **Gate:** synthetic and live workloads demonstrate correct source data,

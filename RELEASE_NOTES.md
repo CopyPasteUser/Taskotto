@@ -1,4 +1,12 @@
-# Taskotto 1.0.0-rc.43 — release candidate
+# Taskotto 1.0.0-rc.44 — release candidate
+
+## RC44 — Evidence-labeled Linux slowdown investigation
+
+- System Performance and all rice Preferences now show tentative CPU contention, memory stalls or I/O stall hints only when kernel-reported PSI is sufficiently sustained. The display requires at least six of eight consecutive sampler readings over chosen presentation thresholds and supporting 60-second rolling evidence. Missing ticks break the evidence chain.
+- Each hint cites its measured 10/60-second numbers and points to non-destructive follow-up checks (process list, cgroups, memory availability, block I/O). It never attributes a cause to a particular task, container or disk; thresholds are **heuristics**, not kernel definitions or performance guarantees.
+- Added deterministic gap, uncertainty, resource-mix and insufficient-data tests. Real controlled-workload acceptance and cross-source attribution are **not completed**.
+
+## RC43 — Linux pressure history
 
 **Date:** 2026-11-07 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
