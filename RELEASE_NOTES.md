@@ -1,4 +1,12 @@
-# Taskotto 1.0.0-rc.48 — release candidate
+# Taskotto 1.0.0-rc.49 — release candidate
+
+## RC49 — Real cgroup v2 pressure readings
+
+- The explicitly requested, asynchronously loaded selected-process cgroup report now includes real **cgroup-local** `cpu.pressure`, `memory.pressure` and `io.pressure` SOME/FULL rows, presenting kernel 10/60/300-second rolling stalled-time percentages and cumulative total seconds. Cgroup-level CPU FULL is included when supported; unlike the system-wide CPU FULL field, it has a meaningful workload-specific interpretation. See [Linux PSI documentation](https://docs.kernel.org/accounting/psi.html).
+- Validates metrics with the existing strict PSI parser; absent controllers, denied files and explicitly disabled `cgroup.pressure` accounting are shown as unavailable. The cgroup scope is always labeled and never attributed to one PID or mixed with system-wide metrics. No new polling loop, daemon, root privilege or mutable service API.
+- Added deterministic data-source and missing/NaN parsing tests and kept the PID/start-tick/membership revalidation. Host/container comparison and controlled load acceptance remain open.
+
+## RC48 — Accurate, selectable process-follow time windows
 
 ## RC48 — Accurate, selectable process-follow time windows
 

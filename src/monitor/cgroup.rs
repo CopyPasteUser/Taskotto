@@ -1,6 +1,6 @@
 //! Selected-process, read-only cgroup v2 inspection. Counters describe the
 //! cgroup (including other members/descendants), not just the chosen PID.
-use super::start_ticks;
+use super::{PressureMetric, psi::parse_pressure, start_ticks};
 use std::{
     fs,
     path::{Component, Path, PathBuf},
@@ -12,6 +12,7 @@ pub(crate) struct CgroupReport {
     /// Names inferred strictly from kernel cgroup path segments; no runtime or
     /// systemd API is queried and these are not verified app/container IDs.
     pub associations: Vec<AssociationHint>,
+    pub pressure: CgroupPressure,
     pub cpu_usage_usec: Option<u64>,
     pub cpu_throttled_usec: Option<u64>,
     pub cpu_throttled_events: Option<u64>,
@@ -19,6 +20,27 @@ pub(crate) struct CgroupReport {
     pub memory_limit: MemoryLimit,
     pub io_read_bytes: Option<u64>,
     pub io_write_bytes: Option<u64>,
+}
+
+#[derive(Clone, Debug, Default)]
+pub(crate) struct CgroupPressure {
+    pub cpu_some: Option<PressureMetric>,
+    pub cpu_full: Option<PressureMetric>,
+    pub memory_some: Option<PressureMetric>,
+    pub memory_full: Option<PressureMetric>,
+    pub io_some: Option<PressureMetric>,
+    pub io_full: Option<PressureMetric>,
+}
+
+impl CgroupPressure {
+    pub fn is_empty(&self) -> bool {
+        self.cpu_some.is_none()
+            && self.cpu_full.is_none()
+            && self.memory_some.is_none()
+            && self.memory_full.is_none()
+            && self.io_some.is_none()
+            && self.io_full.is_none()
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -69,6 +91,7 @@ fn inspect_under(pid: i32, original_start: u64, root: &Path) -> Result<CgroupRep
         Err(_) => MemoryLimit::Unavailable,
     };
     let io_stat = fs::read_to_string(target.join("io.stat")).ok();
+    let pressure = read_cgroup_pressure(&target);
     let (io_read_bytes, io_write_bytes) = io_stat
         .as_deref()
         .and_then(parse_io_stat)
@@ -83,6 +106,7 @@ fn inspect_under(pid: i32, original_start: u64, root: &Path) -> Result<CgroupRep
     }
     Ok(CgroupReport {
         associations: associations_from_path(&path),
+        pressure,
         path,
         cpu_usage_usec: parse_cpu_stat(&cpu, "usage_usec"),
         cpu_throttled_usec: parse_cpu_stat(&cpu, "throttled_usec"),
@@ -92,6 +116,42 @@ fn inspect_under(pid: i32, original_start: u64, root: &Path) -> Result<CgroupRep
         io_read_bytes,
         io_write_bytes,
     })
+}
+
+fn read_cgroup_pressure(target: &Path) -> CgroupPressure {
+    // Newer kernels allow disabling PSI accounting for an individual cgroup.
+    // Existing files may still be readable but their zeros no longer mean
+    // "no stalls". Suppress them instead of claiming a healthy workload.
+    if fs::read_to_string(target.join("cgroup.pressure"))
+        .ok()
+        .as_deref()
+        .is_some_and(pressure_accounting_disabled)
+    {
+        return CgroupPressure::default();
+    }
+    let cpu = fs::read_to_string(target.join("cpu.pressure")).ok();
+    let memory = fs::read_to_string(target.join("memory.pressure")).ok();
+    let io = fs::read_to_string(target.join("io.pressure")).ok();
+    parse_cgroup_pressure(cpu.as_deref(), memory.as_deref(), io.as_deref())
+}
+
+fn pressure_accounting_disabled(value: &str) -> bool {
+    value.trim() == "0"
+}
+
+fn parse_cgroup_pressure(
+    cpu: Option<&str>,
+    memory: Option<&str>,
+    io: Option<&str>,
+) -> CgroupPressure {
+    CgroupPressure {
+        cpu_some: cpu.and_then(|v| parse_pressure(v, "some")),
+        cpu_full: cpu.and_then(|v| parse_pressure(v, "full")),
+        memory_some: memory.and_then(|v| parse_pressure(v, "some")),
+        memory_full: memory.and_then(|v| parse_pressure(v, "full")),
+        io_some: io.and_then(|v| parse_pressure(v, "some")),
+        io_full: io.and_then(|v| parse_pressure(v, "full")),
+    }
 }
 
 fn associations_from_path(path: &str) -> Vec<AssociationHint> {
@@ -252,6 +312,9 @@ mod tests {
         assert!(inspect(pid, start + 1).is_err());
         if let Ok(result) = inspect(pid, start) {
             assert!(result.path.starts_with('/'));
+            if let Some(cpu) = result.pressure.cpu_some {
+                assert!(cpu.avg10_percent <= 100.0);
+            }
         }
     }
 
@@ -279,5 +342,34 @@ mod tests {
         assert_eq!(hints[0].category, "systemd scope-like path segment");
         assert_eq!(hints[1].category, "systemd service-like path segment");
         assert!(associations_from_path("/a\0bad.service").is_empty());
+    }
+
+    #[test]
+    fn parses_cgroup_specific_psi_without_mixing_system_scope_or_missing_sources() {
+        let cpu = "some avg10=9.50 avg60=6.00 avg300=4.00 total=90000\nfull avg10=1.25 avg60=1.00 avg300=0.50 total=23000\n";
+        let memory = "some avg10=3.00 avg60=2.00 avg300=1.00 total=500\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0\n";
+        let report = parse_cgroup_pressure(Some(cpu), Some(memory), None);
+        assert_eq!(report.cpu_some.unwrap().avg10_percent, 9.5);
+        assert_eq!(report.cpu_full.unwrap().total_stall_usec, 23000);
+        assert_eq!(report.memory_some.unwrap().avg60_percent, 2.0);
+        assert_eq!(report.memory_full.unwrap().total_stall_usec, 0);
+        assert!(report.io_some.is_none());
+        assert!(report.io_full.is_none());
+    }
+
+    #[test]
+    fn malformed_or_absent_cgroup_pressure_is_unavailable_not_zero() {
+        assert!(parse_cgroup_pressure(None, None, None).is_empty());
+        let report = parse_cgroup_pressure(
+            Some("some avg10=NaN avg60=0 avg300=0 total=0"),
+            None,
+            Some("full avg10=2 avg60=1 avg300=0 total=100"),
+        );
+        assert!(report.cpu_some.is_none());
+        assert!(report.cpu_full.is_none());
+        assert!(report.io_some.is_none());
+        assert_eq!(report.io_full.unwrap().avg10_percent, 2.0);
+        assert!(pressure_accounting_disabled("0\n"));
+        assert!(!pressure_accounting_disabled("1\n"));
     }
 }
