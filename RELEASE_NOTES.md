@@ -1,4 +1,13 @@
-# Taskotto 1.0.0-rc.47 — release candidate
+# Taskotto 1.0.0-rc.48 — release candidate
+
+## RC48 — Accurate, selectable process-follow time windows
+
+- Opt-in process-follow CPU/RSS charts now offer the actual elapsed last **30 seconds**, **2 minutes**, or **all retained observations**. They use each observed sample's GUI-receipt Unix timestamp, not fabricated evenly spaced time or a fixed samples-per-second assumption; window peaks update to match only displayed samples.
+- Missing timestamps and sampler gaps never become zero. Charts stack below 640 px; the PID and start-tick identity gate, three-miss process expiry, 120-sample RAM bound and no persisted process data remain unchanged.
+- Added regression tests for inclusive time boundaries, missing readings, window filtering and retention. The real-device lifetime/accessibility QA gate still needs physical verification.
+- Updated the process-follow README gallery screenshot through the real Taskotto headless renderer, and documented the existing one-file screenshot filter for faster visual QA.
+
+## RC47 — Frutiger Aero visual polish for custom RicePacks
 
 ## RC47 — Frutiger Aero visual polish for custom RicePacks
 

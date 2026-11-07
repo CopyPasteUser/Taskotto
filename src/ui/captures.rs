@@ -42,7 +42,10 @@ fn generate_headless_ui_screenshots() {
                 .map(ProcessFollow::new);
         }
         if let Some(follow) = &mut followed_sample {
-            follow.record(&snapshot);
+            follow.record(
+                &snapshot,
+                history.sampled_at_unix_ms.back().copied().flatten(),
+            );
         }
         latest = Some(snapshot);
         thread::sleep(Duration::from_millis(150));

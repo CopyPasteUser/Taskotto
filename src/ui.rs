@@ -147,6 +147,9 @@ struct ProcessFollow {
     name: String,
     cpu: VecDeque<f32>,
     rss_mib: VecDeque<f32>,
+    sampled_at_unix_ms: VecDeque<Option<u64>>,
+    /// Session-only elapsed window, relative to the last observed sample.
+    view_seconds: Option<u64>,
     missed: usize,
     active: bool,
 }
@@ -161,12 +164,14 @@ impl ProcessFollow {
             name: process.name.clone(),
             cpu: VecDeque::new(),
             rss_mib: VecDeque::new(),
+            sampled_at_unix_ms: VecDeque::new(),
+            view_seconds: None,
             missed: 0,
             active: true,
         }
     }
 
-    fn record(&mut self, snapshot: &Snapshot) {
+    fn record(&mut self, snapshot: &Snapshot, timestamp: Option<u64>) {
         if !self.active {
             return;
         }
@@ -182,6 +187,10 @@ impl ProcessFollow {
             return;
         };
         self.missed = 0;
+        if self.sampled_at_unix_ms.len() == Self::LIMIT {
+            self.sampled_at_unix_ms.pop_front();
+        }
+        self.sampled_at_unix_ms.push_back(timestamp);
         for (history, value) in [
             (&mut self.cpu, process.cpu_percent),
             (
@@ -212,7 +221,7 @@ impl History {
         }
         self.sampled_at_unix_ms.push_back(timestamp);
         if let Some(follow) = &mut self.process_follow {
-            follow.record(snapshot);
+            follow.record(snapshot, timestamp);
         }
         self.cores
             .resize_with(snapshot.cores_percent.len(), VecDeque::new);
@@ -2155,7 +2164,7 @@ impl TaskottoApp {
                 self.history.process_follow = None;
             }
         });
-        let Some(follow) = &self.history.process_follow else {
+        let Some(follow) = &mut self.history.process_follow else {
             return;
         };
         let state = if !follow.active {
@@ -2168,34 +2177,67 @@ impl TaskottoApp {
         ui.label(
             RichText::new(format!("{} · PID {} · {}", follow.name, follow.pid, state)).small(),
         );
+        ui.horizontal_wrapped(|ui| {
+            ui.label("Show last");
+            for (duration, label) in [
+                (Some(30), "30 seconds"),
+                (Some(120), "2 minutes"),
+                (None, "All samples"),
+            ] {
+                ui.selectable_value(&mut follow.view_seconds, duration, label);
+            }
+        });
+        ui.label(RichText::new("Time windows are relative to the latest matching process sample; an ended process keeps its last measured history.").small().weak());
         if follow.cpu.is_empty() {
             ui.label(RichText::new("Waiting for the next sample…").small().weak());
             return;
         }
         let accent = accent_color(&self.settings);
-        let cpu_peak = graph_max(&follow.cpu, &VecDeque::new());
-        let mem_peak = graph_max(&follow.rss_mib, &VecDeque::new());
+        let cpu_values =
+            within_window(&follow.cpu, &follow.sampled_at_unix_ms, follow.view_seconds);
+        let mem_values = within_window(
+            &follow.rss_mib,
+            &follow.sampled_at_unix_ms,
+            follow.view_seconds,
+        );
+        if cpu_values.is_empty() || mem_values.is_empty() {
+            ui.label(
+                RichText::new("Timestamps unavailable for this history window.")
+                    .small()
+                    .weak(),
+            );
+            return;
+        }
+        let cpu_peak = graph_max(&cpu_values, &VecDeque::new());
+        let mem_peak = graph_max(&mem_values, &VecDeque::new());
         let cpu_max = cpu_peak.max(100.0);
         let mem_max = mem_peak.max(1.0);
-        ui.columns(2, |columns| {
-            columns[0].label(format!(
+        let draw_cpu = |ui: &mut egui::Ui| {
+            ui.label(format!(
                 "CPU · latest {:.1}% · peak {:.1}%",
                 follow.cpu.back().unwrap_or(&0.0),
                 cpu_peak
             ));
-            chart(&mut columns[0], &follow.cpu, cpu_max, accent);
-            columns[1].label(format!(
+            chart(ui, &cpu_values, cpu_max, accent);
+        };
+        let draw_mem = |ui: &mut egui::Ui| {
+            ui.label(format!(
                 "RSS · latest {:.1} MiB · peak {:.1} MiB",
                 follow.rss_mib.back().unwrap_or(&0.0),
                 mem_peak
             ));
-            chart(
-                &mut columns[1],
-                &follow.rss_mib,
-                mem_max,
-                Color32::from_rgb(82, 173, 155),
-            );
-        });
+            chart(ui, &mem_values, mem_max, Color32::from_rgb(82, 173, 155));
+        };
+        if ui.available_width() < 640.0 {
+            draw_cpu(ui);
+            ui.add_space(7.0);
+            draw_mem(ui);
+        } else {
+            ui.columns(2, |columns| {
+                draw_cpu(&mut columns[0]);
+                draw_mem(&mut columns[1]);
+            });
+        }
     }
 
     fn confirmation_dialog(&mut self, ctx: &egui::Context) {
@@ -2580,6 +2622,32 @@ fn graph_max(first: &VecDeque<f32>, second: &VecDeque<f32>) -> f32 {
         .fold(1.0, f32::max)
 }
 
+fn within_window(
+    values: &VecDeque<f32>,
+    times: &VecDeque<Option<u64>>,
+    seconds: Option<u64>,
+) -> VecDeque<f32> {
+    let Some(seconds) = seconds else {
+        return values.clone();
+    };
+    if values.len() != times.len() {
+        return VecDeque::new();
+    }
+    let Some(end) = times.back().copied().flatten() else {
+        return VecDeque::new();
+    };
+    let start = end.saturating_sub(seconds.saturating_mul(1000));
+    values
+        .iter()
+        .zip(times)
+        .filter_map(|(value, timestamp)| {
+            timestamp
+                .filter(|stamp| *stamp >= start && *stamp <= end)
+                .map(|_| *value)
+        })
+        .collect()
+}
+
 fn preference_section(ui: &mut egui::Ui, title: &str, xp: bool) {
     if xp {
         ui.label(RichText::new(title).size(13.0).strong());
@@ -2806,9 +2874,11 @@ mod tests {
         }
         let trail = history.process_follow.as_ref().unwrap();
         assert_eq!(trail.cpu.len(), ProcessFollow::LIMIT);
+        assert_eq!(trail.sampled_at_unix_ms.len(), ProcessFollow::LIMIT);
         assert_eq!(trail.rss_mib.len(), ProcessFollow::LIMIT);
         assert_eq!(trail.cpu.back(), Some(&12.5));
         assert_eq!(trail.rss_mib.back(), Some(&4.0));
+        assert_eq!(trail.view_seconds, None);
 
         // Reused numeric PID with a different start tick must not be recorded.
         snapshot.processes[0].start_ticks = 301;
@@ -2866,6 +2936,23 @@ mod tests {
         assert_eq!(history.psi_cpu_some.len(), 120);
         assert_eq!(history.psi_cpu_some.back().copied(), Some(7.5));
         assert!(history.psi_ticks.back().unwrap()[0].is_none());
+    }
+
+    #[test]
+    fn process_follow_window_selects_only_recent_observations_without_mutating_retention() {
+        let values = VecDeque::from_iter((0..120).map(|v| v as f32));
+        let mut timestamps = VecDeque::from_iter((0..120).map(|v| Some(v * 1000)));
+        let newest_30 = within_window(&values, &timestamps, Some(30));
+        assert_eq!(newest_30.len(), 31); // includes the exact 30 s boundary
+        assert_eq!(newest_30.front().copied(), Some(89.0));
+        assert_eq!(newest_30.back().copied(), Some(119.0));
+        assert_eq!(graph_max(&newest_30, &VecDeque::new()), 119.0);
+        assert_eq!(within_window(&values, &timestamps, Some(120)), values);
+        assert_eq!(within_window(&values, &timestamps, None), values);
+        timestamps[100] = None;
+        assert_eq!(within_window(&values, &timestamps, Some(30)).len(), 30);
+        timestamps.pop_back();
+        assert!(within_window(&values, &timestamps, Some(30)).is_empty());
     }
 
     #[test]
