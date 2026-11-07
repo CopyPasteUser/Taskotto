@@ -1,4 +1,11 @@
-# Taskotto 1.0.0-rc.52 — release candidate
+# Taskotto 1.0.0-rc.53 — release candidate
+
+## RC53 — Bounded parent/child cgroup context
+
+- The selected-PID cgroup inspector now offers a collapsible snapshot of the direct parent and up to 16 immediately nested cgroups. Their kernel-provided cumulative CPU and current-memory values are shown separately, with no extra daemon or privileged API. Enumeration checks at most 128 entries and marks truncated or unavailable views explicitly.
+- Parent/child counters can overlap and must not be summed. The complete selected-process PID/start and membership revalidation from RC41 remains mandatory. A one-time neighborhood snapshot is not a continuous cgroup history or verified container/service inventory.
+- Added hermetic cgroupfs fixtures for nested groups, bounded scanning, ordering, missing groups and unavailable metrics. Native multi-container acceptance remains open.
+
 
 ## RC52 — User-local desktop installation recovery
 

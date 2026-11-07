@@ -191,6 +191,9 @@ non-AMD machine. No mandatory vendor SDK for the baseline binary.
     and `io.pressure` SOME/FULL with kernel parser, accurate 10/60/300-second
     stall percentages and cumulative microseconds; absent sources unavailable,
     never host/cgroup scope conflation. Live workload QA still open.
+  - [x] RC53: bounded direct-parent/16-child cgroup v2 neighborhood in the
+    on-demand inspector, at most 128 directory entries, explicit truncation
+    and separate cumulative CPU/memory values. Not a recursive tree or rate.
   - [ ] Multi-cgroup and nested-hierarchy overview, dynamic group sample
     rates, container host/namespace accounting and native stress QA.
 - [ ] Show user systemd units and optional Podman/Docker associations.
