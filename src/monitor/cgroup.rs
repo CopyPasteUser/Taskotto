@@ -9,6 +9,9 @@ use std::{
 #[derive(Clone, Debug)]
 pub(crate) struct CgroupReport {
     pub path: String,
+    /// Names inferred strictly from kernel cgroup path segments; no runtime or
+    /// systemd API is queried and these are not verified app/container IDs.
+    pub associations: Vec<AssociationHint>,
     pub cpu_usage_usec: Option<u64>,
     pub cpu_throttled_usec: Option<u64>,
     pub cpu_throttled_events: Option<u64>,
@@ -16,6 +19,12 @@ pub(crate) struct CgroupReport {
     pub memory_limit: MemoryLimit,
     pub io_read_bytes: Option<u64>,
     pub io_write_bytes: Option<u64>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct AssociationHint {
+    pub category: &'static str,
+    pub detail: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -73,6 +82,7 @@ fn inspect_under(pid: i32, original_start: u64, root: &Path) -> Result<CgroupRep
         return Err("Selected process moved to another cgroup during inspection".into());
     }
     Ok(CgroupReport {
+        associations: associations_from_path(&path),
         path,
         cpu_usage_usec: parse_cpu_stat(&cpu, "usage_usec"),
         cpu_throttled_usec: parse_cpu_stat(&cpu, "throttled_usec"),
@@ -82,6 +92,63 @@ fn inspect_under(pid: i32, original_start: u64, root: &Path) -> Result<CgroupRep
         io_read_bytes,
         io_write_bytes,
     })
+}
+
+fn associations_from_path(path: &str) -> Vec<AssociationHint> {
+    let mut hints = Vec::new();
+    // The only trusted fact is the exact kernel membership path. Unit and
+    // runtime ownership remain unverified without talking to those services.
+    for component in path.split('/').filter(|part| !part.is_empty()) {
+        if component.len() > 160 || component.chars().any(char::is_control) {
+            continue;
+        }
+        if let Some(id) = component
+            .strip_prefix("docker-")
+            .and_then(|v| v.strip_suffix(".scope"))
+            && id.len() == 64
+            && id.bytes().all(|b| b.is_ascii_hexdigit())
+        {
+            hints.push(AssociationHint {
+                category: "Docker-like cgroup scope",
+                detail: format!("ID prefix {} (unverified)", &id[..12]),
+            });
+        } else if let Some(id) = component
+            .strip_prefix("libpod-")
+            .and_then(|v| v.strip_suffix(".scope"))
+            && id.len() == 64
+            && id.bytes().all(|b| b.is_ascii_hexdigit())
+        {
+            hints.push(AssociationHint {
+                category: "Podman-like cgroup scope",
+                detail: format!("ID prefix {} (unverified)", &id[..12]),
+            });
+        } else if component.starts_with("app-flatpak-") && component.ends_with(".scope") {
+            hints.push(AssociationHint {
+                category: "Flatpak-like cgroup scope",
+                detail: component.to_owned(),
+            });
+        } else if component.ends_with(".service") && component.len() > ".service".len() {
+            hints.push(AssociationHint {
+                category: "systemd service-like path segment",
+                detail: component.to_owned(),
+            });
+        } else if component.ends_with(".scope") && component.len() > ".scope".len() {
+            hints.push(AssociationHint {
+                category: "systemd scope-like path segment",
+                detail: component.to_owned(),
+            });
+        }
+    }
+    // Deeply nested cgroups may have many .scope segments. Keep the summary
+    // compact while retaining the full authoritative path above it.
+    hints
+        .into_iter()
+        .rev()
+        .take(4)
+        .collect::<Vec<_>>()
+        .into_iter()
+        .rev()
+        .collect()
 }
 
 fn parse_unified_path(text: &str) -> Option<String> {
@@ -186,5 +253,31 @@ mod tests {
         if let Ok(result) = inspect(pid, start) {
             assert!(result.path.starts_with('/'));
         }
+    }
+
+    #[test]
+    fn identifies_only_naming_hints_and_never_claims_runtime_verification() {
+        let docker_id = "a".repeat(64);
+        let podman_id = "b".repeat(64);
+        let path = format!(
+            "/system.slice/sshd.service/docker-{docker_id}.scope/libpod-{podman_id}.scope/app-flatpak-org.example.App-42.scope"
+        );
+        let hints = associations_from_path(&path);
+        assert_eq!(hints.len(), 4);
+        assert_eq!(hints[0].category, "systemd service-like path segment");
+        assert_eq!(hints[1].category, "Docker-like cgroup scope");
+        assert_eq!(hints[1].detail, "ID prefix aaaaaaaaaaaa (unverified)");
+        assert_eq!(hints[2].category, "Podman-like cgroup scope");
+        assert_eq!(hints[3].category, "Flatpak-like cgroup scope");
+    }
+
+    #[test]
+    fn arbitrary_names_and_incorrect_ids_do_not_make_container_claims() {
+        assert!(associations_from_path("/user.slice/app.slice/myprogram").is_empty());
+        let hints = associations_from_path("/user.slice/docker-NOT-A-CONTAINER.scope/fake.service");
+        assert_eq!(hints.len(), 2);
+        assert_eq!(hints[0].category, "systemd scope-like path segment");
+        assert_eq!(hints[1].category, "systemd service-like path segment");
+        assert!(associations_from_path("/a\0bad.service").is_empty());
     }
 }

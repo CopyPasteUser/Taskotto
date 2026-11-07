@@ -1987,6 +1987,19 @@ impl TaskottoApp {
                         .small()
                         .strong(),
                 );
+                if !report.associations.is_empty() {
+                    ui.label(
+                        RichText::new(
+                            "Possible service / container associations · from path names only",
+                        )
+                        .small()
+                        .strong(),
+                    );
+                    for hint in &report.associations {
+                        ui.label(format!("{}: {}", hint.category, hint.detail));
+                    }
+                    ui.label(RichText::new("These are unverified cgroup naming conventions, NOT confirmed systemd/Flatpak/Docker/Podman identities. No runtime API, service control or container access is used.").small().weak());
+                }
                 let available_bytes = |value: Option<u64>| {
                     value
                         .map(format::bytes)

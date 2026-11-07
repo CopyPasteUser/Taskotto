@@ -1,4 +1,11 @@
-# Taskotto 1.0.0-rc.45 — release candidate
+# Taskotto 1.0.0-rc.46 — release candidate
+
+## RC46 — Read-only service and container naming hints
+
+- The existing explicitly requested cgroup inspector now highlights plausible systemd .service/.scope paths, strict Docker/Podman container-ID scope conventions (12-character prefix only) and Flatpak-style scope names. It derives these solely from the selected PID's kernel-verified cgroup v2 membership and never contacts a systemd, Podman or Docker API.
+- All associations are **unverified naming hints**, not proof that a specific service or container owns the process. No service/container controls, elevated privileges or background discovery. Parser regression tests cover false positives, control bytes and path ambiguity; native runtime comparisons are still pending.
+
+## RC45 — Explicit session history export
 
 ## RC45 — Explicit session history export
 

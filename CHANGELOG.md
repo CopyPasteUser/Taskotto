@@ -2,6 +2,11 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.46] — 2026-11-07
+
+- Added strictly read-only, bounded cgroup v2 membership naming hints for systemd-like services/scopes, Flatpak-like app scopes, and Docker/Podman-style 64-hex unit IDs. Only the cgroup path is authoritative; display explicitly refuses to claim verified service ownership, API linkage or PID-container attribution.
+- Synthetic path tests cover valid naming conventions, malformed IDs, controls and absent paths. No runtime sockets, root privileges, daemon or process mutations.
+
 ## [1.0.0-rc.45] — 2026-11-07
 
 - Added explicit, no-overwrite, user-only-permission CSV and JSON exports of up to 120 session-only sampler-visible Linux system samples from every rice's Preferences. GUI-receipt timestamped rows include CPU, RAM, network, disk, nullable per-tick PSI, export schema version, observable scope and configured (nominal) interval.
