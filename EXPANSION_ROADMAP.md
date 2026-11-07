@@ -150,8 +150,11 @@ with **no new Rust UI module**. No untrusted scripts or arbitrary shell hooks.
     process-follow views or all retained observations, with correct peaks,
     missing-timestamp exclusion and narrow-screen stacked graphs; sampling
     retention remains 120 observations and no new daemon is started.
-  - [ ] Explicit per-process history export and native lifetime/follow QA
-    remain open; RC45's system-aggregate export excludes process identities.
+  - [x] RC50: explicit private CSV/JSON export of the opted-in followed PID,
+    start ticks, timestamps, CPU and RSS; new-file-only, `0600`, no commands
+    or names, no background persistence. RC45's separate host-aggregate export
+    still excludes process identities.
+  - [ ] Native lifetime/follow/export acceptance remains open.
 
 **Gate:** no actions on PID reuse, no hidden root service, accurate
 distinction between processes, GUI windows and logical applications.

@@ -2,6 +2,12 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.50] — 2026-11-07
+
+- Added deliberately triggered, private CSV/JSON export of the currently followed process's bounded CPU/RSS history. Includes numeric PID+start-tick identity, observed GUI-receipt timestamps, MiB/percentage units, scope and nominal interval; excludes process name and command, refuses existing files, requires an absolute path and writes owner-only permissions.
+- Reused RC45's safe new-file writer rather than duplicating file logic. Tests cover JSON/CSV fields, missing timestamps, alignment, sensitive-name omission, overwrite refusal and file mode. Process history stays in RAM until user chooses export.
+- Regenerated the real headless process-follow screenshot to include the export control and its privacy explanation.
+
 ## [1.0.0-rc.49] — 2026-11-07
 
 - Added genuine cgroup-local CPU, memory and I/O PSI to the existing selected-PID, asynchronous read-only cgroup v2 inspector. Reuses Taskotto's strictly validated kernel PSI parser for SOME/FULL 10/60/300-second stalled-task percentages and cumulative microseconds; cgroup CPU FULL is supported when present, unlike meaningless system CPU FULL.

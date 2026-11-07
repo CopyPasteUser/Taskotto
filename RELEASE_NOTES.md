@@ -1,4 +1,10 @@
-# Taskotto 1.0.0-rc.49 — release candidate
+# Taskotto 1.0.0-rc.50 — release candidate
+
+## RC50 — Optional private followed-process history export
+
+- The process-follow control in Details and Preferences now offers a separate explicit CSV/JSON export to a new absolute file with Unix `0600` permissions. Only the selected follow's numeric PID, start-tick identity, recorded timestamp, CPU percentage and RSS MiB enter the file; the process name, command, other processes and unrelated host histories are not included.
+- Every row is labeled with schema version, process scope and nominal interval. Missing timestamps remain missing, no existing file is overwritten and data never persists without a deliberate click. Export continues to refer to the followed PID after changing the selection; the display identifies that target.
+- Added pure formatting, missing-data, identity, no-overwrite and permissions tests. Native user interaction/permission acceptance remains open.
 
 ## RC49 — Real cgroup v2 pressure readings
 

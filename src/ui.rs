@@ -150,6 +150,8 @@ struct ProcessFollow {
     sampled_at_unix_ms: VecDeque<Option<u64>>,
     /// Session-only elapsed window, relative to the last observed sample.
     view_seconds: Option<u64>,
+    /// Opt-in destination; never serialized to user preferences.
+    export_path: String,
     missed: usize,
     active: bool,
 }
@@ -166,6 +168,7 @@ impl ProcessFollow {
             rss_mib: VecDeque::new(),
             sampled_at_unix_ms: VecDeque::new(),
             view_seconds: None,
+            export_path: String::new(),
             missed: 0,
             active: true,
         }
@@ -2272,6 +2275,30 @@ impl TaskottoApp {
                 draw_mem(&mut columns[1]);
             });
         }
+        ui.add_space(8.0);
+        ui.horizontal_wrapped(|ui| {
+            ui.label("Export followed process");
+            ui.add(
+                egui::TextEdit::singleline(&mut follow.export_path)
+                    .desired_width(330.0)
+                    .hint_text("/absolute/path/to/process.csv"),
+            );
+            if ui.button("Save CSV / JSON").clicked() {
+                let path = PathBuf::from(follow.export_path.trim());
+                match history_export::write_process_new(follow, &path, self.settings.refresh_ms) {
+                    Ok(count) => {
+                        self.notification = Some(format!(
+                            "Exported {count} followed-process samples: {}",
+                            path.display()
+                        ))
+                    }
+                    Err(error) => {
+                        self.notification = Some(format!("Process-follow export failed: {error}"))
+                    }
+                }
+            }
+        });
+        ui.label(RichText::new("Explicit export includes the selected PID and start ticks, CPU and RSS but no command/name. A new owner-readable file is created; existing files are never overwritten.").small().weak());
     }
 
     fn confirmation_dialog(&mut self, ctx: &egui::Context) {
