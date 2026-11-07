@@ -22,6 +22,15 @@ jobs:
       - run: cargo clippy --locked --all-targets -- -D warnings
       - run: cargo test --locked --all-targets
       - run: cargo build --locked --release
+      - name: Smoke-test bundled installer, launcher and icon
+        run: |
+          test_dir=$(mktemp -d)
+          cp install.sh target/release/taskotto "$test_dir/"
+          HOME="$test_dir/home" CARGO_HOME="$test_dir/home/.cargo" XDG_DATA_HOME="$test_dir/user-data" bash "$test_dir/install.sh"
+          test -x "$test_dir/home/.cargo/bin/taskotto"
+          test -s "$test_dir/user-data/applications/io.github.copypasteuser.taskotto.desktop"
+          test -s "$test_dir/user-data/icons/hicolor/scalable/apps/io.github.copypasteuser.taskotto.svg"
+          grep -Fq "$test_dir/home/.cargo/bin/taskotto" "$test_dir/user-data/applications/io.github.copypasteuser.taskotto.desktop"
       - run: ./target/release/taskotto --snapshot
       - run: ./target/release/taskotto --snapshot --json | jq -e '.logical_cpus > 0 and .memory.total > 0'
       - run: RUSTDOCFLAGS='-D warnings' cargo doc --locked --no-deps
