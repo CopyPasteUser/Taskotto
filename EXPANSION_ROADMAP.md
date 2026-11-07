@@ -146,8 +146,12 @@ with **no new Rust UI module**. No untrusted scripts or arbitrary shell hooks.
   - [x] RC37: opt-in process-follow with 120-sample CPU/RSS trends in the
     generic inspector and Preferences, expiry after repeated missing samples,
     and PID+start-time isolation; no persisted data.
-  - [ ] Optional time-window selection, explicit session export and native
-    lifetime/follow QA remain open.
+  - [x] RC48: session-only, timestamp-filtered 30-second and 2-minute
+    process-follow views or all retained observations, with correct peaks,
+    missing-timestamp exclusion and narrow-screen stacked graphs; sampling
+    retention remains 120 observations and no new daemon is started.
+  - [ ] Explicit per-process history export and native lifetime/follow QA
+    remain open; RC45's system-aggregate export excludes process identities.
 
 **Gate:** no actions on PID reuse, no hidden root service, accurate
 distinction between processes, GUI windows and logical applications.

@@ -2,6 +2,12 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.48] — 2026-11-07
+
+- Added optional elapsed 30-second and 2-minute views (or entire session retention) to the opt-in per-PID CPU/RSS follow panel, based on GUI-receipt timestamps rather than assuming equally spaced samples. CPU/RSS peaks reflect the selected window, and missing timestamps cannot masquerade as recent evidence.
+- At narrow widths the two charts stack instead of squeezing into unreadable columns. Existing PID+start-tick identity verification, three-missing-sample expiry, 120-observation memory bound and no-persistence defaults remain intact. Deterministic time-boundary/gap tests added.
+- Regenerated the actual `taskotto-system-process-follow.png` gallery screenshot with the three functional time-window controls visible, and documented targeted screenshot reproduction.
+
 ## [1.0.0-rc.47] — 2026-11-07
 
 - Audited Frutiger Aero's remaining high-visibility navigation and hero panel hardcoded surfaces: horizontal tabs and opt-in sidebar use semantic control color, hero/layered backdrop and heading/subheading use table and readable-on-table colors, chart outlines honor the border token.

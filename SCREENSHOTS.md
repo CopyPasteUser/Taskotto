@@ -34,6 +34,15 @@ TASKOTTO_SCREENSHOT_DIR=assets/screenshots \
   cargo test --locked generate_headless_ui_screenshots -- --ignored --nocapture
 ```
 
+To refresh a single screenshot without repainting all 51, set the optional
+`TASKOTTO_SCREENSHOT_FILTER` to its exact filename (or a unique substring):
+
+```bash
+TASKOTTO_SCREENSHOT_DIR=assets/screenshots \
+TASKOTTO_SCREENSHOT_FILTER=taskotto-system-process-follow.png \
+  cargo test --locked generate_headless_ui_screenshots -- --ignored --nocapture
+```
+
 The command samples real system activity and writes:
 
 ### Generated functional screens (P2 foundation)

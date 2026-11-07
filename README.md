@@ -6,11 +6,11 @@
 
 A customizable process manager and system monitor written in **Rust**. Runs alone or alongside [RiceBowl](https://github.com/CopyPasteUser/Ricebowl) on **X11 and Wayland**.
 
-![License](https://img.shields.io/badge/license-MIT-blue) ![Rust](https://img.shields.io/badge/language-Rust-orange) ![Status](https://img.shields.io/badge/status-1.0%20RC47-yellow)
+![License](https://img.shields.io/badge/license-MIT-blue) ![Rust](https://img.shields.io/badge/language-Rust-orange) ![Status](https://img.shields.io/badge/status-1.0%20RC48-yellow)
 
 </div>
 
-> **Status:** `1.0.0-rc.47` — seven dedicated interfaces: Frutiger Aero, ChromeOS, Windows 98, XP Luna, Windows 7, Windows 10 and macOS Activity Monitor, plus optional data-defined client screens. **All eight profiles leave the window frame, title and window buttons to RiceBowl/the active window manager**; Taskotto draws only its content, menus and functional toolbars. Native GUI and resource-use acceptance are still outstanding. See [1.0 roadmap](ROADMAP.md), [future development roadmap](EXPANSION_ROADMAP.md) and [QA checklist](QA.md). This is **not yet stable 1.0**.
+> **Status:** `1.0.0-rc.48` — seven dedicated interfaces: Frutiger Aero, ChromeOS, Windows 98, XP Luna, Windows 7, Windows 10 and macOS Activity Monitor, plus optional data-defined client screens. **All eight profiles leave the window frame, title and window buttons to RiceBowl/the active window manager**; Taskotto draws only its content, menus and functional toolbars. Native GUI and resource-use acceptance are still outstanding. See [1.0 roadmap](ROADMAP.md), [future development roadmap](EXPANSION_ROADMAP.md) and [QA checklist](QA.md). This is **not yet stable 1.0**.
 
 ## Screenshots
 
@@ -135,7 +135,7 @@ A customizable process manager and system monitor written in **Rust**. Runs alon
 
 ## What works
 
-- **Processes:** searchable live list, CPU/RAM/I/O/PID/name sort, session-only sort freeze (`Ctrl+Shift+Space`), tree, user filter, process start/runtime and per-process I/O rates. Opt-in **Follow selected process** charts record up to 120 CPU/RSS samples without PID-reuse mistakes; open generic Details or Preferences → Process follow. Details/Properties/Info summarize observed descendant CPU and **summed RSS** (shared pages may overlap), plus read-only leader Nice/CPU-affinity metadata (other threads may differ). An explicit **Measure PSS now** action in generic Details/Preferences calculates proportional memory for at most 128 observed tree processes on a background worker; missing procfs permissions show an incomplete report, never fake zero.
+- **Processes:** searchable live list, CPU/RAM/I/O/PID/name sort, session-only sort freeze (`Ctrl+Shift+Space`), tree, user filter, process start/runtime and per-process I/O rates. Opt-in **Follow selected process** charts record up to 120 CPU/RSS samples without PID-reuse mistakes; switch between the last **30 seconds, 2 minutes or all observations** using real GUI-receipt timestamps. At narrow widths charts stack vertically; no extra daemon or saved process log. Open generic Details or Preferences → Process follow. Details/Properties/Info summarize observed descendant CPU and **summed RSS** (shared pages may overlap), plus read-only leader Nice/CPU-affinity metadata (other threads may differ). An explicit **Measure PSS now** action in generic Details/Preferences calculates proportional memory for at most 128 observed tree processes on a background worker; missing procfs permissions show an incomplete report, never fake zero.
 - **Safe actions:** terminate, force kill, pause and resume with confirmation and PID-reuse protection via Linux `pidfd`.
 - **Performance:** CPU/core load, RAM/swap, network RX/TX and disk read/write rates, bounded comparative rolling graphs. Linux **PSI** shows measured CPU, memory and I/O task-stall percentages over 10/60/300 seconds, bounded PSI trend charts and conservative, evidence-labeled investigation hints in System Performance and all rice Preferences. Thresholds are display heuristics, not kernel limits or proven causes.
 - **Session export:** In Preferences, explicitly export up to 120 Linux sampler-visible system samples as a new `.csv` or `.json` file. Exports include GUI-receipt Unix timestamps, nominal interval and units; container visibility may vary. No file is written by default; no existing destination is overwritten, and no process names, commands or PIDs are included. Missing PSI readings remain missing.
