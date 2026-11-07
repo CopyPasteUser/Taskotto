@@ -151,7 +151,14 @@ distinction between processes, GUI windows and logical applications.
 ## P4 — GPU and hardware telemetry
 
 - [ ] Optional AMD, Intel and NVIDIA backends with capability detection.
+  - [x] RC39: safe DRM device discovery and native AMDGPU busy/VRAM sysfs
+    counters, plus optional hwmon temperature/power/frequency and Intel GT
+    frequency with truthful per-device capability gaps.
+  - [ ] Intel/NVIDIA utilization and additional supported driver-specific
+    metrics, with real hardware and permission tests.
 - [ ] Show available GPU utilization, memory, clocks, temperatures and power.
+  - [x] RC39: display all supported sampled AMDGPU values in System
+    Performance and every rice's Preferences; missing values remain unknown.
 - [ ] Per-process GPU use only where the corresponding driver exposes
   trustworthy process attribution.
 - [ ] Battery/power information where available; distinguish unavailable

@@ -154,6 +154,7 @@ mod tests {
             rates: Default::default(),
             uptime_seconds: 0.0,
             logical_cpus: 1,
+            gpus: vec![],
         };
         assert!(
             inspect_tree(&snapshot, (400, 322))
@@ -183,6 +184,7 @@ mod tests {
             rates: Default::default(),
             uptime_seconds: 0.0,
             logical_cpus: 1,
+            gpus: vec![],
         };
         let result = inspect_tree(&snapshot, (pid, start)).unwrap();
         assert_eq!(result.observed, 1);
