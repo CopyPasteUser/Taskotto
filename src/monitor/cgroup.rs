@@ -9,6 +9,8 @@ use std::{
 #[derive(Clone, Debug)]
 pub(crate) struct CgroupReport {
     pub path: String,
+    /// Bounded one-level neighborhood from the same read-only cgroupfs view.
+    pub neighborhood: CgroupNeighborhood,
     /// Names inferred strictly from kernel cgroup path segments; no runtime or
     /// systemd API is queried and these are not verified app/container IDs.
     pub associations: Vec<AssociationHint>,
@@ -20,6 +22,21 @@ pub(crate) struct CgroupReport {
     pub memory_limit: MemoryLimit,
     pub io_read_bytes: Option<u64>,
     pub io_write_bytes: Option<u64>,
+}
+
+#[derive(Clone, Debug)]
+pub(crate) struct CgroupNeighbor {
+    pub path: String,
+    pub cpu_usage_usec: Option<u64>,
+    pub memory_bytes: Option<u64>,
+}
+
+#[derive(Clone, Debug, Default)]
+pub(crate) struct CgroupNeighborhood {
+    pub parent: Option<CgroupNeighbor>,
+    /// None means directory enumeration failed, not that the group is empty.
+    pub children: Option<Vec<CgroupNeighbor>>,
+    pub truncated: bool,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -92,6 +109,7 @@ fn inspect_under(pid: i32, original_start: u64, root: &Path) -> Result<CgroupRep
     };
     let io_stat = fs::read_to_string(target.join("io.stat")).ok();
     let pressure = read_cgroup_pressure(&target);
+    let neighborhood = read_neighborhood(&canonical_root, &canonical_target);
     let (io_read_bytes, io_write_bytes) = io_stat
         .as_deref()
         .and_then(parse_io_stat)
@@ -106,6 +124,7 @@ fn inspect_under(pid: i32, original_start: u64, root: &Path) -> Result<CgroupRep
     }
     Ok(CgroupReport {
         associations: associations_from_path(&path),
+        neighborhood,
         pressure,
         path,
         cpu_usage_usec: parse_cpu_stat(&cpu, "usage_usec"),
@@ -116,6 +135,69 @@ fn inspect_under(pid: i32, original_start: u64, root: &Path) -> Result<CgroupRep
         io_read_bytes,
         io_write_bytes,
     })
+}
+
+/// Inspect only the direct parent and at most 16 of the immediate children.
+/// Reading 128 entries is the upper bound, even in huge containerized trees;
+/// these are cumulative group counters, not disjoint per-process totals.
+fn read_neighborhood(root: &Path, target: &Path) -> CgroupNeighborhood {
+    const SCAN_LIMIT: usize = 128;
+    const CHILD_LIMIT: usize = 16;
+    let parent = (target != root)
+        .then(|| target.parent())
+        .flatten()
+        .filter(|path| path.starts_with(root))
+        .map(|path| neighbor_from_path(root, path));
+    let Ok(entries) = fs::read_dir(target) else {
+        return CgroupNeighborhood {
+            parent,
+            ..CgroupNeighborhood::default()
+        };
+    };
+    let mut children = Vec::new();
+    let mut truncated = false;
+    for (index, item) in entries.enumerate() {
+        if index == SCAN_LIMIT {
+            truncated = true;
+            break;
+        }
+        let Ok(item) = item else {
+            truncated = true;
+            continue;
+        };
+        if !item.file_type().is_ok_and(|kind| kind.is_dir()) {
+            continue;
+        }
+        let Ok(child) = fs::canonicalize(item.path()) else {
+            truncated = true;
+            continue;
+        };
+        if child.starts_with(root) && child.parent() == Some(target) {
+            children.push(neighbor_from_path(root, &child));
+        }
+    }
+    children.sort_by(|a, b| a.path.cmp(&b.path));
+    if children.len() > CHILD_LIMIT {
+        children.truncate(CHILD_LIMIT);
+        truncated = true;
+    }
+    CgroupNeighborhood {
+        parent,
+        children: Some(children),
+        truncated,
+    }
+}
+
+fn neighbor_from_path(root: &Path, group: &Path) -> CgroupNeighbor {
+    let path = group.strip_prefix(root).unwrap_or(group).to_string_lossy();
+    let path = format!("/{path}").trim_end_matches('/').to_owned();
+    CgroupNeighbor {
+        path: if path.is_empty() { "/".into() } else { path },
+        cpu_usage_usec: fs::read_to_string(group.join("cpu.stat"))
+            .ok()
+            .and_then(|text| parse_cpu_stat(&text, "usage_usec")),
+        memory_bytes: read_number(&group.join("memory.current")),
+    }
 }
 
 fn read_cgroup_pressure(target: &Path) -> CgroupPressure {
@@ -371,5 +453,44 @@ mod tests {
         assert_eq!(report.io_full.unwrap().avg10_percent, 2.0);
         assert!(pressure_accounting_disabled("0\n"));
         assert!(!pressure_accounting_disabled("1\n"));
+    }
+
+    #[test]
+    fn neighboring_cgroups_are_bounded_sorted_and_not_summed() {
+        let root = std::env::temp_dir().join(format!(
+            "taskotto-cgroup-neighbors-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let selected = root.join("selected.scope");
+        fs::create_dir_all(&selected).unwrap();
+        fs::write(root.join("cpu.stat"), "usage_usec 500\n").unwrap();
+        fs::write(root.join("memory.current"), "8192\n").unwrap();
+        for i in 0..20 {
+            let child = selected.join(format!("child-{i:02}.scope"));
+            fs::create_dir_all(&child).unwrap();
+            fs::write(child.join("cpu.stat"), format!("usage_usec {}\n", 100 + i)).unwrap();
+            fs::write(child.join("memory.current"), "4096\n").unwrap();
+        }
+        let group = read_neighborhood(&root, &selected);
+        assert_eq!(group.parent.as_ref().unwrap().path, "/");
+        assert_eq!(group.parent.as_ref().unwrap().cpu_usage_usec, Some(500));
+        assert_eq!(group.parent.as_ref().unwrap().memory_bytes, Some(8192));
+        let children = group.children.unwrap();
+        assert_eq!(children.len(), 16);
+        assert!(group.truncated);
+        assert!(children.windows(2).all(|w| w[0].path <= w[1].path));
+        assert!(
+            children
+                .iter()
+                .all(|child| child.memory_bytes == Some(4096))
+        );
+        assert!(children.iter().all(|child| child.cpu_usage_usec.is_some()));
+        let missing = read_neighborhood(&root, &root.join("not-found"));
+        assert!(missing.children.is_none());
+        fs::remove_dir_all(root).unwrap();
     }
 }

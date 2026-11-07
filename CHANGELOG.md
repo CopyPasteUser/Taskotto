@@ -2,6 +2,11 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.53] — 2026-11-07
+
+- Extended the explicitly requested, asynchronous read-only cgroup v2 inspection with a bounded nearby-hierarchy view: the selected group's direct parent and up to 16 immediate child cgroups, showing their own cumulative CPU use and memory current when readable. The scan stops after 128 entries and notes truncation; unavailable enumeration never appears as an empty hierarchy.
+- No background recursive scans or synthetic service ownership. The UI warns that ancestor/descendant counters overlap and cannot be summed. Fixture tests verify deterministic sorting, bounds, real missing-data handling and selected-process identity protection remains in place.
+
 ## [1.0.0-rc.52] — 2026-11-07
 
 - Added safe, idempotent `--uninstall-desktop` for removing only Taskotto-managed user-local launcher/icon files; refuses modified or symlinked files before removing either, preserves other apps and never deletes the Taskotto executable or preferences. Re-running `--install-desktop` repairs a stale launch path.

@@ -2068,6 +2068,41 @@ impl TaskottoApp {
                             ui.end_row();
                         }
                     });
+                ui.add_space(8.0);
+                ui.collapsing("Parent and immediate child cgroups · one-time snapshot", |ui| {
+                    let show_neighbor = |ui: &mut egui::Ui,
+                                         relation: &str,
+                                         neighbor: &crate::monitor::cgroup::CgroupNeighbor| {
+                        ui.label(RichText::new(format!("{relation}: {}", neighbor.path)).strong());
+                        ui.label(format!(
+                            "CPU cumulative: {} · Memory current: {}",
+                            available_usec(neighbor.cpu_usage_usec),
+                            available_bytes(neighbor.memory_bytes)
+                        ));
+                    };
+                    if let Some(parent) = &report.neighborhood.parent {
+                        show_neighbor(ui, "Parent", parent);
+                    } else {
+                        ui.label(RichText::new("No accessible parent within this mounted hierarchy.").small().weak());
+                    }
+                    match &report.neighborhood.children {
+                        Some(children) if children.is_empty() => {
+                            ui.label("No immediate child cgroups observed.");
+                        }
+                        Some(children) => {
+                            for child in children {
+                                show_neighbor(ui, "Child", child);
+                            }
+                        }
+                        None => {
+                            ui.label("Child enumeration unavailable (permissions or hierarchy).");
+                        }
+                    }
+                    if report.neighborhood.truncated {
+                        ui.label(RichText::new("Child list incomplete: inspected at most 128 entries and displayed at most 16 cgroups.").small().weak());
+                    }
+                    ui.label(RichText::new("Each value is a separate, potentially nested cumulative cgroup counter. Parent and child values overlap and must never be summed. No process/container ownership is inferred from paths.").small().weak());
+                });
                 if !report.pressure.is_empty() {
                     ui.add_space(8.0);
                     ui.label(
