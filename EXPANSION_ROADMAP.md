@@ -214,7 +214,13 @@ units, threshold behavior and no false certainty.
 
 - [ ] Build per-user dashboards from the P2 component schema.
 - [ ] Session-only history by default; opt-in bounded retention and export.
+  - [x] RC45: session RAM history stays capped at 120 system ticks, with
+    explicit non-overwriting CSV/JSON export from every rice's Preferences;
+    no process identities or implicit retention.
 - [ ] CSV/JSON export with explicit timestamp, scope and collection interval.
+  - [x] RC45: host-aggregate export includes per-observation Unix milliseconds,
+    nominal polling interval and measured CPU, RAM, network, disk and PSI;
+    absent pressure sources remain null/blank, not zero.
 - [ ] Time-series comparisons without a mandatory always-on daemon.
 
 **Gate:** export/import/retention tests, low-memory history bounds and clear

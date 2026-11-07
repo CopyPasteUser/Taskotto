@@ -2,6 +2,11 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.45] — 2026-11-07
+
+- Added explicit, no-overwrite, user-only-permission CSV and JSON exports of up to 120 session-only sampler-visible Linux system samples from every rice's Preferences. GUI-receipt timestamped rows include CPU, RAM, network, disk, nullable per-tick PSI, export schema version, observable scope and configured (nominal) interval.
+- Unlike the visual PSI history, export storage preserves absent ticks as missing values; diagnostics still use only eight actual consecutive readings. Export contains no process identity information and never runs unattended. Tested format alignment, absence, file ownership mode, overwrite refusal and malformed history.
+
 ## [1.0.0-rc.44] — 2026-11-07
 
 - Added evidence-first, explicitly tentative CPU/memory/I/O pressure investigation hints. They use thresholded 10s/60s PSI and at least six above-threshold observations among eight consecutive sampler ticks; missing readings cannot masquerade as sustained pressure.

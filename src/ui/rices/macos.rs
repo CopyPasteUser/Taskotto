@@ -928,6 +928,7 @@ mod tests {
             worker: Worker::start(10_000, ctx),
             snapshot: None,
             history: History::default(),
+            history_export_path: String::new(),
             page: Page::Processes,
             performance_focus: PerformanceFocus::Cpu,
             query: String::new(),

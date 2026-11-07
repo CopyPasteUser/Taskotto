@@ -15,14 +15,18 @@ fn sustained(history: &History, index: usize, metric: &PressureMetric, minimum: 
         && metric.avg60_percent.is_finite()
         && metric.avg10_percent >= minimum
         && metric.avg60_percent >= minimum / 2.0
-        && history.psi_diagnostic_recent.len() == 8
+        && history.psi_ticks.len() >= 8
         && history
-            .psi_diagnostic_recent
+            .psi_ticks
             .iter()
+            .rev()
+            .take(8)
             .all(|tick| tick[index].is_some_and(|value| value.is_finite()))
         && history
-            .psi_diagnostic_recent
+            .psi_ticks
             .iter()
+            .rev()
+            .take(8)
             .filter_map(|tick| tick[index])
             .filter(|value| value.is_finite() && *value >= minimum)
             .count()
@@ -107,7 +111,7 @@ mod tests {
     fn no_hypothesis_from_one_sample_or_missing_psi() {
         let mut history = History::default();
         history
-            .psi_diagnostic_recent
+            .psi_ticks
             .push_back([Some(99.0), None, None, None, None]);
         let current = PressureSnapshot {
             cpu_some: Some(sample(99.0)),
@@ -119,7 +123,7 @@ mod tests {
     #[test]
     fn requires_repeated_evidence_and_never_invents_root_cause() {
         let mut history = History {
-            psi_diagnostic_recent: std::collections::VecDeque::from(
+            psi_ticks: std::collections::VecDeque::from(
                 [[Some(20.0), None, Some(2.0), None, Some(3.0)]; 8],
             ),
             ..History::default()
@@ -138,7 +142,7 @@ mod tests {
             .into_iter()
             .enumerate()
         {
-            history.psi_diagnostic_recent[index][0] = Some(value);
+            history.psi_ticks[index][0] = Some(value);
         }
         assert_eq!(analyze(&history, &current, 92.0).len(), 2);
     }
@@ -146,7 +150,7 @@ mod tests {
     #[test]
     fn no_hypotheses_with_missing_or_nonfinite_data() {
         let history = History {
-            psi_diagnostic_recent: std::collections::VecDeque::from(
+            psi_ticks: std::collections::VecDeque::from(
                 [[None, Some(f32::NAN), None, None, None]; 8],
             ),
             ..History::default()
@@ -161,7 +165,7 @@ mod tests {
     #[test]
     fn missing_sampler_ticks_cannot_be_interpreted_as_sustained_contention() {
         let history = History {
-            psi_diagnostic_recent: std::collections::VecDeque::from([
+            psi_ticks: std::collections::VecDeque::from([
                 [Some(20.0), None, None, None, None],
                 [Some(20.0), None, None, None, None],
                 [Some(20.0), None, None, None, None],
@@ -175,6 +179,24 @@ mod tests {
         };
         let current = PressureSnapshot {
             cpu_some: Some(sample(20.0)),
+            ..PressureSnapshot::default()
+        };
+        assert!(analyze(&history, &current, 95.0).is_empty());
+    }
+
+    #[test]
+    fn old_pressure_outside_recent_eight_ticks_does_not_trigger_hint() {
+        let mut history = History {
+            psi_ticks: std::collections::VecDeque::from(
+                [[Some(30.0), None, None, None, None]; 112],
+            ),
+            ..History::default()
+        };
+        history
+            .psi_ticks
+            .extend([[Some(0.0), None, None, None, None]; 8]);
+        let current = PressureSnapshot {
+            cpu_some: Some(sample(30.0)),
             ..PressureSnapshot::default()
         };
         assert!(analyze(&history, &current, 95.0).is_empty());
