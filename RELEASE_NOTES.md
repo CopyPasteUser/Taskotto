@@ -1,8 +1,14 @@
-# Taskotto 1.0.0-rc.42 — release candidate
+# Taskotto 1.0.0-rc.43 — release candidate
 
 **Date:** 2026-11-07 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
 Rust-only Linux process manager and system monitor. This is a **prerelease**, not a stable 1.0 certification.
+
+## Changes since rc.42
+
+- Added bounded real PSI history for CPU SOME, memory SOME/FULL and I/O SOME/FULL. System Performance and all rice Preferences draw live trend charts alongside the existing 10/60/300-second source readings, with a compact single-column presentation on narrow windows.
+- Retains at most 120 **valid observations per PSI source** in memory. Kernel PSI values are already overlapping rolling 10-second averages; these graphs visualize their changes at the configured Taskotto sampler interval, not independent events or proven bottleneck causes. Missing samples never become fabricated zeros; they do not claim uniform elapsed time across collection gaps.
+- Extended regression tests for the 120-sample bound and absent PSI readings, with the same no-root/no-new-dependency data flow. Multi-workload correlation, explicit diagnostic hypotheses and native acceptance remain open.
 
 ## Changes since rc.41
 

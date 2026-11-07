@@ -2,6 +2,12 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.43] — 2026-11-07
+
+- Extended Linux PSI telemetry into history-backed CPU SOME, memory SOME/FULL and I/O SOME/FULL trend plots using the existing sampler and chart primitives. The five rolling series retain at most 120 measured observations each and do not invent missing samples or imply separate independent stall events.
+- System Performance and all rice Preferences display these as source-specific trend charts with labels and honest auto-scales, including compact-window support. Each point is a kernel-produced rolling 10-second stall-time percentage collected at Taskotto's interval, not a diagnosis from a single CPU load number.
+- Added deterministic regressions for bounded PSI history and missing-reading continuity. Systemic slowdown hypotheses still require controlled workload/physical acceptance before any certainty claim.
+
 ## [1.0.0-rc.42] — 2026-11-07
 
 - Began P6 kernel-backed PSI telemetry. The existing monitor worker samples `/proc/pressure/{cpu,memory,io}`; System Performance and every rice's Preferences report CPU SOME, memory SOME/FULL and I/O SOME/FULL stalled-task percentages over 10, 60 and 300 seconds, and cumulative stall time.

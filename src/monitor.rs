@@ -7,7 +7,7 @@ mod psi;
 pub(crate) mod pss;
 pub use gpu::Gpu;
 pub use power::PowerSnapshot;
-pub use psi::PressureSnapshot;
+pub use psi::{PressureMetric, PressureSnapshot};
 use std::{
     collections::{HashMap, HashSet},
     fs, io,
