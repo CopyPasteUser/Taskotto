@@ -168,7 +168,10 @@ drawings still contain intentionally hardcoded era-specific colors. Frutiger
 Aero's custom navigation, process list and chart panels consume these
 tokens; macOS Activity Monitor, ChromeOS tables, Windows 7 classic reports,
 XP Luna/Windows 10 task tables and navigation, and Classic 98's beveled
-controls and process lists use the shared parser. Try
+controls and process lists use the shared parser. Windows 7 Users/Services,
+XP networking/performance, Windows 10 performance selector/chart, macOS
+process inspector and Aero network cards also accept semantic table/border
+tokens. Try
 [Aero Lagoon](examples/ricepacks/aero-lagoon.toml),
 [Nightshift](examples/ricepacks/macos-nightshift.toml),
 [Nocturne](examples/ricepacks/chromeos-nocturne.toml),

@@ -1,4 +1,5 @@
 use super::*;
+use crate::theme::ComponentPaint;
 use egui::{Align2, FontId, Rect, StrokeKind};
 
 pub(super) fn page(app: &mut TaskottoApp, ui: &mut egui::Ui) {
@@ -23,6 +24,7 @@ pub(super) fn networking_page(app: &TaskottoApp, ui: &mut egui::Ui) {
         ui.label("Reading network activity…");
         return;
     };
+    let paint = ComponentPaint::from_settings(&app.settings);
     ui.label(RichText::new("Network activity").size(14.0).strong());
     ui.add_space(8.0);
     ui.label("All non-loopback interfaces · bytes per second");
@@ -58,10 +60,16 @@ pub(super) fn networking_page(app: &TaskottoApp, ui: &mut egui::Ui) {
     ui.add_space(15.0);
     ui.label(RichText::new("Connection status").size(12.0).strong());
     egui::Frame::new()
-        .fill(Color32::WHITE)
-        .stroke(Stroke::new(1.0_f32, Color32::from_rgb(155, 153, 137)))
+        .fill(paint.table(Color32::WHITE))
+        .stroke(Stroke::new(
+            1.0_f32,
+            paint.border(Color32::from_rgb(155, 153, 137)),
+        ))
         .inner_margin(egui::Margin::same(10))
         .show(ui, |ui| {
+            if paint.table.is_some() {
+                ui.visuals_mut().override_text_color = Some(paint.on_table(Color32::BLACK));
+            }
             egui::Grid::new("xp-network-summary")
                 .num_columns(2)
                 .spacing([30.0, 8.0])
@@ -183,13 +191,25 @@ fn metric_tile(
     let (title, detail, color, values, scale) = metric_data(app, focus);
     let (rect, response) = ui.allocate_exact_size(egui::vec2(width, height), Sense::click());
     let selected = app.performance_focus == focus;
+    let paint = ComponentPaint::from_settings(&app.settings);
+    let default_selected = Color32::from_rgb(234, 244, 251);
+    let ink = if selected {
+        paint.on_selection(default_selected, Color32::from_rgb(37, 37, 37))
+    } else {
+        paint.on_table(Color32::from_rgb(37, 37, 37))
+    };
+    let detail_ink = if (selected && paint.selection.is_some()) || paint.table.is_some() {
+        ink
+    } else {
+        Color32::from_rgb(91, 91, 91)
+    };
     ui.painter().rect_filled(
         rect,
         0.0,
         if selected {
-            Color32::from_rgb(234, 244, 251)
+            paint.selection(default_selected)
         } else {
-            Color32::WHITE
+            paint.table(Color32::WHITE)
         },
     );
     ui.painter().rect_stroke(
@@ -200,7 +220,7 @@ fn metric_tile(
             if selected {
                 color
             } else {
-                Color32::from_rgb(219, 219, 219)
+                paint.border(Color32::from_rgb(219, 219, 219))
             },
         ),
         StrokeKind::Inside,
@@ -235,7 +255,7 @@ fn metric_tile(
             Align2::LEFT_CENTER,
             title,
             FontId::proportional(16.0),
-            Color32::from_rgb(37, 37, 37),
+            ink,
         );
     ui.painter()
         .with_clip_rect(Rect::from_min_max(
@@ -247,7 +267,7 @@ fn metric_tile(
             Align2::LEFT_CENTER,
             detail,
             FontId::proportional(11.5),
-            Color32::from_rgb(91, 91, 91),
+            detail_ink,
         );
     if response.clicked() {
         app.performance_focus = focus;
@@ -257,6 +277,7 @@ fn metric_tile(
 
 fn focused_chart(app: &TaskottoApp, ui: &mut egui::Ui) {
     let snapshot = app.snapshot.as_ref().expect("checked by page");
+    let paint = ComponentPaint::from_settings(&app.settings);
     let focus = app.performance_focus;
     let (title, summary, color, first, scale) = metric_data(app, focus);
     ui.horizontal(|ui| {
@@ -283,8 +304,8 @@ fn focused_chart(app: &TaskottoApp, ui: &mut egui::Ui) {
     let rect = graph_rect(
         ui,
         260.0 * app.settings.chart_scale,
-        Color32::from_rgb(252, 254, 255),
-        Color32::from_rgb(197, 222, 237),
+        paint.table(Color32::from_rgb(252, 254, 255)),
+        paint.border(Color32::from_rgb(197, 222, 237)),
     );
     let second = match focus {
         PerformanceFocus::Disk => Some(&app.history.disk_write),
@@ -398,6 +419,7 @@ fn metric(ui: &mut egui::Ui, label: &str, value: String) {
 
 fn xp_performance(app: &TaskottoApp, ui: &mut egui::Ui) {
     let snapshot = app.snapshot.as_ref().expect("checked by page");
+    let paint = ComponentPaint::from_settings(&app.settings);
     ui.add_space(2.0);
     egui::ScrollArea::vertical().show(ui, |ui| {
         xp_graph(
@@ -463,25 +485,31 @@ fn xp_performance(app: &TaskottoApp, ui: &mut egui::Ui) {
         if ui.available_width() >= 680.0 {
             ui.columns(3, |columns| {
                 for (column, (title, values)) in columns.iter_mut().zip(&groups) {
-                    xp_stat_group(column, title, values);
+                    xp_stat_group(column, title, values, paint);
                 }
             });
         } else {
             for (title, values) in &groups {
-                xp_stat_group(ui, title, values);
+                xp_stat_group(ui, title, values, paint);
                 ui.add_space(6.0);
             }
         }
     });
 }
 
-fn xp_stat_group(ui: &mut egui::Ui, title: &str, values: &[(&str, String)]) {
+fn xp_stat_group(ui: &mut egui::Ui, title: &str, values: &[(&str, String)], paint: ComponentPaint) {
     ui.label(RichText::new(title).size(12.0).strong());
     egui::Frame::new()
-        .stroke(Stroke::new(1.0_f32, Color32::from_rgb(166, 162, 145)))
-        .fill(Color32::from_rgb(245, 243, 231))
+        .stroke(Stroke::new(
+            1.0_f32,
+            paint.border(Color32::from_rgb(166, 162, 145)),
+        ))
+        .fill(paint.table(Color32::from_rgb(245, 243, 231)))
         .inner_margin(egui::Margin::same(7))
         .show(ui, |ui| {
+            if paint.table.is_some() {
+                ui.visuals_mut().override_text_color = Some(paint.on_table(Color32::BLACK));
+            }
             ui.set_min_width(ui.available_width().max(100.0) - 16.0);
             for (label, value) in values {
                 ui.horizontal(|ui| {

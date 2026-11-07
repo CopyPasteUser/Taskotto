@@ -70,7 +70,12 @@ Development on later milestones may proceed while user-hardware QA is pending.
     shared semantic component colors without fake titlebar decoration.
   - [x] RC26: validated `appearance.chart_scale` adjusts native performance
     chart heights in the original rices without Rust changes.
-  - [ ] Audit remaining historical secondary pages for hardcoded palette tokens.
+  - [x] RC27: Windows 7 Users/Services, performance statistics and Properties;
+    XP properties/networking/statistics; Win10 performance selection/chart;
+    macOS process Info and Aero network chips honor semantic table/border
+    colors with contrast-safe text and responsive layout regressions.
+  - [ ] Audit remaining intentional artwork, toolbars/status strips and
+    secondary widgets for hardcoded palette tokens without homogenizing rices.
 
 **Gate:** an AI-generated pack can be checked, previewed and applied without
 Rust changes, while the legacy presets render and behave identically.
@@ -158,10 +163,11 @@ lean, offline-capable and independent from RiceBowl.
 
 ## Work order
 
-1. **Delivered (RC14–25):** P1 format/loader/CLI, secure reference pack,
+1. **Delivered (RC14–27):** P1 format/loader/CLI, secure reference pack,
    headless export/check/re-import, live file reload and in-app library,
    session-only preview/revert/import/export, semantic widget tokens, an
-   explicit RiceBowl export fixture and tokenized core clients for all seven rices.
+   explicit RiceBowl export fixture and tokenized core and many secondary
+   clients for all seven rices.
 2. **Next:** P1 component-level UI token extraction. RiceBowl's separate JSON
    desktop pack still is not Taskotto TOML; the explicit RiceBowl exporter is
    the validated conversion boundary.

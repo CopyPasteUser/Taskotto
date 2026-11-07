@@ -1786,6 +1786,16 @@ mod rices;
 mod tests {
     use super::*;
 
+    fn dark_component_tokens() -> crate::config::ComponentColors {
+        crate::config::ComponentColors {
+            control: Some("#304761".to_owned()),
+            hover: Some("#416387".to_owned()),
+            border: Some("#63809E".to_owned()),
+            table: Some("#182639".to_owned()),
+            selection: Some("#DDEAF8".to_owned()),
+        }
+    }
+
     #[test]
     fn new_task_requires_explicit_command_and_uses_regular_user_launcher() {
         assert!(launch_user_task("   ").is_err());
@@ -2358,6 +2368,32 @@ mod tests {
                 }
             }
         }
+
+        // The secondary Activity Monitor panes and process inspector must
+        // remain paintable with a generator-supplied dark table surface.
+        app.settings.components = dark_component_tokens();
+        apply_theme(&ctx, &app.settings);
+        for page in [Page::Processes, Page::Performance, Page::Networking] {
+            app.page = page;
+            app.mac_info_open = page == Page::Processes;
+            app.selected = Some((3300, 0));
+            for (width, height) in [(650.0, 420.0), (1280.0, 800.0)] {
+                let output = ctx.run(
+                    egui::RawInput {
+                        screen_rect: Some(egui::Rect::from_min_size(
+                            egui::Pos2::ZERO,
+                            Vec2::new(width, height),
+                        )),
+                        ..Default::default()
+                    },
+                    |ctx| app.draw_contents(ctx),
+                );
+                assert!(
+                    !output.shapes.is_empty(),
+                    "dark macOS {page:?} did not paint"
+                );
+            }
+        }
     }
 
     #[test]
@@ -2472,6 +2508,40 @@ mod tests {
                             );
                         }
                     }
+                }
+            }
+        }
+
+        // Secondary reports, performance metric tiles and the Windows 7
+        // properties sheet should work with custom RicePack component colors.
+        app.settings.components = dark_component_tokens();
+        for theme in [Theme::XpLuna, Theme::Windows7, Theme::Windows10] {
+            app.settings.theme = theme;
+            apply_theme(&ctx, &app.settings);
+            for page in [
+                Page::Performance,
+                Page::Networking,
+                Page::Users,
+                Page::Services,
+                Page::Details,
+            ] {
+                app.page = page;
+                app.selected = Some((3300, 0));
+                for (width, height) in [(650.0, 420.0), (1280.0, 800.0)] {
+                    let output = ctx.run(
+                        egui::RawInput {
+                            screen_rect: Some(egui::Rect::from_min_size(
+                                egui::Pos2::ZERO,
+                                Vec2::new(width, height),
+                            )),
+                            ..Default::default()
+                        },
+                        |ctx| app.draw_contents(ctx),
+                    );
+                    assert!(
+                        !output.shapes.is_empty(),
+                        "dark {theme:?} {page:?} did not paint"
+                    );
                 }
             }
         }

@@ -637,9 +637,9 @@ pub(super) fn networking(app: &TaskottoApp, ui: &mut egui::Ui) {
         }, 257.0 * app.settings.chart_scale, palette);
         ui.add_space(15.0);
         ui.horizontal_wrapped(|ui| {
-            info_chip(ui, "RECEIVING", &format::rate(s.rates.received_per_second), SKY);
-            info_chip(ui, "SENDING", &format::rate(s.rates.sent_per_second), LEAF);
-            info_chip(ui, "SAMPLES", &app.history.received.len().to_string(), AQUA);
+            info_chip(ui, "RECEIVING", &format::rate(s.rates.received_per_second), SKY, palette);
+            info_chip(ui, "SENDING", &format::rate(s.rates.sent_per_second), LEAF, palette);
+            info_chip(ui, "SAMPLES", &app.history.received.len().to_string(), AQUA, palette);
         });
         ui.add_space(17.0);
         ui.label(RichText::new("System-wide traffic, not per-process usage. Virtual interfaces may cause double-counting; connection state and link speed are not inferred.").small().color(MUTED));
@@ -945,15 +945,25 @@ fn meter(ui: &egui::Ui, center: Pos2, radius: f32, percent: f32, color: Color32,
     );
 }
 
-fn info_chip(ui: &mut egui::Ui, title: &str, value: &str, color: Color32) {
+fn info_chip(ui: &mut egui::Ui, title: &str, value: &str, color: Color32, palette: AeroPalette) {
     Frame::new()
-        .fill(Color32::from_rgb(244, 255, 252))
-        .stroke(Stroke::new(1.0_f32, BORDER))
+        .fill(palette.table(Color32::from_rgb(244, 255, 252)))
+        .stroke(Stroke::new(1.0_f32, palette.border(BORDER)))
         .corner_radius(13.0)
         .inner_margin(Margin::symmetric(17, 11))
         .show(ui, |ui| {
-            ui.label(RichText::new(title).strong().color(color).size(11.0));
-            ui.label(RichText::new(value).strong().size(20.0).color(INK));
+            let title_ink = if palette.table.is_some() {
+                palette.on_table(color)
+            } else {
+                color
+            };
+            ui.label(RichText::new(title).strong().color(title_ink).size(11.0));
+            ui.label(
+                RichText::new(value)
+                    .strong()
+                    .size(20.0)
+                    .color(palette.on_table(INK)),
+            );
         });
 }
 

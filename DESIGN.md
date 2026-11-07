@@ -100,7 +100,9 @@ navigation/process/chart surfaces, macOS Activity Monitor's custom tabs/process
 report, ChromeOS's adaptive table palette, Windows 7's classic tab/process
 reports, the shared XP Luna/Windows 10 table and navigation widgets, and
 Windows 98's beveled buttons and classic Close Program list use it with
-era-specific fallbacks.
+era-specific fallbacks. Secondary-page statistics, data grids, process Info
+and performance selectors adopt the same background/border colors and
+contrast-aware text while keeping distinctive era-specific artwork.
 `readable_text` provides contrast-aware
 foreground for user-selected colors. Loading/empty/error states describe the
 real `/proc` state. Keyboard focus is visible, destructive actions require

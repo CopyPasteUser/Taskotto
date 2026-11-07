@@ -736,6 +736,9 @@ pub(super) fn network_page(app: &TaskottoApp, ui: &mut egui::Ui) {
 
 pub(super) fn info_dialog(app: &mut TaskottoApp, ctx: &egui::Context) {
     let mut open = app.mac_info_open;
+    let paint = ComponentPaint::from_settings(&app.settings);
+    let ink = paint.on_table(INK);
+    let muted = paint.on_table(MUTED);
     egui::Window::new("Process Information")
         .id(egui::Id::new("mac-process-information"))
         .anchor(Align2::CENTER_CENTER, egui::Vec2::ZERO)
@@ -744,23 +747,26 @@ pub(super) fn info_dialog(app: &mut TaskottoApp, ctx: &egui::Context) {
         .open(&mut open)
         .frame(
             Frame::window(&ctx.style())
-                .fill(Color32::from_rgb(248, 249, 251))
-                .stroke(Stroke::new(1.0_f32, BORDER))
+                .fill(paint.table(Color32::from_rgb(248, 249, 251)))
+                .stroke(Stroke::new(1.0_f32, paint.border(BORDER)))
                 .inner_margin(Margin::same(13)),
         )
         .show(ctx, |ui| {
+            if paint.table.is_some() {
+                ui.visuals_mut().override_text_color = Some(ink);
+            }
             let Some(process) = app.selected_process().cloned() else {
                 ui.label("The selected process has exited or is no longer available.");
                 return;
             };
-            ui.label(RichText::new(&process.name).size(20.0).strong().color(INK));
+            ui.label(RichText::new(&process.name).size(20.0).strong().color(ink));
             let command_preview: String = process.command.chars().take(95).collect();
             let command_preview = if process.command.chars().nth(95).is_some() {
                 format!("{command_preview}…")
             } else {
                 command_preview
             };
-            ui.label(RichText::new(command_preview).small().color(MUTED))
+            ui.label(RichText::new(command_preview).small().color(muted))
                 .on_hover_text(&process.command);
             ui.separator();
             egui::Grid::new("mac-info-actual-fields")
@@ -800,7 +806,7 @@ pub(super) fn info_dialog(app: &mut TaskottoApp, ctx: &egui::Context) {
                             },
                         ),
                     ] {
-                        ui.label(RichText::new(label).color(MUTED));
+                        ui.label(RichText::new(label).color(muted));
                         ui.label(value);
                         ui.end_row();
                     }
