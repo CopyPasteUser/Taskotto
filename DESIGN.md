@@ -112,6 +112,12 @@ foreground for user-selected colors. Loading/empty/error states describe the
 real `/proc` state. Keyboard focus is visible, destructive actions require
 confirmation, and unsupported permissions are reported as such.
 
+Optional `layout.pages` is a typed, bounded, data-only screen description.
+It reuses the real Linux sampler and confirmation-protected process actions;
+it cannot render proprietary assets, invoke commands or introduce fake
+measurements. Original clients remain the default unless a pack asks for
+named widgets. A future in-app editor must serialize this exact contract.
+
 The interface is live and honest: charts use measured bounded history;
 labels distinguish system-wide traffic from per-process information. Motion
 is limited to genuine loading and sampling status; the application must not

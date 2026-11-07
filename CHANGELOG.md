@@ -2,6 +2,12 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.29] — 2026-11-07
+
+- Began P2 with a strictly bounded, data-only declarative screen layout in RicePack TOML: up to four named screens with 16 widgets each, typed headings, live metrics, historical plots and virtualized real-process lists. Screen tabs and safe process selection/confirmation run through existing unprivileged Linux code.
+- Added `Diagnostic Studio`, a distinct two-screen original RicePack that can be checked, exported, live-reloaded and rendered without a bespoke Rust rice module. Invalid bindings, unknown widget kinds, duplicate columns, repeated screen ids, excessive sizes and script-like fields fail validation.
+- Existing packs still render their original client pages. Declarative toolbars, gauges, layout editor, responsive capabilities and the rest of P2 remain open, as do real X11/Wayland/labwc acceptance gates.
+
 ## [1.0.0-rc.28] — 2026-11-07
 
 - Extended validated RicePack control/table/border colors to the Windows 98, XP Luna, Windows 7/10, macOS and Aero status/menu/toolbar strips; preserved original fallback palette and native compositor-owned window frames. ChromeOS retains its existing dynamic dark/light strip palette.

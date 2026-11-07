@@ -233,6 +233,16 @@ fn generate_headless_ui_screenshots() {
             Page::Performance,
             "taskotto-frutiger-aero-lagoon-performance.png",
         ),
+        (
+            Theme::System,
+            Page::Processes,
+            "taskotto-diagnostic-studio-ricepack.png",
+        ),
+        (
+            Theme::System,
+            Page::Processes,
+            "taskotto-diagnostic-studio-traffic.png",
+        ),
     ] {
         if let Ok(filter) = std::env::var("TASKOTTO_SCREENSHOT_FILTER")
             && !file.contains(&filter)
@@ -301,6 +311,13 @@ fn generate_headless_ui_screenshots() {
             .expect("checked-in Violet RicePack must remain valid");
             pack.apply(&mut settings);
         }
+        if file.contains("diagnostic-studio") {
+            let pack = crate::ricepack::RicePack::from_toml(include_str!(
+                "../../examples/ricepacks/diagnostic-studio.toml"
+            ))
+            .expect("checked-in Diagnostic Studio RicePack must remain valid");
+            pack.apply(&mut settings);
+        }
         apply_theme(&ctx, &settings);
         let mut app = TaskottoApp {
             worker: Worker::start(10_000, ctx.clone()),
@@ -327,6 +344,7 @@ fn generate_headless_ui_screenshots() {
                 || file.contains("dusk-ricepack")
                 || file.contains("midnight-ricepack")
                 || file.contains("indigo-ricepack")
+                || file.contains("diagnostic-studio")
             {
                 snapshot
                     .processes
@@ -361,6 +379,11 @@ fn generate_headless_ui_screenshots() {
         if file.contains("ricepack-editor") {
             app.ricepack_library.source_path = "examples/ricepacks/sea-glass.toml".into();
             app.preview_ricepack(&ctx);
+        }
+        if file.contains("diagnostic-studio-traffic") {
+            ctx.data_mut(|data| {
+                data.insert_temp(egui::Id::new("taskotto-declarative-screen"), 1_usize);
+            });
         }
         let size = if theme == Theme::Windows98 {
             CLASSIC98_SIZE

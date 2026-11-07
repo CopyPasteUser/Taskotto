@@ -831,6 +831,10 @@ impl TaskottoApp {
     }
 
     fn processes_page(&mut self, ui: &mut egui::Ui) {
+        if self.settings.custom_layout.is_some() {
+            rices::declarative_processes(self, ui);
+            return;
+        }
         if rices::supports(self.settings.theme) {
             rices::processes(self, ui);
             return;
@@ -2556,6 +2560,36 @@ mod tests {
                         }
                     }
                 }
+            }
+        }
+
+        // A completely new two-screen monitor is data-driven from TOML and
+        // paints real procfs statistics without adding a theme-specific UI.
+        let generated =
+            RicePack::from_toml(include_str!("../examples/ricepacks/diagnostic-studio.toml"))
+                .expect("validated declarative example");
+        generated.apply(&mut app.settings);
+        app.page = Page::Processes;
+        apply_theme(&ctx, &app.settings);
+        for screen in 0..2 {
+            ctx.data_mut(|data| {
+                data.insert_temp(egui::Id::new("taskotto-declarative-screen"), screen)
+            });
+            for (width, height) in [(650.0, 420.0), (1280.0, 800.0)] {
+                let output = ctx.run(
+                    egui::RawInput {
+                        screen_rect: Some(egui::Rect::from_min_size(
+                            egui::Pos2::ZERO,
+                            Vec2::new(width, height),
+                        )),
+                        ..Default::default()
+                    },
+                    |ctx| app.draw_contents(ctx),
+                );
+                assert!(
+                    !output.shapes.is_empty(),
+                    "declarative screen {screen} did not paint"
+                );
             }
         }
 

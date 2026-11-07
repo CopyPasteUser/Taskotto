@@ -1,6 +1,6 @@
 # Screenshot provenance and reproduction
 
-[**View all 46 screenshots in the expandable README gallery**](README.md#screenshots).
+[**View all 48 screenshots in the expandable README gallery**](README.md#screenshots).
 The gallery groups every image by rice, including the supplementary pages
 and alternate layouts; click any preview to see its full-resolution PNG.
 
@@ -23,7 +23,7 @@ The restricted capture environment currently exposes few processes and very
 little I/O; this is why some screenshots look sparse. They are not evidence of
 hardware compatibility or GUI performance.
 
-To regenerate all 46 images on Linux:
+To regenerate all 48 images on Linux:
 
 ```bash
 TASKOTTO_SCREENSHOT_DIR=assets/screenshots \
@@ -31,6 +31,11 @@ TASKOTTO_SCREENSHOT_DIR=assets/screenshots \
 ```
 
 The command samples real system activity and writes:
+
+### Generated functional screens (P2 foundation)
+
+- `assets/screenshots/taskotto-diagnostic-studio-ricepack.png` — original two-tab Diagnostic Studio composed entirely from a validated TOML RicePack. Displays genuine host CPU and a live Linux process list; the process-control confirmation path is shared with the historical clients.
+- `assets/screenshots/taskotto-diagnostic-studio-traffic.png` — the second generated tab of the same TOML layout: actual network receive and disk-write rates, history and real Linux threads/PID report; no new source-code widget implementation for the second tab.
 
 ### ChromeOS Task manager (primary task table and supplementary tools)
 

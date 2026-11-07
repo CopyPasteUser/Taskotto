@@ -214,6 +214,9 @@ pub struct Settings {
     pub corner_radius: Option<u8>,
     #[serde(skip_serializing_if = "ComponentColors::is_empty")]
     pub components: ComponentColors,
+    /// A generated screen layout belongs to the active RicePack session only.
+    #[serde(skip)]
+    pub(crate) custom_layout: Option<crate::layout::LayoutSpec>,
     /// Session-only RiceBowl/CLI override; never replace the user's saved theme.
     #[serde(skip)]
     pub launch_theme_original: Option<Theme>,
@@ -238,6 +241,7 @@ pub(crate) struct AppearanceBackup {
     corner_radius: Option<u8>,
     table_row_height: Option<f32>,
     components: ComponentColors,
+    custom_layout: Option<crate::layout::LayoutSpec>,
 }
 
 impl Default for Settings {
@@ -263,6 +267,7 @@ impl Default for Settings {
             chart_scale: 1.0,
             corner_radius: None,
             components: ComponentColors::default(),
+            custom_layout: None,
             launch_theme_original: None,
             launch_ricepack_original: None,
             launch_ricepack_name: None,
@@ -286,6 +291,7 @@ impl Settings {
                 corner_radius: self.corner_radius,
                 table_row_height: self.table_row_height,
                 components: self.components.clone(),
+                custom_layout: self.custom_layout.clone(),
             }));
         }
         self.launch_ricepack_name = Some(name.to_owned());
@@ -307,6 +313,7 @@ impl Settings {
             self.corner_radius = original.corner_radius;
             self.table_row_height = original.table_row_height;
             self.components.clone_from(&original.components);
+            self.custom_layout.clone_from(&original.custom_layout);
         }
     }
 

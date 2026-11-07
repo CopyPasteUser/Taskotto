@@ -1,0 +1,68 @@
+format_version = 1
+name = "Diagnostic Studio"
+base_theme = "system"
+
+[appearance]
+accent = "#64D6BD"
+surface = "#101A29"
+text = "#EAF8F4"
+density = "comfortable"
+navigation = "sidebar"
+chart_scale = 1.1
+
+[components]
+control = "#243B50"
+hover = "#36586B"
+border = "#497F83"
+table = "#192C3D"
+selection = "#66DCCA"
+
+[[layout.pages]]
+id = "overview"
+title = "Overview"
+
+[[layout.pages.widgets]]
+kind = "heading"
+text = "Real Linux signals"
+
+[[layout.pages.widgets]]
+kind = "metric"
+label = "CPU load"
+binding = "cpu-percent"
+
+[[layout.pages.widgets]]
+kind = "metric"
+label = "Available process count"
+binding = "processes"
+
+[[layout.pages.widgets]]
+kind = "plot"
+label = "CPU history"
+binding = "cpu"
+
+[[layout.pages.widgets]]
+kind = "process-list"
+columns = ["name", "cpu", "memory", "pid"]
+
+[[layout.pages]]
+id = "traffic"
+title = "I/O and network"
+
+[[layout.pages.widgets]]
+kind = "metric"
+label = "Network receive"
+binding = "network-received"
+
+[[layout.pages.widgets]]
+kind = "metric"
+label = "Disk write"
+binding = "disk-write"
+
+[[layout.pages.widgets]]
+kind = "plot"
+label = "Network receive history"
+binding = "network-received"
+
+[[layout.pages.widgets]]
+kind = "process-list"
+columns = ["name", "threads", "pid"]

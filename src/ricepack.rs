@@ -3,6 +3,7 @@
 //! RiceBowl and generative tools can select an existing client layout and
 //! override its supported tokens without loading executable code or assets.
 use crate::config::{ComponentColors, Density, LayoutMode, Settings, Theme, is_hex_color};
+use crate::layout::LayoutSpec;
 use serde::{Deserialize, Serialize};
 use std::{
     fs::{self, File, OpenOptions},
@@ -113,6 +114,8 @@ pub struct RicePack {
     pub appearance: Appearance,
     #[serde(default, skip_serializing_if = "ComponentColors::is_empty")]
     pub components: ComponentColors,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub layout: Option<LayoutSpec>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
@@ -149,6 +152,7 @@ impl RicePack {
                 row_height: settings.table_row_height,
             },
             components: settings.components.clone(),
+            layout: settings.custom_layout.clone(),
         }
     }
 
@@ -215,6 +219,9 @@ impl RicePack {
             return Err("appearance.corner_radius must be between 0 and 16".to_owned());
         }
         pack.components.validate()?;
+        if let Some(layout) = &pack.layout {
+            layout.validate()?;
+        }
         Ok(pack)
     }
 
@@ -268,6 +275,7 @@ impl RicePack {
             settings.table_row_height = Some(value);
         }
         settings.components.overlay(&self.components);
+        settings.custom_layout = self.layout.clone();
     }
 }
 
@@ -276,6 +284,31 @@ mod tests {
     use super::*;
 
     const SAMPLE: &str = include_str!("../examples/ricepacks/sea-glass.toml");
+
+    #[test]
+    fn declarative_layout_roundtrips_without_persisting_into_user_preferences() {
+        let source = include_str!("../examples/ricepacks/diagnostic-studio.toml");
+        let pack = RicePack::from_toml(source).expect("original two-page data layout is valid");
+        assert_eq!(pack.layout.as_ref().unwrap().pages.len(), 2);
+        let mut settings = Settings {
+            refresh_ms: 5_000,
+            ..Settings::default()
+        };
+        pack.apply(&mut settings);
+        assert!(settings.custom_layout.is_some());
+        assert_eq!(settings.refresh_ms, 5_000);
+        assert!(!toml::to_string(&settings).unwrap().contains("layout.pages"));
+        let exported = RicePack::from_settings(&settings);
+        let encoded = toml::to_string_pretty(&exported).unwrap();
+        assert_eq!(RicePack::from_toml(&encoded).unwrap().layout, pack.layout);
+        settings.reset_ricepack_appearance();
+        assert!(settings.custom_layout.is_none());
+
+        let malicious = source.replace("binding = \"cpu-percent\"", "binding = \"run-command\"");
+        assert!(RicePack::from_toml(&malicious).is_err());
+        let unknown = source.replace("kind = \"heading\"", "kind = \"script\"");
+        assert!(RicePack::from_toml(&unknown).is_err());
+    }
 
     #[test]
     fn library_import_discovers_packs_and_never_overwrites() {
