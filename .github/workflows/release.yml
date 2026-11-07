@@ -29,6 +29,7 @@ jobs:
         run: |
           mkdir -p dist/taskotto
           install -Dm755 target/release/taskotto dist/taskotto/taskotto
+          install -Dm755 install.sh dist/taskotto/install.sh
           install -Dm644 packaging/io.github.copypasteuser.taskotto.desktop dist/taskotto/io.github.copypasteuser.taskotto.desktop
           install -Dm644 assets/io.github.copypasteuser.taskotto.svg dist/taskotto/io.github.copypasteuser.taskotto.svg
           install -Dm644 README.md LICENSE QA.md RELEASE_NOTES.md CHANGELOG.md SECURITY.md dist/taskotto/
@@ -51,6 +52,8 @@ jobs:
           tar -xzf "taskotto-${GITHUB_REF_NAME}-linux-x86_64.tar.gz" -C "$test_dir"
           "$test_dir/taskotto/taskotto" --version | grep -Fx "Taskotto ${GITHUB_REF_NAME#v}"
           "$test_dir/taskotto/taskotto" --snapshot --json | jq -e '.logical_cpus > 0 and .memory.total > 0'
+          HOME="$test_dir/home" CARGO_HOME="$test_dir/home/.cargo" XDG_DATA_HOME="$test_dir/user-data" bash "$test_dir/taskotto/install.sh"
+          test -x "$test_dir/home/.cargo/bin/taskotto"
           XDG_DATA_HOME="$test_dir/user-data" "$test_dir/taskotto/taskotto" --install-desktop
           test -s "$test_dir/user-data/applications/io.github.copypasteuser.taskotto.desktop"
           test -s "$test_dir/user-data/icons/hicolor/scalable/apps/io.github.copypasteuser.taskotto.svg"
