@@ -932,6 +932,7 @@ mod tests {
             performance_focus: PerformanceFocus::Cpu,
             query: String::new(),
             focus_search: false,
+            frozen_sort_order: None,
             selected: None,
             pending: None,
             notification: None,

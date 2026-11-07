@@ -2,6 +2,12 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.36] — 2026-11-07
+
+- Added **session-only process sort freeze**: the visible row order stays stable while CPU/RAM/I/O measurements update. Toggle with Ctrl+Shift+Space in all eight profiles, the generic process toolbar or Preferences → Process table. Settings and saved RicePacks remain unchanged.
+- New processes append to the frozen list in deterministic PID order. Entries are keyed by PID **and start ticks** so kernel PID reuse cannot inherit a defunct process's position. Hierarchical mode still places descendants beneath observed parents; normal sorting returns immediately when unfrozen.
+- Added regression coverage for live metric flips, stale PID reuse, new processes and tree hierarchy. Physical keyboard-focus and window-manager verification remains outstanding.
+
 ## [1.0.0-rc.35] — 2026-11-07
 
 - Added low-overhead read-only scheduling telemetry sourced from the process leader's `/proc/PID/stat` signed `nice` value and `/proc/PID/status` `Cpus_allowed_list`. No new syscall, background sampler, privilege or driver dependency is required.

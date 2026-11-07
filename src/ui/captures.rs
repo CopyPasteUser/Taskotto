@@ -346,6 +346,7 @@ fn generate_headless_ui_screenshots() {
             performance_focus: PerformanceFocus::Cpu,
             query: String::new(),
             focus_search: false,
+            frozen_sort_order: None,
             selected: if file.contains("win98-close")
                 || file.contains("violet-ricepack")
                 || file.contains("win98-processes")
