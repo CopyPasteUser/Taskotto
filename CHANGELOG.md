@@ -2,6 +2,12 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.26] — 2026-11-07
+
+- Added bounded performance chart-size customization to RicePack v1 and Preferences while preserving every built-in rice's default dimensions.
+- Extended export, validation, transient preview, live reload and config rollback to chart scaling, with invalid-input and legacy-pack regression tests.
+- Secondary-page palette audit and stable 1.0 hardware release gates remain open.
+
 ## [1.0.0-rc.25] — 2026-11-06
 
 - Connected Classic 98's original beveled action/navigation buttons, focus outlines, sunken list border, selected/hovered Close Program entries and optional advanced process report to the shared validated RicePack component-color contract. Defaults keep the original grayscale Win98 feel; real window controls remain the window manager's responsibility.

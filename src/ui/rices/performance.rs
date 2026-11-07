@@ -28,7 +28,7 @@ pub(super) fn networking_page(app: &TaskottoApp, ui: &mut egui::Ui) {
     ui.label("All non-loopback interfaces · bytes per second");
     ui.add_space(4.0);
     let scale = graph_max(&app.history.received, &app.history.sent);
-    let chart_height = ui.available_height().clamp(185.0, 340.0) * 0.67;
+    let chart_height = ui.available_height().clamp(185.0, 340.0) * 0.67 * app.settings.chart_scale;
     let rect = graph_rect(
         ui,
         chart_height,
@@ -282,7 +282,7 @@ fn focused_chart(app: &TaskottoApp, ui: &mut egui::Ui) {
     });
     let rect = graph_rect(
         ui,
-        260.0,
+        260.0 * app.settings.chart_scale,
         Color32::from_rgb(252, 254, 255),
         Color32::from_rgb(197, 222, 237),
     );
@@ -406,6 +406,7 @@ fn xp_performance(app: &TaskottoApp, ui: &mut egui::Ui) {
             snapshot.cpu_percent,
             &app.history.cpu,
             100.0,
+            app.settings.chart_scale,
         );
         ui.add_space(11.0);
         xp_graph(
@@ -414,6 +415,7 @@ fn xp_performance(app: &TaskottoApp, ui: &mut egui::Ui) {
             snapshot.memory.used_fraction() * 100.0,
             &app.history.memory,
             100.0,
+            app.settings.chart_scale,
         );
         ui.add_space(17.0);
         let groups = [
@@ -492,11 +494,19 @@ fn xp_stat_group(ui: &mut egui::Ui, title: &str, values: &[(&str, String)]) {
         });
 }
 
-fn xp_graph(ui: &mut egui::Ui, title: &str, fraction: f32, history: &VecDeque<f32>, scale: f32) {
+fn xp_graph(
+    ui: &mut egui::Ui,
+    title: &str,
+    fraction: f32,
+    history: &VecDeque<f32>,
+    scale: f32,
+    chart_scale: f32,
+) {
     ui.horizontal_top(|ui| {
         ui.vertical(|ui| {
             ui.label(RichText::new(title).size(12.0).strong());
-            let (bar, _) = ui.allocate_exact_size(egui::vec2(103.0, 117.0), Sense::hover());
+            let (bar, _) =
+                ui.allocate_exact_size(egui::vec2(103.0, 117.0 * chart_scale), Sense::hover());
             let frame = Color32::from_rgb(106, 105, 98);
             ui.painter()
                 .rect_filled(bar, 0.0, Color32::from_rgb(2, 12, 5));
@@ -529,7 +539,7 @@ fn xp_graph(ui: &mut egui::Ui, title: &str, fraction: f32, history: &VecDeque<f3
             );
             let rect = graph_rect(
                 ui,
-                117.0,
+                117.0 * chart_scale,
                 Color32::from_rgb(0, 15, 3),
                 Color32::from_rgb(21, 92, 27),
             );

@@ -68,8 +68,9 @@ Development on later milestones may proceed while user-hardware QA is pending.
   - [x] RC25: Windows 98 Close Program, optional advanced process rows and
     selected/hovered lists, raised/sunken beveled controls and borders honor
     shared semantic component colors without fake titlebar decoration.
-  - [ ] Expose intentionally drawn metric/chart sizes without recompilation,
-    and audit remaining historical secondary pages for hardcoded palette tokens.
+  - [x] RC26: validated `appearance.chart_scale` adjusts native performance
+    chart heights in the original rices without Rust changes.
+  - [ ] Audit remaining historical secondary pages for hardcoded palette tokens.
 
 **Gate:** an AI-generated pack can be checked, previewed and applied without
 Rust changes, while the legacy presets render and behave identically.

@@ -578,7 +578,12 @@ pub(super) fn performance(app: &TaskottoApp, ui: &mut egui::Ui) {
         if wide {
             ui.columns(2, |columns| {
                 for (index, panel) in panels.iter().enumerate() {
-                    chart_panel(&mut columns[index % 2], panel, 175.0, palette);
+                    chart_panel(
+                        &mut columns[index % 2],
+                        panel,
+                        175.0 * app.settings.chart_scale,
+                        palette,
+                    );
                     if index < 2 {
                         columns[index % 2].add_space(12.0);
                     }
@@ -586,7 +591,7 @@ pub(super) fn performance(app: &TaskottoApp, ui: &mut egui::Ui) {
             });
         } else {
             for panel in &panels {
-                chart_panel(ui, panel, 156.0, palette);
+                chart_panel(ui, panel, 156.0 * app.settings.chart_scale, palette);
                 ui.add_space(12.0);
             }
         }
@@ -629,7 +634,7 @@ pub(super) fn networking(app: &TaskottoApp, ui: &mut egui::Ui) {
             secondary: Some(&app.history.sent),
             max: graph_max(&app.history.received, &app.history.sent),
             colors: [SKY, LEAF],
-        }, 257.0, palette);
+        }, 257.0 * app.settings.chart_scale, palette);
         ui.add_space(15.0);
         ui.horizontal_wrapped(|ui| {
             info_chip(ui, "RECEIVING", &format::rate(s.rates.received_per_second), SKY);

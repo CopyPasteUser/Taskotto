@@ -22,6 +22,7 @@ density = "comfortable"
 navigation = "top-tabs"
 font_scale = 1.05
 spacing = 9.0
+chart_scale = 1.2
 corner_radius = 10
 row_height = 34.0
 
@@ -143,6 +144,7 @@ the user's saved design.
 | `appearance.navigation` | No | `auto`, `sidebar`, `top-tabs` |
 | `appearance.font_scale` | No | 0.8–1.5 |
 | `appearance.spacing` | No | 3–16 |
+| `appearance.chart_scale` | No | 0.75–1.5; multiplies performance chart heights |
 | `appearance.corner_radius` | No | 0–16 |
 | `appearance.row_height` | No | 22–48 |
 | `components.control` | No | `#RRGGBB` default control fill |

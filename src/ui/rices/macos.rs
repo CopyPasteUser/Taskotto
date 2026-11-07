@@ -215,7 +215,7 @@ pub(super) fn statusbar(app: &TaskottoApp, ctx: &egui::Context) {
     let current = focus(app.page);
     egui::TopBottomPanel::bottom("mac-activity-summary")
         .resizable(false)
-        .exact_height(133.0)
+        .exact_height(133.0 * app.settings.chart_scale)
         .frame(
             Frame::NONE
                 .fill(Color32::from_rgb(246, 247, 250))
@@ -230,7 +230,7 @@ pub(super) fn statusbar(app: &TaskottoApp, ctx: &egui::Context) {
                 let available = ui.available_width();
                 let chart_width = (available * 0.33).clamp(155.0, 350.0);
                 ui.allocate_ui_with_layout(
-                    egui::vec2(chart_width, 103.0),
+                    egui::vec2(chart_width, 103.0 * app.settings.chart_scale),
                     egui::Layout::top_down(egui::Align::Min),
                     |ui| {
                         let label = match current {
@@ -257,7 +257,13 @@ pub(super) fn statusbar(app: &TaskottoApp, ctx: &egui::Context) {
                         } else {
                             super::super::graph_max(series[0].0, series[1].0)
                         };
-                        sparkline(ui, &series, max, chart_width - 2.0, 60.0);
+                        sparkline(
+                            ui,
+                            &series,
+                            max,
+                            chart_width - 2.0,
+                            60.0 * app.settings.chart_scale,
+                        );
                     },
                 );
                 ui.add_space(17.0);
@@ -711,7 +717,7 @@ pub(super) fn network_page(app: &TaskottoApp, ui: &mut egui::Ui) {
         ui.add_space(11.0);
         let max = super::super::graph_max(&app.history.received, &app.history.sent);
         sparkline(ui, &[(&app.history.received, BLUE), (&app.history.sent, ORANGE)],
-            max, ui.available_width() - 5.0, ui.available_height().clamp(125.0, 310.0) * 0.62);
+            max, ui.available_width() - 5.0, ui.available_height().clamp(125.0, 310.0) * 0.62 * app.settings.chart_scale);
         ui.add_space(16.0);
         egui::Grid::new("mac-network-details").num_columns(2).spacing([32.0, 12.0]).show(ui, |ui| {
             for (label, value) in [

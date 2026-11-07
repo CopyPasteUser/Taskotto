@@ -125,6 +125,7 @@ pub struct Appearance {
     pub navigation: Option<LayoutMode>,
     pub font_scale: Option<f32>,
     pub spacing: Option<f32>,
+    pub chart_scale: Option<f32>,
     pub corner_radius: Option<u8>,
     pub row_height: Option<f32>,
 }
@@ -143,6 +144,7 @@ impl RicePack {
                 navigation: Some(settings.layout_mode),
                 font_scale: Some(settings.font_scale),
                 spacing: Some(settings.ui_spacing),
+                chart_scale: Some(settings.chart_scale),
                 corner_radius: settings.corner_radius,
                 row_height: settings.table_row_height,
             },
@@ -196,6 +198,7 @@ impl RicePack {
         for (label, value, min, max) in [
             ("font_scale", pack.appearance.font_scale, 0.8, 1.5),
             ("spacing", pack.appearance.spacing, 3.0, 16.0),
+            ("chart_scale", pack.appearance.chart_scale, 0.75, 1.5),
             ("row_height", pack.appearance.row_height, 22.0, 48.0),
         ] {
             if value.is_some_and(|value| !value.is_finite() || !(min..=max).contains(&value)) {
@@ -254,6 +257,9 @@ impl RicePack {
         }
         if let Some(value) = appearance.spacing {
             settings.ui_spacing = value;
+        }
+        if let Some(value) = appearance.chart_scale {
+            settings.chart_scale = value;
         }
         if let Some(value) = appearance.corner_radius {
             settings.corner_radius = Some(value);
@@ -325,6 +331,7 @@ mod tests {
             SAMPLE.replace("format_version = 1", "format_version = 2"),
             SAMPLE.replace("#159DA4", "#not-hex"),
             SAMPLE.replace("font_scale = 1.05", "font_scale = 500"),
+            SAMPLE.replace("font_scale = 1.05", "font_scale = 1.05\nchart_scale = 9"),
             SAMPLE.replace("Sea Glass", ""),
             SAMPLE.replace("#B6EAE0", "#bad"),
             SAMPLE.replace(
@@ -335,6 +342,18 @@ mod tests {
         ] {
             assert!(RicePack::from_toml(&source).is_err(), "{source}");
         }
+    }
+
+    #[test]
+    fn chart_scale_is_optional_for_old_packs_and_strict_for_new_packs() {
+        let old = RicePack::from_toml(SAMPLE).unwrap();
+        assert_eq!(old.appearance.chart_scale, None);
+        let custom = SAMPLE.replace("font_scale = 1.05", "font_scale = 1.05\nchart_scale = 1.25");
+        let pack = RicePack::from_toml(&custom).unwrap();
+        let mut settings = Settings::default();
+        pack.apply(&mut settings);
+        assert_eq!(settings.chart_scale, 1.25);
+        assert!(RicePack::from_toml(&custom.replace("1.25", "nan")).is_err());
     }
 
     #[test]
@@ -362,6 +381,7 @@ mod tests {
             accent_hex: Some("#123ABC".into()),
             layout_mode: LayoutMode::Sidebar,
             ui_spacing: 11.0,
+            chart_scale: 1.3,
             components: ComponentColors {
                 control: Some("#C0FFEE".into()),
                 ..ComponentColors::default()
@@ -375,11 +395,13 @@ mod tests {
         assert_eq!(loaded.appearance.accent.as_deref(), Some("#123ABC"));
         assert_eq!(loaded.appearance.navigation, Some(LayoutMode::Sidebar));
         assert_eq!(loaded.appearance.spacing, Some(11.0));
+        assert_eq!(loaded.appearance.chart_scale, Some(1.3));
         assert_eq!(loaded.components.control.as_deref(), Some("#C0FFEE"));
         let mut restored = Settings::default();
         loaded.apply(&mut restored);
         assert_eq!(restored.theme, settings.theme);
         assert_eq!(restored.accent_hex, settings.accent_hex);
+        assert_eq!(restored.chart_scale, settings.chart_scale);
         assert_eq!(restored.components, settings.components);
     }
 }

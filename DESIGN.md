@@ -73,6 +73,8 @@ font or proprietary font is required.
 The process table is virtualized. Real pages adapt to compact minimum windows
 and wide desktops; optional columns give way to process name, PID and core
 metrics. Density, row height, navigation and spacing are user-owned tokens.
+`chart_scale` changes chart height without changing each rice's relative
+proportions; 1.0 preserves the historical defaults.
 Pills in Frutiger Aero are intentionally unlike the square Classic 98 controls.
 Do not impose a fixed web-style viewport model on egui.
 
