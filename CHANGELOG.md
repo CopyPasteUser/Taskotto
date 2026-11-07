@@ -2,6 +2,12 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.35] — 2026-11-07
+
+- Added low-overhead read-only scheduling telemetry sourced from the process leader's `/proc/PID/stat` signed `nice` value and `/proc/PID/status` `Cpus_allowed_list`. No new syscall, background sampler, privilege or driver dependency is required.
+- Generic Details, XP Luna Properties and macOS Info now expose the observed **leader** Nice level and allowed CPU range alongside existing truthful CPU/RAM and descendant metrics. Other threads can differ; missing affinity remains `Unavailable` rather than invented all-core access.
+- Regression tests cover negative priorities, absent/oversized affinity text and actual current-process fields. Mutating nice, affinity or I/O priority remains pending safe race-free targeting, explicit user confirmation and Linux permission testing.
+
 ## [1.0.0-rc.34] — 2026-11-07
 
 - Started P3 read-only process tree aggregation: for any selected process, a single live Linux snapshot now yields the number of **distinct observed PIDs** in the descendant tree, their summed per-process CPU percentages, and their summed resident RSS. The traversal guards cycles, duplicate PID entries, stale root start ticks and byte-count overflow.

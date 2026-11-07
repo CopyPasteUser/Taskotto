@@ -1126,6 +1126,14 @@ impl TaskottoApp {
                             .unwrap_or_else(|| process.user_id.to_string()),
                     ),
                     ("State", state_name(process.state).to_owned()),
+                    ("Nice (leader)", process.nice.to_string()),
+                    (
+                        "CPUs allowed (leader)",
+                        process
+                            .cpus_allowed_list
+                            .clone()
+                            .unwrap_or_else(|| "Unavailable".into()),
+                    ),
                     (
                         "Started (local)",
                         format::local_timestamp(process.start_unix_seconds),

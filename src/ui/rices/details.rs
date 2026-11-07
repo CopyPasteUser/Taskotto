@@ -50,6 +50,8 @@ pub(super) fn xp_page(app: &mut TaskottoApp, ui: &mut egui::Ui) {
             "Performance",
             &[
                 ("CPU Usage", format!("{:.1}%", p.cpu_percent)),
+                ("Nice (leader)", p.nice.to_string()),
+                ("CPUs allowed (leader)", p.cpus_allowed_list.clone().unwrap_or_else(|| "Unavailable".into())),
                 ("Mem Usage", format::bytes(p.resident_bytes)),
                 ("VM Size", format::bytes(p.virtual_bytes)),
                 ("Threads", p.threads.to_string()),

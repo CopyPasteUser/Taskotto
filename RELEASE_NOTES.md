@@ -1,8 +1,14 @@
-# Taskotto 1.0.0-rc.34 — release candidate
+# Taskotto 1.0.0-rc.35 — release candidate
 
 **Date:** 2026-11-07 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
 Rust-only Linux process manager and system monitor. This is a **prerelease**, not a stable 1.0 certification.
+
+## Changes since rc.34
+
+- Read-only Linux scheduling diagnostics now show `nice` and permitted CPU-list masks of each process's **leader thread** in generic Details, XP Luna Properties and macOS Info. Values come from already sampled procfs metadata and do not grant any additional permission.
+- Unavailable affinity is explicitly marked unavailable; negative Nice values are parsed correctly. These are not process-wide guarantees when other threads have separate affinity/priority, and privilege-sensitive controls remain unimplemented pending safe PID targeting.
+- Updated genuine historical Info/Properties screenshots and added parser/real-proc tests.
 
 ## Changes since rc.33
 

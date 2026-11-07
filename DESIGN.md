@@ -133,6 +133,9 @@ its versioned schema; incompatible variants are never silently converted.
 The process inspector can display observed descendant PID totals from a
 single snapshot, but labels summed RSS and its shared-page overlap rather
 than claiming deduplicated physical RAM or full-system process visibility.
+Scheduling metadata is read-only and sourced from the selected thread-group
+leader's `/proc`: signed Nice values and explicit permitted CPU ranges are
+not falsely described as uniform across all threads or as write privileges.
 
 The interface is live and honest: charts use measured bounded history;
 labels distinguish system-wide traffic from per-process information. Motion

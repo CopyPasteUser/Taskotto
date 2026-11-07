@@ -74,7 +74,7 @@ The command samples real system activity and writes:
 - `assets/screenshots/taskotto-macos-energy.png` — per-process CPU activity as an **explicitly labeled proxy**, because macOS Energy Impact / App Nap are not available from portable Linux procfs.
 - `assets/screenshots/taskotto-macos-disk.png` — permission-sensitive real `/proc/PID/io` process bytes and aggregate block-device rates.
 - `assets/screenshots/taskotto-macos-network.png` — real non-loopback system-wide traffic history; no imaginary per-process counters.
-- `assets/screenshots/taskotto-macos-info.png` — modal process information from the currently selected actual PID, including an explicitly scoped observed Linux descendant summary with non-unique summed RSS.
+- `assets/screenshots/taskotto-macos-info.png` — modal process information from the currently selected actual PID, including the observed descendant summary, leader Nice/CPU-affinity metadata and non-unique summed RSS caveat.
 - `assets/screenshots/taskotto-macos-nightshift-ricepack.png` — real macOS-inspired process report with the included Nightshift RicePack v1, proving the custom drawn selection, controls, border and dark table token flow.
 
 ### Windows 7 (six historical tabs)
@@ -108,7 +108,7 @@ The command samples real system activity and writes:
 - `assets/screenshots/taskotto-xp-midnight-ricepack.png` — original Midnight RicePack with customizable XP-era tabs, borders, dark report and actual current Linux process selection.
 - `assets/screenshots/taskotto-xp-luna-performance.png` — CPU/memory history.
 - `assets/screenshots/taskotto-xp-luna-networking.png` — non-loopback receive/send trends.
-- `assets/screenshots/taskotto-xp-luna-details.png` — process properties using live Linux fields and the observed descendant tree count/CPU/summed RSS (shared pages may overlap).
+- `assets/screenshots/taskotto-xp-luna-details.png` — process properties using live Linux fields, leader Nice/CPU-affinity mask and the observed descendant tree count/CPU/summed RSS (shared pages may overlap).
 
 The obsolete generic dark/Classic 98 gallery captures were removed in RC7;
 RC11 added four independently rendered Classic 98 views; RC12 adds two ChromeOS and four Frutiger Aero views.
