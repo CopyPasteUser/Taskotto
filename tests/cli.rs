@@ -215,7 +215,11 @@ fn installer_creates_a_reusable_user_local_desktop_entry() {
         format!("Exec={executable}")
     };
     assert!(desktop.contains(&exec));
-    assert!(desktop.contains("Icon=io.github.copypasteuser.taskotto"));
+    let png_path = home
+        .0
+        .join(format!("icons/hicolor/256x256/apps/{app_id}.png"));
+    assert!(desktop.contains(&format!("Icon={}", png_path.display())));
+    assert!(png_path.is_file());
     assert!(
         home.0
             .join(format!("icons/hicolor/scalable/apps/{app_id}.svg"))
@@ -251,5 +255,6 @@ fn installer_creates_a_reusable_user_local_desktop_entry() {
         );
         assert!(!desktop_path.exists());
         assert!(!icon_path.exists());
+        assert!(!png_path.exists());
     }
 }
