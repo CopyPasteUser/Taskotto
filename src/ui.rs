@@ -106,6 +106,17 @@ struct History {
     disk_write: VecDeque<f32>,
     process_follow: Option<ProcessFollow>,
     pss_inspection: Option<PssInspection>,
+    cgroup_inspection: Option<CgroupInspection>,
+}
+
+struct CgroupInspection {
+    target: (i32, u64),
+    state: CgroupState,
+}
+
+enum CgroupState {
+    Loading(Receiver<Result<crate::monitor::cgroup::CgroupReport, String>>),
+    Ready(Result<crate::monitor::cgroup::CgroupReport, String>),
 }
 
 struct PssInspection {
@@ -654,6 +665,22 @@ impl TaskottoApp {
             };
             if let Some(result) = result {
                 inspection.state = PssState::Ready(result);
+            }
+        }
+        if let Some(inspection) = &mut self.history.cgroup_inspection {
+            let result = if let CgroupState::Loading(rx) = &inspection.state {
+                match rx.try_recv() {
+                    Ok(result) => Some(result),
+                    Err(TryRecvError::Disconnected) => {
+                        Some(Err("Cgroup inspection worker exited unexpectedly".into()))
+                    }
+                    Err(TryRecvError::Empty) => None,
+                }
+            } else {
+                None
+            };
+            if let Some(result) = result {
+                inspection.state = CgroupState::Ready(result);
             }
         }
     }
@@ -1216,6 +1243,7 @@ impl TaskottoApp {
         ui.label(RichText::new(&process.command).weak());
         self.process_follow_controls(ui);
         self.pss_inspection_controls(ui);
+        self.cgroup_inspection_controls(ui);
         ui.add_space(8.0);
         egui::Grid::new("process-details")
             .num_columns(2)
@@ -1504,6 +1532,9 @@ impl TaskottoApp {
             preference_section(ui, "Proportional memory · on demand", xp);
             self.pss_inspection_controls(ui);
             ui.add_space(18.0);
+            preference_section(ui, "Linux cgroup v2 · on demand", xp);
+            self.cgroup_inspection_controls(ui);
+            ui.add_space(18.0);
             preference_section(ui, "GPU sensors · read only", xp);
             self.gpu_telemetry_ui(ui);
             ui.add_space(18.0);
@@ -1676,6 +1707,118 @@ impl TaskottoApp {
             ui.add_space(8.0);
         }
         ui.label(RichText::new("AMDGPU exposes busy/VRAM and optional hwmon values; Intel/NVIDIA utilization requires a supported driver backend. Missing fields are not zero. Some AMD APU power sensors include CPU power.").small().weak());
+    }
+
+    fn cgroup_inspection_controls(&mut self, ui: &mut egui::Ui) {
+        let selected = self.selected_process().map(|p| (p.pid, p.start_ticks));
+        let loading = self
+            .history
+            .cgroup_inspection
+            .as_ref()
+            .is_some_and(|inspection| matches!(inspection.state, CgroupState::Loading(_)));
+        if ui.add_enabled(selected.is_some() && !loading, egui::Button::new("Inspect cgroup v2"))
+            .on_hover_text("Read selected PID's cgroup v2 resource counters once, asynchronously; no process/container control")
+            .clicked()
+            && let Some(target) = selected
+        {
+            let (tx, rx) = mpsc::channel();
+            let ctx = ui.ctx().clone();
+            thread::spawn(move || {
+                let result = crate::monitor::cgroup::inspect(target.0, target.1);
+                let _ = tx.send(result);
+                ctx.request_repaint();
+            });
+            self.history.cgroup_inspection = Some(CgroupInspection {
+                target,
+                state: CgroupState::Loading(rx),
+            });
+        }
+        let Some(inspection) = &self.history.cgroup_inspection else {
+            return;
+        };
+        if selected != Some(inspection.target) {
+            ui.label(
+                RichText::new(format!(
+                    "Last inspection was for PID {} (different from selection)",
+                    inspection.target.0
+                ))
+                .small()
+                .weak(),
+            );
+        }
+        match &inspection.state {
+            CgroupState::Loading(_) => {
+                ui.spinner();
+                ui.label("Reading cgroup v2 counters…");
+            }
+            CgroupState::Ready(Err(error)) => {
+                ui.label(
+                    RichText::new(format!("Cgroup unavailable: {error}"))
+                        .small()
+                        .weak(),
+                );
+            }
+            CgroupState::Ready(Ok(report)) => {
+                ui.label(
+                    RichText::new(format!("Cgroup: {}", report.path))
+                        .small()
+                        .strong(),
+                );
+                let available_bytes = |value: Option<u64>| {
+                    value
+                        .map(format::bytes)
+                        .unwrap_or_else(|| "Unavailable".into())
+                };
+                let available_usec = |value: Option<u64>| {
+                    value
+                        .map(|us| format!("{:.2} s", us as f64 / 1_000_000.0))
+                        .unwrap_or_else(|| "Unavailable".into())
+                };
+                let limit = match report.memory_limit {
+                    crate::monitor::cgroup::MemoryLimit::Bytes(bytes) => format::bytes(bytes),
+                    crate::monitor::cgroup::MemoryLimit::Unlimited => "No cgroup limit".into(),
+                    crate::monitor::cgroup::MemoryLimit::Unavailable => "Unavailable".into(),
+                };
+                let rows = [
+                    (
+                        "CPU usage (cumulative)",
+                        available_usec(report.cpu_usage_usec),
+                    ),
+                    (
+                        "CPU throttle time",
+                        available_usec(report.cpu_throttled_usec),
+                    ),
+                    (
+                        "CPU throttle events",
+                        report
+                            .cpu_throttled_events
+                            .map(|v| v.to_string())
+                            .unwrap_or_else(|| "Unavailable".into()),
+                    ),
+                    ("Memory current", available_bytes(report.memory_bytes)),
+                    ("Memory max", limit),
+                    (
+                        "I/O read (cumulative)",
+                        available_bytes(report.io_read_bytes),
+                    ),
+                    (
+                        "I/O written (cumulative)",
+                        available_bytes(report.io_write_bytes),
+                    ),
+                ];
+                egui::Grid::new("cgroup-inspection-fields")
+                    .num_columns(2)
+                    .spacing([20.0, 6.0])
+                    .show(ui, |ui| {
+                        for (name, value) in rows {
+                            ui.label(RichText::new(name).weak());
+                            ui.label(value);
+                            ui.end_row();
+                        }
+                    });
+                ui.label(RichText::new("These are cumulative counters for this Linux cgroup, potentially including other processes and nested cgroups. They are not per-PID or container-API values; collection is a non-atomic snapshot.").small().weak());
+            }
+        }
     }
 
     fn pss_inspection_controls(&mut self, ui: &mut egui::Ui) {

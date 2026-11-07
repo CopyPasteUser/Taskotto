@@ -2,6 +2,12 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.41] — 2026-11-07
+
+- Started P5 with an explicitly requested read-only cgroup v2 inspector for the selected process. It reads kernel membership `0::/path`, CPU use and throttling, current/maximum memory (including unlimited) and summed block I/O byte counters in a bounded background task; normal sampling performance remains unchanged.
+- Defends against unsafe cgroup traversal and namespace mount escapes and checks PID start ticks and membership both before and after reading. Missing controllers, permissions, moved or exited processes yield truthful unavailable/error states; cgroup-wide results are never falsely attributed to one PID or an invented container identity.
+- Added strict path, cgroup CPU/I/O parsing and current-process tests. User-systemd, real Podman/Docker associations, Flatpak labels and physical container acceptance remain open.
+
 ## [1.0.0-rc.40] — 2026-11-07
 
 - Added read-only battery and external-power sampling through the standard Linux `power_supply` sysfs class inside the existing worker loop. System Performance and every rice's Preferences show reported charge percentage, charging state, actual Wh, W and external-source availability when present.

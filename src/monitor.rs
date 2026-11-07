@@ -1,5 +1,6 @@
 //! Unprivileged, on-demand Linux /proc sampler. No daemon and no shell commands.
 use serde::Serialize;
+pub(crate) mod cgroup;
 mod gpu;
 mod power;
 pub(crate) mod pss;
