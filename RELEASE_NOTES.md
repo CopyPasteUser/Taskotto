@@ -1,8 +1,14 @@
-# Taskotto 1.0.0-rc.36 — release candidate
+# Taskotto 1.0.0-rc.37 — release candidate
 
 **Date:** 2026-11-07 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
 Rust-only Linux process manager and system monitor. This is a **prerelease**, not a stable 1.0 certification.
+
+## Changes since rc.36
+
+- Added an **opt-in, strictly session-only process follow** control in generic Details and Preferences. It graphs up to 120 genuine per-process CPU and resident-memory samples with no background process service or disk writes.
+- Samples must match the **PID and original process start ticks**. A temporarily unavailable process does not generate invented zero samples; after three consecutive misses the follow ends and its bounded history remains visible until cleared. Tracking never silently resumes for a recycled PID.
+- Added a genuine headless screenshot of the generic inspector watching an actual disposable Linux process, plus lifecycle/limit regression tests. Hardware keyboard and desktop acceptance remain pending.
 
 ## Changes since rc.35
 

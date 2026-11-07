@@ -104,10 +104,72 @@ struct History {
     sent: VecDeque<f32>,
     disk_read: VecDeque<f32>,
     disk_write: VecDeque<f32>,
+    process_follow: Option<ProcessFollow>,
+}
+
+/// Explicitly followed process only; avoids keeping an unbounded global PID
+/// database and never mistakes a recycled PID for the original process.
+struct ProcessFollow {
+    pid: i32,
+    start_ticks: u64,
+    name: String,
+    cpu: VecDeque<f32>,
+    rss_mib: VecDeque<f32>,
+    missed: usize,
+    active: bool,
+}
+
+impl ProcessFollow {
+    const LIMIT: usize = 120;
+
+    fn new(process: &Process) -> Self {
+        Self {
+            pid: process.pid,
+            start_ticks: process.start_ticks,
+            name: process.name.clone(),
+            cpu: VecDeque::new(),
+            rss_mib: VecDeque::new(),
+            missed: 0,
+            active: true,
+        }
+    }
+
+    fn record(&mut self, snapshot: &Snapshot) {
+        if !self.active {
+            return;
+        }
+        let Some(process) = snapshot
+            .processes
+            .iter()
+            .find(|p| p.pid == self.pid && p.start_ticks == self.start_ticks)
+        else {
+            self.missed = self.missed.saturating_add(1);
+            if self.missed >= 3 {
+                self.active = false;
+            }
+            return;
+        };
+        self.missed = 0;
+        for (history, value) in [
+            (&mut self.cpu, process.cpu_percent),
+            (
+                &mut self.rss_mib,
+                process.resident_bytes as f32 / (1024.0 * 1024.0),
+            ),
+        ] {
+            if history.len() == Self::LIMIT {
+                history.pop_front();
+            }
+            history.push_back(value);
+        }
+    }
 }
 
 impl History {
     fn record(&mut self, snapshot: &Snapshot) {
+        if let Some(follow) = &mut self.process_follow {
+            follow.record(snapshot);
+        }
         self.cores
             .resize_with(snapshot.cores_percent.len(), VecDeque::new);
         self.cores.truncate(snapshot.cores_percent.len());
@@ -1121,6 +1183,7 @@ impl TaskottoApp {
         };
         ui.heading(&process.name);
         ui.label(RichText::new(&process.command).weak());
+        self.process_follow_controls(ui);
         ui.add_space(8.0);
         egui::Grid::new("process-details")
             .num_columns(2)
@@ -1402,6 +1465,10 @@ impl TaskottoApp {
                 changed = true;
             }
             ui.add_space(18.0);
+            preference_section(ui, "Process follow · this session", xp);
+            self.process_follow_controls(ui);
+            ui.label(RichText::new("Only a deliberately followed process is recorded. Its PID and start time must both match; samples are bounded to 120, and tracking stops after three missed samples. No file is written.").small().weak());
+            ui.add_space(18.0);
             preference_section(ui, "Monitoring", xp);
             changed |= ui.add(egui::Slider::new(&mut self.settings.refresh_ms, 500..=10_000).text("Refresh interval (ms)")).changed();
             changed |= ui.checkbox(&mut self.settings.only_my_processes, "Show only my processes").changed();
@@ -1428,6 +1495,82 @@ impl TaskottoApp {
         if changed {
             self.save_preferences(ui.ctx());
         }
+    }
+
+    fn process_follow_controls(&mut self, ui: &mut egui::Ui) {
+        let selected = self.selected_process().cloned();
+        let following_selected = self.history.process_follow.as_ref().is_some_and(|follow| {
+            follow.active
+                && selected.as_ref().is_some_and(|process| {
+                    (process.pid, process.start_ticks) == (follow.pid, follow.start_ticks)
+                })
+        });
+        ui.horizontal_wrapped(|ui| {
+            if ui
+                .add_enabled(
+                    selected.is_some(),
+                    egui::Button::new(if following_selected {
+                        "Stop following"
+                    } else {
+                        "Follow selected process"
+                    }),
+                )
+                .on_hover_text(
+                    "Remember up to 120 live CPU and RSS samples for this exact Linux process",
+                )
+                .clicked()
+            {
+                self.history.process_follow = if following_selected {
+                    None
+                } else {
+                    selected.as_ref().map(ProcessFollow::new)
+                };
+            }
+            if self.history.process_follow.is_some() && ui.small_button("Clear history").clicked() {
+                self.history.process_follow = None;
+            }
+        });
+        let Some(follow) = &self.history.process_follow else {
+            return;
+        };
+        let state = if !follow.active {
+            "Ended: 3 missed samples (no automatic PID reattach)"
+        } else if follow.missed > 0 {
+            "Temporarily unavailable: waiting for a matching sample"
+        } else {
+            "Following live process"
+        };
+        ui.label(
+            RichText::new(format!("{} · PID {} · {}", follow.name, follow.pid, state)).small(),
+        );
+        if follow.cpu.is_empty() {
+            ui.label(RichText::new("Waiting for the next sample…").small().weak());
+            return;
+        }
+        let accent = accent_color(&self.settings);
+        let cpu_peak = graph_max(&follow.cpu, &VecDeque::new());
+        let mem_peak = graph_max(&follow.rss_mib, &VecDeque::new());
+        let cpu_max = cpu_peak.max(100.0);
+        let mem_max = mem_peak.max(1.0);
+        ui.columns(2, |columns| {
+            columns[0].label(format!(
+                "CPU · latest {:.1}% · peak {:.1}%",
+                follow.cpu.back().unwrap_or(&0.0),
+                cpu_peak
+            ));
+            chart(&mut columns[0], &follow.cpu, cpu_max, accent);
+            columns[1].label(format!(
+                "RSS · latest {:.1} MiB · peak {:.1} MiB",
+                follow.rss_mib.back().unwrap_or(&0.0),
+                mem_peak
+            ));
+            chart(
+                &mut columns[1],
+                &follow.rss_mib,
+                mem_max,
+                Color32::from_rgb(82, 173, 155),
+            );
+        });
     }
 
     fn confirmation_dialog(&mut self, ctx: &egui::Context) {
@@ -2001,6 +2144,51 @@ mod tests {
             [7, 42, 200]
         );
         assert_eq!(rows[1].depth, 1);
+    }
+
+    #[test]
+    fn explicit_process_follow_is_bounded_and_never_reattaches_reused_pid() {
+        let process = Process {
+            pid: 77,
+            start_ticks: 300,
+            name: "watched".into(),
+            cpu_percent: 12.5,
+            resident_bytes: 4 * 1024 * 1024,
+            ..Process::default()
+        };
+        let mut history = History::default();
+        let mut snapshot = Snapshot {
+            processes: vec![process.clone()],
+            cpu_percent: 0.0,
+            cores_percent: vec![],
+            memory: Default::default(),
+            rates: Default::default(),
+            uptime_seconds: 0.0,
+            logical_cpus: 1,
+        };
+        history.process_follow = Some(ProcessFollow::new(&process));
+        for _ in 0..200 {
+            history.record(&snapshot);
+        }
+        let trail = history.process_follow.as_ref().unwrap();
+        assert_eq!(trail.cpu.len(), ProcessFollow::LIMIT);
+        assert_eq!(trail.rss_mib.len(), ProcessFollow::LIMIT);
+        assert_eq!(trail.cpu.back(), Some(&12.5));
+        assert_eq!(trail.rss_mib.back(), Some(&4.0));
+
+        // Reused numeric PID with a different start tick must not be recorded.
+        snapshot.processes[0].start_ticks = 301;
+        snapshot.processes[0].cpu_percent = 99.0;
+        for _ in 0..3 {
+            history.record(&snapshot);
+        }
+        let trail = history.process_follow.as_ref().unwrap();
+        assert!(!trail.active);
+        assert_eq!(trail.cpu.back(), Some(&12.5));
+        snapshot.processes[0] = process;
+        history.record(&snapshot);
+        assert!(!history.process_follow.as_ref().unwrap().active);
+        assert_eq!(history.process_follow.as_ref().unwrap().cpu.len(), 120);
     }
 
     #[test]
