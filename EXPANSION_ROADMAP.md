@@ -173,6 +173,11 @@ non-AMD machine. No mandatory vendor SDK for the baseline binary.
 ## P5 — Container, cgroup and service monitoring
 
 - [ ] Read cgroup v2 CPU, memory and I/O counters with correct aggregation.
+  - [x] RC41: explicit selected-process cgroup v2 inspector for actual
+    membership, cumulative group CPU/throttling, memory current/max and
+    aggregated per-device I/O, with PID/membership revalidation.
+  - [ ] Multi-cgroup and nested-hierarchy overview, dynamic group sample
+    rates, container host/namespace accounting and native stress QA.
 - [ ] Show user systemd units and optional Podman/Docker associations.
 - [ ] Recognize Flatpak/containerized processes where kernel metadata allows.
 - [ ] Start read-only; consider safe service actions only behind explicit

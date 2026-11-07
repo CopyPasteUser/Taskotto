@@ -359,6 +359,7 @@ fn generate_headless_ui_screenshots() {
                 disk_write: history.disk_write.clone(),
                 process_follow: None,
                 pss_inspection: None,
+                cgroup_inspection: None,
             },
             page,
             performance_focus: PerformanceFocus::Cpu,

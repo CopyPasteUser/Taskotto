@@ -1,8 +1,14 @@
-# Taskotto 1.0.0-rc.40 — release candidate
+# Taskotto 1.0.0-rc.41 — release candidate
 
 **Date:** 2026-11-07 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
 Rust-only Linux process manager and system monitor. This is a **prerelease**, not a stable 1.0 certification.
+
+## Changes since rc.40
+
+- Started P5 with an on-demand, asynchronous **cgroup v2 inspector** for the selected Linux PID. It reads true unified cgroup membership, cumulative `cpu.stat` usage/throttling, `memory.current`, `memory.max` (including unlimited) and aggregates device-level `io.stat` read/write bytes.
+- Revalidates the PID's original start tick and membership after reading, rejects unsafe/escaping cgroup paths, and distinguishes unavailable controller data from actual zero. Results explicitly describe **cgroup-wide** counters, not per-process or container API metrics; unsupported cgroup v1/namespace mounts show an error, not a crash.
+- Added pure path/traversal/CPU/I/O parsing tests and a best-effort own-process probe. Available through generic Details and every rice's Preferences, without privilege escalation, background daemon or process mutations. Native cgroup/container tests remain outstanding.
 
 ## Changes since rc.39
 
