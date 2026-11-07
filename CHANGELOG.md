@@ -2,6 +2,11 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.54] — 2026-11-07
+
+- Added explicit two-snapshot cgroup CPU usage and block I/O rate comparison on re-inspection of the same selected process, using monotonic actual elapsed time, cgroupfs inode and membership path identity. No continuous sampler, service, root permissions or extra background task is introduced.
+- Rejects cgroup replacement/recreation, paths changed by migration, zero/short intervals, missing controllers and counter resets instead of inventing negative or zero rates. CPU use is expressed as a percentage of one core (multi-core values may exceed 100%). Tests verify identity, elapsed time, reset/missing data and real units.
+
 ## [1.0.0-rc.53] — 2026-11-07
 
 - Extended the explicitly requested, asynchronous read-only cgroup v2 inspection with a bounded nearby-hierarchy view: the selected group's direct parent and up to 16 immediate child cgroups, showing their own cumulative CPU use and memory current when readable. The scan stops after 128 entries and notes truncation; unavailable enumeration never appears as an empty hierarchy.
