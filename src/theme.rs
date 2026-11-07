@@ -259,6 +259,11 @@ impl ThemeStyle {
         visuals.widgets.open.corner_radius = rounding;
         ctx.set_visuals(visuals);
         let mut style = (*ctx.style()).clone();
+        style.animation_time = if settings.low_overhead {
+            0.0
+        } else {
+            egui::Style::default().animation_time
+        };
         let spacing = if settings.density == Density::Compact {
             self.spacing * 0.65
         } else {
@@ -434,6 +439,23 @@ mod tests {
         assert_eq!(custom.on_table(ink), white);
         assert_eq!(custom.on_selection(ink, white), Color32::BLACK);
         assert_eq!(custom.on_control(white, ink), white);
+    }
+
+    #[test]
+    fn low_overhead_mode_disables_style_animation_and_restores_default() {
+        let ctx = egui::Context::default();
+        let mut settings = Settings {
+            low_overhead: true,
+            ..Settings::default()
+        };
+        ThemeStyle::from_settings(&settings).apply(&ctx, &settings);
+        assert_eq!(ctx.style().animation_time, 0.0);
+        settings.low_overhead = false;
+        ThemeStyle::from_settings(&settings).apply(&ctx, &settings);
+        assert_eq!(
+            ctx.style().animation_time,
+            egui::Style::default().animation_time
+        );
     }
 
     #[test]

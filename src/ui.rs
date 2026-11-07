@@ -411,7 +411,7 @@ impl TaskottoApp {
             Page::Processes
         };
         Self {
-            worker: Worker::start(settings.refresh_ms, context.egui_ctx.clone()),
+            worker: Worker::start(settings.effective_refresh_ms(), context.egui_ctx.clone()),
             settings,
             snapshot: None,
             history: History::default(),
@@ -765,7 +765,7 @@ impl TaskottoApp {
         let _ = self
             .worker
             .commands
-            .send(Command::SetPeriod(self.settings.refresh_ms));
+            .send(Command::SetPeriod(self.settings.effective_refresh_ms()));
         if let Err(err) = self.settings.save() {
             self.notification = Some(format!("Could not save preferences: {err}"));
         }
@@ -1628,7 +1628,7 @@ impl TaskottoApp {
                     .desired_width(350.0).hint_text("/absolute/path/to/taskotto-session.csv"));
                 if ui.button("Export session history").clicked() {
                     let path = PathBuf::from(self.history_export_path.trim());
-                    match history_export::write_new(&self.history, &path, self.settings.refresh_ms) {
+                    match history_export::write_new(&self.history, &path, self.settings.effective_refresh_ms()) {
                         Ok(count) => self.notification = Some(format!("Exported {count} session samples: {}", path.display())),
                         Err(error) => self.notification = Some(format!("Session export failed: {error}")),
                     }
@@ -1638,6 +1638,10 @@ impl TaskottoApp {
             ui.add_space(18.0);
             preference_section(ui, "Monitoring", xp);
             changed |= ui.add(egui::Slider::new(&mut self.settings.refresh_ms, 500..=10_000).text("Refresh interval (ms)")).changed();
+            changed |= ui.checkbox(&mut self.settings.low_overhead, "Low-overhead mode (fewer samples, reduced motion)").changed();
+            if self.settings.low_overhead {
+                ui.label(RichText::new(format!("Effective monitoring interval: {} ms (at least 3000 ms). Your configured interval is preserved when switching this off. All monitors and process actions remain available.", self.settings.effective_refresh_ms())).small().weak());
+            }
             changed |= ui.checkbox(&mut self.settings.only_my_processes, "Show only my processes").changed();
             changed |= ui.checkbox(&mut self.settings.show_kernel_threads, "Show kernel threads").changed();
             ui.add_space(12.0);
@@ -2285,7 +2289,11 @@ impl TaskottoApp {
             );
             if ui.button("Save CSV / JSON").clicked() {
                 let path = PathBuf::from(follow.export_path.trim());
-                match history_export::write_process_new(follow, &path, self.settings.refresh_ms) {
+                match history_export::write_process_new(
+                    follow,
+                    &path,
+                    self.settings.effective_refresh_ms(),
+                ) {
                     Ok(count) => {
                         self.notification = Some(format!(
                             "Exported {count} followed-process samples: {}",
@@ -3161,7 +3169,7 @@ mod tests {
         let ctx = egui::Context::default();
         let settings = Settings::default();
         let mut app = TaskottoApp {
-            worker: Worker::start(settings.refresh_ms, ctx.clone()),
+            worker: Worker::start(settings.effective_refresh_ms(), ctx.clone()),
             settings,
             snapshot: Some(Snapshot {
                 cpu_percent: 12.5,

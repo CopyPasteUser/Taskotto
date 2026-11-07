@@ -197,6 +197,8 @@ pub struct Settings {
     pub sort_by: SortBy,
     pub descending: bool,
     pub refresh_ms: u64,
+    /// Optional sampling/animation tradeoff for battery-sensitive desktops.
+    pub low_overhead: bool,
     pub tree_view: bool,
     pub only_my_processes: bool,
     pub show_kernel_threads: bool,
@@ -252,6 +254,7 @@ impl Default for Settings {
             sort_by: SortBy::Cpu,
             descending: true,
             refresh_ms: 1_500,
+            low_overhead: false,
             tree_view: false,
             only_my_processes: false,
             show_kernel_threads: false,
@@ -276,6 +279,17 @@ impl Default for Settings {
 }
 
 impl Settings {
+    /// Effective worker period without modifying the user's saved interval.
+    /// The profile changes sampling cadence, not which monitors are enabled.
+    pub(crate) fn effective_refresh_ms(&self) -> u64 {
+        let interval = self.refresh_ms.clamp(500, 10_000);
+        if self.low_overhead {
+            interval.max(3_000)
+        } else {
+            interval
+        }
+    }
+
     pub(crate) fn record_ricepack_session(&mut self, name: &str) {
         if self.launch_ricepack_original.is_none() {
             self.launch_ricepack_original = Some(Box::new(AppearanceBackup {
@@ -511,6 +525,27 @@ mod tests {
         let decoded: Settings = toml::from_str(&encoded).unwrap();
         assert_eq!(decoded.refresh_ms, config.refresh_ms);
         assert_eq!(decoded.theme, config.theme);
+    }
+
+    #[test]
+    fn low_overhead_profile_clamps_effective_period_without_changing_preferences() {
+        let mut settings = Settings::default();
+        assert_eq!(settings.effective_refresh_ms(), 1_500);
+        settings.low_overhead = true;
+        assert_eq!(settings.effective_refresh_ms(), 3_000);
+        settings.refresh_ms = 5_000;
+        assert_eq!(settings.effective_refresh_ms(), 5_000);
+        settings.refresh_ms = 500;
+        assert_eq!(settings.effective_refresh_ms(), 3_000);
+        let saved = toml::to_string(&settings).unwrap();
+        let mut loaded: Settings = toml::from_str(&saved).unwrap();
+        assert!(loaded.low_overhead);
+        assert_eq!(loaded.refresh_ms, 500);
+        loaded.low_overhead = false;
+        assert_eq!(loaded.effective_refresh_ms(), 500);
+        let legacy: Settings = toml::from_str("refresh_ms = 1200").unwrap();
+        assert!(!legacy.low_overhead);
+        assert_eq!(legacy.effective_refresh_ms(), 1200);
     }
 
     #[test]

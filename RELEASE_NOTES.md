@@ -1,4 +1,11 @@
-# Taskotto 1.0.0-rc.50 — release candidate
+# Taskotto 1.0.0-rc.51 — release candidate
+
+## RC51 — Opt-in low-overhead monitoring
+
+- Preferences → Monitoring adds an optional low-overhead mode. When enabled, the existing sampler runs at a minimum 3-second interval and native UI style animations are removed. Every view, safety confirmation and process action remains available; CPU/RAM savings are not claimed without hardware measurement.
+- The saved preferred refresh period is not changed. Switching the mode off immediately restores it. Both session and followed-process exports use the actual nominal monitoring interval. Old configurations keep normal behavior.
+- Added regression tests for the legacy default, persistence, effective period and returning from reduced animation to normal styling. Native measured idle-power/CPU acceptance is still outstanding.
+
 
 ## RC50 — Optional private followed-process history export
 
