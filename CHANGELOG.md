@@ -2,6 +2,12 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.32] — 2026-11-07
+
+- Added a functional, session-only **Screen layout designer** in Preferences. Users can start with a safe default, edit up to four pages, name and reorder widgets, choose verified metric/plot/gauge bindings and select predefined status, toolbar and process columns. The seven predefined widget templates need no scripting or compiling.
+- Separate standard and compact compositions can be edited; draft changes are validated together and **never applied** to the active client while invalid. Valid layouts can be applied to the running monitor and explicitly exported through the existing non-overwriting RicePack export flow. Discard and reset are available; no implicit config/file updates occur.
+- Added a genuine egui layout-editor screenshot, editor schema test and accessibility-friendly Move up/Move down buttons. Desktop keyboard/physical acceptance and P2 migration diagnostics remain open.
+
 ## [1.0.0-rc.31] — 2026-11-07
 
 - Added backwards-compatible, validated responsive RicePack screen variants: an optional 480–1024 px content-area breakpoint (`layout.compact_below`) and up to 16 alternative `compact_widgets` per page, chosen automatically as the Taskotto window resizes. Old packs continue rendering exactly their original widgets.

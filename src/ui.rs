@@ -169,6 +169,10 @@ struct RicePackLibraryUi {
     entries: Vec<LibraryEntry>,
     loaded: bool,
     preview: Option<RicePackPreview>,
+    editor_layout: Option<crate::layout::LayoutSpec>,
+    editor_page: usize,
+    editor_compact: bool,
+    editor_error: Option<String>,
 }
 
 struct RicePackPreview {
@@ -545,6 +549,8 @@ impl TaskottoApp {
                 }
             }
         });
+        ui.add_space(12.0);
+        layout_editor::draw(self, ui, xp);
         ui.label(RichText::new("Preview changes only this window. Import and export never overwrite files. RicePacks cannot run commands or change monitoring permissions.").small().weak());
     }
 
@@ -1367,6 +1373,8 @@ impl TaskottoApp {
             ui.add_space(18.0);
             if ui.button("Reset to defaults").clicked() {
                 self.ricepack_library.preview = None;
+                self.ricepack_library.editor_layout = None;
+                self.ricepack_library.editor_error = None;
                 self.ricepack_watcher = None;
                 self.settings = Settings::default();
                 self.theme_accent_input.clear();
@@ -1784,6 +1792,7 @@ fn apply_theme(ctx: &egui::Context, settings: &Settings) {
 
 #[cfg(test)]
 mod captures;
+mod layout_editor;
 mod rices;
 
 #[cfg(test)]

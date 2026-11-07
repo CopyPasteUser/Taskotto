@@ -165,7 +165,16 @@ their existing behavior. Control/selection text uses automatic contrast
 fallback; a table fill that would make inherited text unreadable is ignored.
 
 This is an interactive editor for the **v1 supported appearance tokens**, not
-arbitrary UI widget placement. The separate RiceBowl desktop RicePack
+arbitrary scripts or visual assets. **Screen layout designer (RC32)** appears
+below the library controls in Preferences. It can compose and reorder the
+schema's seven safe widget kinds, edit captions, typed data sources, action
+sets and process columns, and maintain independent standard/compact widget
+lists for up to four pages. The active design is not altered while the draft
+is incomplete or invalid. **Apply to this session** previews the validated
+layout in the Processes view without writing any files; use the existing
+**Export current appearance** to create a new, non-overwriting portable TOML
+file. **Discard draft** and **Reset draft from active layout** preserve the
+currently running design. The separate RiceBowl desktop RicePack
 JSON/ZIP formats cannot be loaded as Taskotto TOML; RiceBowl must export a
 `taskotto-rice.toml` and pass its absolute path through the environment.
 

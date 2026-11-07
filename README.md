@@ -6,11 +6,11 @@
 
 A customizable process manager and system monitor written in **Rust**. Runs alone or alongside [RiceBowl](https://github.com/CopyPasteUser/Ricebowl) on **X11 and Wayland**.
 
-![License](https://img.shields.io/badge/license-MIT-blue) ![Rust](https://img.shields.io/badge/language-Rust-orange) ![Status](https://img.shields.io/badge/status-1.0%20RC31-yellow)
+![License](https://img.shields.io/badge/license-MIT-blue) ![Rust](https://img.shields.io/badge/language-Rust-orange) ![Status](https://img.shields.io/badge/status-1.0%20RC32-yellow)
 
 </div>
 
-> **Status:** `1.0.0-rc.31` — seven dedicated interfaces: Frutiger Aero, ChromeOS, Windows 98, XP Luna, Windows 7, Windows 10 and macOS Activity Monitor, plus optional data-defined client screens. **All eight profiles leave the window frame, title and window buttons to RiceBowl/the active window manager**; Taskotto draws only its content, menus and functional toolbars. Native GUI and resource-use acceptance are still outstanding. See [1.0 roadmap](ROADMAP.md), [future development roadmap](EXPANSION_ROADMAP.md) and [QA checklist](QA.md). This is **not yet stable 1.0**.
+> **Status:** `1.0.0-rc.32` — seven dedicated interfaces: Frutiger Aero, ChromeOS, Windows 98, XP Luna, Windows 7, Windows 10 and macOS Activity Monitor, plus optional data-defined client screens. **All eight profiles leave the window frame, title and window buttons to RiceBowl/the active window manager**; Taskotto draws only its content, menus and functional toolbars. Native GUI and resource-use acceptance are still outstanding. See [1.0 roadmap](ROADMAP.md), [future development roadmap](EXPANSION_ROADMAP.md) and [QA checklist](QA.md). This is **not yet stable 1.0**.
 
 ## Screenshots
 
@@ -25,7 +25,7 @@ A customizable process manager and system monitor written in **Rust**. Runs alon
 | [![macOS-inspired Activity Monitor CPU process list](assets/screenshots/taskotto-macos-cpu.png)](assets/screenshots/taskotto-macos-cpu.png) | [![Frutiger Aero CPU and memory performance dashboard](assets/screenshots/taskotto-frutiger-aero-performance.png)](assets/screenshots/taskotto-frutiger-aero-performance.png) |
 
 <details>
-<summary><strong>All screenshots (49)</strong> — expand to view every rice and every captured screen</summary>
+<summary><strong>All screenshots (50)</strong> — expand to view every rice and every captured screen</summary>
 
 ### Frutiger Aero
 
@@ -37,6 +37,8 @@ A customizable process manager and system monitor written in **Rust**. Runs alon
 | [![Frutiger Aero: Network](assets/screenshots/taskotto-frutiger-aero-network.png)](assets/screenshots/taskotto-frutiger-aero-network.png) | [![Frutiger Aero: Sidebar layout](assets/screenshots/taskotto-frutiger-aero-sidebar.png)](assets/screenshots/taskotto-frutiger-aero-sidebar.png) |
 | **RicePack live preview and editor** | **Aero Lagoon · custom component tokens** |
 | [![Frutiger Aero: RicePack preview with reversible appearance controls](assets/screenshots/taskotto-frutiger-aero-ricepack-editor.png)](assets/screenshots/taskotto-frutiger-aero-ricepack-editor.png) | [![Frutiger Aero: Aero Lagoon RicePack applies control, hover, border, table and selection colors to custom widgets](assets/screenshots/taskotto-frutiger-aero-lagoon-ricepack.png)](assets/screenshots/taskotto-frutiger-aero-lagoon-ricepack.png) |
+| **Screen layout designer · typed widget editor** | |
+| [![Frutiger Aero: functional screen layout designer with widget labels, process data bindings and validated session-only application](assets/screenshots/taskotto-frutiger-aero-layout-editor.png)](assets/screenshots/taskotto-frutiger-aero-layout-editor.png) | |
 | **Aero Lagoon · custom performance charts** | |
 | [![Frutiger Aero: Aero Lagoon RicePack recolors live performance charts](assets/screenshots/taskotto-frutiger-aero-lagoon-performance.png)](assets/screenshots/taskotto-frutiger-aero-lagoon-performance.png) | |
 
@@ -123,7 +125,7 @@ A customizable process manager and system monitor written in **Rust**. Runs alon
 
 </details>
 
-*All 49 images above are headless Taskotto egui renders using live Linux `/proc`; the capture environment exposes few processes. The editor, Aero Lagoon, Nightshift, Nocturne, Dusk, Midnight, Indigo, Violet and Diagnostic Studio captures are actual renders using bundled RicePacks. These client-only renders intentionally omit RiceBowl's native window frame. [Capture provenance and reproduction](SCREENSHOTS.md) · [Fidelity boundaries](RICE_FIDELITY.md). Native X11/Wayland verification remains pending.*
+*All 50 images above are headless Taskotto egui renders using live Linux `/proc`; the capture environment exposes few processes. The editor, Aero Lagoon, Nightshift, Nocturne, Dusk, Midnight, Indigo, Violet and Diagnostic Studio captures are actual Taskotto renders (the designer is an in-session draft; the others use bundled RicePacks). These client-only renders intentionally omit RiceBowl's native window frame. [Capture provenance and reproduction](SCREENSHOTS.md) · [Fidelity boundaries](RICE_FIDELITY.md). Native X11/Wayland verification remains pending.*
 
 ## What works
 
@@ -131,7 +133,7 @@ A customizable process manager and system monitor written in **Rust**. Runs alon
 - **Safe actions:** terminate, force kill, pause and resume with confirmation and PID-reuse protection via Linux `pidfd`.
 - **Performance:** CPU/core load, RAM/swap, network RX/TX and disk read/write rates, bounded comparative rolling graphs.
 - **Riceable:** 8 profiles; Frutiger Aero (original luminous Y2K task manager), ChromeOS (compact task table), Windows 98 **Close Program**, XP Luna (5 tabs), Windows 7 (6 tabs), Windows 10 (7 tabs), and macOS Activity Monitor (5 views). Custom navigation, colors, fonts, density and persistent TOML preferences remain supported.
-- **RicePacks (v1 + declarative screens):** Export your current appearance with `--export-ricepack`, modify its TOML, validate and apply it using `--check-ricepack` / `--ricepack` without rebuilding Rust. Active RicePack sessions automatically reload valid file edits about every 2 seconds. Preferences → RicePack library discovers local designs, previews them with a one-click revert, imports them without overwriting, and exports the current appearance to a new file. Bounded `[layout]` screens can arrange real metrics, gauges, status strips, safe toolbars, plots and process lists without a new Rust rice module; optional validated compact screen compositions adapt automatically on resize. See [RicePack format](RICEPACK_FORMAT.md) and [Diagnostic Studio](examples/ricepacks/diagnostic-studio.toml).
+- **RicePacks (v1 + declarative screens):** Export your current appearance with `--export-ricepack`, modify its TOML, validate and apply it using `--check-ricepack` / `--ricepack` without rebuilding Rust. Active RicePack sessions automatically reload valid file edits about every 2 seconds. Preferences → RicePack library discovers local designs, previews them with a one-click revert, imports them without overwriting, and exports the current appearance to a new file. The **Screen layout designer** builds and reorders bounded, data-bound screens from seven safe widget presets, validates a detached draft and applies it temporarily; optional compact compositions adapt on resize. See [RicePack format](RICEPACK_FORMAT.md) and [Diagnostic Studio](examples/ricepacks/diagnostic-studio.toml).
 - **One window decoration:** Taskotto requests WM-managed window decorations for every rice. XP Luna, Windows 7 and Windows 10 no longer draw fake title strips or app captions; their real menus and tabs remain intact. The macOS toolbar no longer repeats the native app caption. Native border colors/buttons are configured in RiceBowl/the compositor, not Taskotto.
 - **Frutiger Aero:** original vector aqua/glass masthead, bubble meters, seven navigable destinations, searchable/sortable process garden, selected-PID actions and four live performance charts. Both pill tabs and a customizable sidebar use the existing sampler; RiceBowl/the compositor owns native decorations.
 - **Classic 98:** compact, gray 3D controls and a white running-program list showing actual *user-owned Linux processes*. End Task uses the same safe confirmation flow; New Task, Refresh, Close and advanced Processes/Performance/Network/Users/Options all work. The compositor owns external window decoration; Taskotto does not draw a second title bar.

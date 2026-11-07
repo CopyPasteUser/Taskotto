@@ -1,8 +1,14 @@
-# Taskotto 1.0.0-rc.31 — release candidate
+# Taskotto 1.0.0-rc.32 — release candidate
 
 **Date:** 2026-11-07 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
 Rust-only Linux process manager and system monitor. This is a **prerelease**, not a stable 1.0 certification.
+
+## Changes since rc.31
+
+- Preferences now contains a real screen layout designer built on the same strictly validated RicePack v1 schema. Create/edit up to four pages, change all supported widget labels and data bindings, reorder and remove widgets, add one of seven safe widget templates, and maintain a separate narrow-screen variant.
+- Apply only validated drafts to the current session; discard invalid work or reset the draft without overwriting any files. Existing **Export current appearance** writes a new, re-importable TOML RicePack via the existing no-clobber path.
+- New screenshot shows the designer's true egui layout in Taskotto's Frutiger Aero client. Additional manual UI/focus and cross-desktop acceptance are required before stable 1.0.
 
 ## Changes since rc.30
 

@@ -1,6 +1,6 @@
 # Screenshot provenance and reproduction
 
-[**View all 49 screenshots in the expandable README gallery**](README.md#screenshots).
+[**View all 50 screenshots in the expandable README gallery**](README.md#screenshots).
 The gallery groups every image by rice, including the supplementary pages
 and alternate layouts; click any preview to see its full-resolution PNG.
 
@@ -23,7 +23,7 @@ The restricted capture environment currently exposes few processes and very
 little I/O; this is why some screenshots look sparse. They are not evidence of
 hardware compatibility or GUI performance.
 
-To regenerate all 49 images on Linux:
+To regenerate all 50 images on Linux:
 
 ```bash
 TASKOTTO_SCREENSHOT_DIR=assets/screenshots \
@@ -51,6 +51,7 @@ The command samples real system activity and writes:
 - `assets/screenshots/taskotto-frutiger-aero-performance.png` — four live CPU, RAM, disk and network graphs plus actual memory/CPU gauges.
 - `assets/screenshots/taskotto-frutiger-aero-network.png` — measured aggregate non-loopback RX/TX with explicit scope caveat.
 - `assets/screenshots/taskotto-frutiger-aero-ricepack-editor.png` — actual Taskotto Preferences screen showing the bundled Sea Glass RicePack in reversible session-only preview; no desktop frame or external file chooser is implied.
+- `assets/screenshots/taskotto-frutiger-aero-layout-editor.png` — a real Frutiger Aero Preferences capture of the new seven-preset declarative layout editor working on a detached, validated session draft. A screenshot of its controls does not replace native keyboard/mouse acceptance.
 - `assets/screenshots/taskotto-frutiger-aero-lagoon-ricepack.png` — original Aero Lagoon RicePack v1 with an aqua control palette and contrasting dark process table/selection, rendered by the real Frutiger Aero egui code; validates component tokens on custom-drawn client content.
 - `assets/screenshots/taskotto-frutiger-aero-lagoon-performance.png` — the same palette applied to live Frutiger Aero chart containers and graph grids; measured Linux CPU, memory, disk and network data, not mock numbers.
 
