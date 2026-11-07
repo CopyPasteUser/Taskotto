@@ -2,6 +2,12 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.42] — 2026-11-07
+
+- Began P6 kernel-backed PSI telemetry. The existing monitor worker samples `/proc/pressure/{cpu,memory,io}`; System Performance and every rice's Preferences report CPU SOME, memory SOME/FULL and I/O SOME/FULL stalled-task percentages over 10, 60 and 300 seconds, and cumulative stall time.
+- Strictly validate kernel fields, reject missing, duplicate, nonfinite, negative or above-100% values. Do not fabricate zero when unsupported, mistake pressure for utilization, or display system-wide CPU FULL as a meaningful saturation signal. Compact layouts stack metrics below 700 px available width.
+- Added deterministic kernel-format tests and optional real procfs probe. Rule-based diagnosis, thresholds and live workload acceptance remain P6 tasks; no single PSI sample is presented as a proven slowdown cause.
+
 ## [1.0.0-rc.41] — 2026-11-07
 
 - Started P5 with an explicitly requested read-only cgroup v2 inspector for the selected process. It reads kernel membership `0::/path`, CPU use and throttling, current/maximum memory (including unlimited) and summed block I/O byte counters in a bounded background task; normal sampling performance remains unchanged.

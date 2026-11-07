@@ -3,9 +3,11 @@ use serde::Serialize;
 pub(crate) mod cgroup;
 mod gpu;
 mod power;
+mod psi;
 pub(crate) mod pss;
 pub use gpu::Gpu;
 pub use power::PowerSnapshot;
+pub use psi::PressureSnapshot;
 use std::{
     collections::{HashMap, HashSet},
     fs, io,
@@ -80,6 +82,8 @@ pub struct Snapshot {
     pub gpus: Vec<Gpu>,
     #[serde(skip_serializing_if = "PowerSnapshot::is_empty")]
     pub power: PowerSnapshot,
+    #[serde(skip_serializing_if = "PressureSnapshot::is_empty")]
+    pub pressure: PressureSnapshot,
 }
 
 /// Process-inclusive descendant totals from one observed /proc sample.
@@ -273,6 +277,7 @@ impl Monitor {
             logical_cpus,
             gpus: gpu::sample(),
             power: power::sample(),
+            pressure: psi::sample(),
         })
     }
 }
@@ -654,6 +659,7 @@ mod tests {
             logical_cpus: 2,
             gpus: vec![],
             power: Default::default(),
+            pressure: Default::default(),
         };
         let summary = snapshot.tree_summary(10, 7).unwrap();
         assert_eq!(summary.process_count, 4);

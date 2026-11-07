@@ -1217,6 +1217,8 @@ impl TaskottoApp {
             self.gpu_telemetry_ui(ui);
             ui.add_space(18.0);
             self.power_telemetry_ui(ui);
+            ui.add_space(18.0);
+            self.pressure_telemetry_ui(ui);
         });
     }
 
@@ -1541,6 +1543,9 @@ impl TaskottoApp {
             preference_section(ui, "Battery and external power · read only", xp);
             self.power_telemetry_ui(ui);
             ui.add_space(18.0);
+            preference_section(ui, "Linux pressure stalls · PSI", xp);
+            self.pressure_telemetry_ui(ui);
+            ui.add_space(18.0);
             preference_section(ui, "Monitoring", xp);
             changed |= ui.add(egui::Slider::new(&mut self.settings.refresh_ms, 500..=10_000).text("Refresh interval (ms)")).changed();
             changed |= ui.checkbox(&mut self.settings.only_my_processes, "Show only my processes").changed();
@@ -1567,6 +1572,80 @@ impl TaskottoApp {
         if changed {
             self.save_preferences(ui.ctx());
         }
+    }
+
+    fn pressure_telemetry_ui(&self, ui: &mut egui::Ui) {
+        let Some(snapshot) = &self.snapshot else {
+            ui.label(RichText::new("Pressure stalls: waiting for Linux system sample…").weak());
+            return;
+        };
+        let pressure = &snapshot.pressure;
+        if pressure.is_empty() {
+            ui.label(
+                RichText::new("Kernel PSI counters unavailable in /proc/pressure.")
+                    .small()
+                    .weak(),
+            );
+            return;
+        }
+        ui.label(
+            RichText::new("Share of elapsed time that tasks waited for a resource")
+                .small()
+                .weak(),
+        );
+        let rows = [
+            ("CPU · some stalled", pressure.cpu_some.as_ref()),
+            ("Memory · some stalled", pressure.memory_some.as_ref()),
+            ("Memory · full stalled", pressure.memory_full.as_ref()),
+            ("I/O · some stalled", pressure.io_some.as_ref()),
+            ("I/O · full stalled", pressure.io_full.as_ref()),
+        ];
+        if ui.available_width() < 700.0 {
+            for (name, metric) in rows {
+                ui.label(RichText::new(name).strong());
+                if let Some(metric) = metric {
+                    ui.label(format!(
+                        "10s {:.2}% · 60s {:.2}% · 300s {:.2}%",
+                        metric.avg10_percent, metric.avg60_percent, metric.avg300_percent
+                    ));
+                    ui.label(
+                        RichText::new(format!(
+                            "Total {:.1}s",
+                            metric.total_stall_usec as f64 / 1_000_000.0
+                        ))
+                        .small()
+                        .weak(),
+                    );
+                } else {
+                    ui.label("Unavailable");
+                }
+                ui.add_space(4.0);
+            }
+        } else {
+            egui::Grid::new("linux-psi-pressure")
+                .num_columns(3)
+                .spacing([20.0, 7.0])
+                .show(ui, |ui| {
+                    for (name, metric) in rows {
+                        ui.label(RichText::new(name).weak());
+                        if let Some(metric) = metric {
+                            ui.label(format!(
+                                "10s {:.2}% · 60s {:.2}% · 300s {:.2}%",
+                                metric.avg10_percent, metric.avg60_percent, metric.avg300_percent
+                            ));
+                            ui.label(format!(
+                                "Total {:.1}s",
+                                metric.total_stall_usec as f64 / 1_000_000.0
+                            ));
+                        } else {
+                            ui.label("Unavailable");
+                            ui.label("—");
+                        }
+                        ui.end_row();
+                    }
+                });
+        }
+        ui.label(RichText::new("PSI is stalled-task time, not CPU usage, RAM usage, disk throughput or a diagnosis on its own. System-level CPU FULL is deliberately omitted; totals are cumulative since kernel start and may have different scopes in containers.").small().weak());
     }
 
     fn power_telemetry_ui(&self, ui: &mut egui::Ui) {
@@ -2477,6 +2556,7 @@ mod tests {
                 logical_cpus: 1,
                 gpus: vec![],
                 power: Default::default(),
+                pressure: Default::default(),
             }),
             history: History::default(),
             page: Page::Processes,
@@ -2558,6 +2638,7 @@ mod tests {
             logical_cpus: 1,
             gpus: vec![],
             power: Default::default(),
+            pressure: Default::default(),
         };
         history.process_follow = Some(ProcessFollow::new(&process));
         for _ in 0..200 {
@@ -2597,6 +2678,7 @@ mod tests {
             logical_cpus: 1,
             gpus: vec![],
             power: Default::default(),
+            pressure: Default::default(),
         };
         for _ in 0..200 {
             history.record(&snapshot);
@@ -2706,6 +2788,7 @@ mod tests {
                 logical_cpus: 2,
                 gpus: vec![],
                 power: Default::default(),
+                pressure: Default::default(),
             }),
             history: History::default(),
             page: Page::Processes,
@@ -3015,6 +3098,7 @@ mod tests {
             logical_cpus: 2,
             gpus: vec![],
             power: Default::default(),
+            pressure: Default::default(),
         };
         let mut history = History::default();
         for _ in 0..4 {
@@ -3133,6 +3217,7 @@ mod tests {
                 logical_cpus: 2,
                 gpus: vec![],
                 power: Default::default(),
+                pressure: Default::default(),
             }),
             history: History::default(),
             page: Page::Processes,
@@ -3243,6 +3328,7 @@ mod tests {
                 logical_cpus: 24,
                 gpus: vec![],
                 power: Default::default(),
+                pressure: Default::default(),
             }),
             history: History::default(),
             page: Page::Processes,
