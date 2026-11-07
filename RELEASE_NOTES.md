@@ -1,8 +1,14 @@
-# Taskotto 1.0.0-rc.32 — release candidate
+# Taskotto 1.0.0-rc.33 — release candidate
 
 **Date:** 2026-11-07 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
 Rust-only Linux process manager and system monitor. This is a **prerelease**, not a stable 1.0 certification.
+
+## Changes since rc.32
+
+- `Ctrl+F` reliably opens and focuses a real process search input in TOML-generated screens; a minimal no-toolbar pack gets an accessible keyboard-driven fallback. Hiding search no longer leaves invisible filtering.
+- `--check-ricepack` now reports the fully validated page/widget/compact capabilities. Incompatible, missing and future schema versions get explicit no-auto-migration diagnostics instead of being masked by unrecognized experimental fields.
+- Automated coverage checks keyboard search focus and decodes every screenshot in the 50-image gallery, verifying dimensions and nonblank renders. Physical Linux display-server, assistive technology and focus-order acceptance remains open.
 
 ## Changes since rc.31
 

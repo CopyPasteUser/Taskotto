@@ -127,6 +127,9 @@ The P2 editor works on a detached, session-local draft. It offers constrained
 widget templates and typed Linux bindings, never arbitrary executable
 content; applying is atomic after full layout validation, and exporting
 uses the existing non-overwriting v1 RicePack writer.
+Generated process screens preserve `Ctrl+F` keyboard focus even when a safe
+custom toolbar was omitted. Pack compatibility is diagnosed explicitly via
+its versioned schema; incompatible variants are never silently converted.
 
 The interface is live and honest: charts use measured bounded history;
 labels distinguish system-wide traffic from per-process information. Motion

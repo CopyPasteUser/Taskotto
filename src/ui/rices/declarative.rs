@@ -60,6 +60,13 @@ pub(in crate::ui) fn render(app: &mut TaskottoApp, ui: &mut egui::Ui) {
                 ui.available_width(),
                 layout.compact_below.unwrap_or(680) as f32,
             );
+            let has_search_action = widgets.iter().any(|widget| match widget {
+                Widget::Toolbar { actions } => actions.contains(&ToolbarAction::FocusSearch),
+                _ => false,
+            });
+            if !has_search_action {
+                fallback_search(app, ui);
+            }
             let end_in_toolbar = widgets.iter().any(|widget| match widget {
                 Widget::Toolbar { actions } => actions.contains(&ToolbarAction::EndProcess),
                 _ => false,
@@ -230,7 +237,12 @@ fn toolbar(
     let mut search_open = ui
         .ctx()
         .data(|data| data.get_temp::<bool>(id).unwrap_or(false));
-    let mut focus_now = false;
+    let mut focus_now = app.focus_search && actions.contains(&ToolbarAction::FocusSearch);
+    if focus_now {
+        app.focus_search = false;
+        search_open = true;
+        ui.ctx().data_mut(|data| data.insert_temp(id, true));
+    }
     Frame::new()
         .fill(paint.control(ui.visuals().faint_bg_color))
         .inner_margin(Margin::symmetric(8, 5))
@@ -250,6 +262,9 @@ fn toolbar(
                             if ui.button("Search processes").clicked() {
                                 search_open = !search_open;
                                 focus_now = search_open;
+                                if !search_open {
+                                    app.query.clear();
+                                }
                                 ui.ctx().data_mut(|data| data.insert_temp(id, search_open));
                             }
                         }
@@ -279,6 +294,37 @@ fn toolbar(
                 }
             }
         });
+}
+
+fn fallback_search(app: &mut TaskottoApp, ui: &mut egui::Ui) {
+    // Ctrl+F must work even in an AI-authored screen with no toolbar widget.
+    let id = egui::Id::new("taskotto-declarative-fallback-search");
+    let mut open = ui
+        .ctx()
+        .data(|data| data.get_temp::<bool>(id).unwrap_or(false));
+    let focus_now = app.focus_search;
+    if focus_now {
+        app.focus_search = false;
+        open = true;
+        ui.ctx().data_mut(|data| data.insert_temp(id, true));
+    }
+    if open {
+        ui.horizontal(|ui| {
+            let response = ui.add(
+                egui::TextEdit::singleline(&mut app.query)
+                    .hint_text("Filter Linux processes…")
+                    .desired_width(ui.available_width().clamp(145.0, 340.0)),
+            );
+            if focus_now {
+                response.request_focus();
+            }
+            if ui.small_button("Close search").clicked() {
+                app.query.clear();
+                ui.ctx().data_mut(|data| data.insert_temp(id, false));
+            }
+        });
+        ui.add_space(8.0);
+    }
 }
 
 fn plot(app: &TaskottoApp, ui: &mut egui::Ui, binding: Plot, paint: ComponentPaint) {

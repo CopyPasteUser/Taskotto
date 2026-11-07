@@ -94,6 +94,9 @@ columns = ["name", "cpu", "memory", "pid"]
   the same PID/start-tick safety check and confirmation flow as built-in rices.
 
 All other fields, kinds, bindings, scripts and shell hooks are rejected.
+Generated screens retain keyboard process search via `Ctrl+F`. If a page has
+no search-enabled toolbar, Taskotto opens a temporary focused search control
+instead; dismissing either search clears its filter.
 Try the complete two-tab [Diagnostic Studio](examples/ricepacks/diagnostic-studio.toml):
 
 ```toml
@@ -122,6 +125,13 @@ are introduced. At wide sizes the original process table is retained.
 taskotto --check-ricepack examples/ricepacks/diagnostic-studio.toml
 taskotto --ricepack examples/ricepacks/diagnostic-studio.toml
 ```
+
+`--check-ricepack` also reports the validated screen count, normal/compact
+widget counts and breakpoint. If an AI produces a missing, outdated or future
+`format_version`, Taskotto rejects it with an explicit compatibility/migration
+diagnostic before attempting to interpret unsupported widget extensions.
+There is no automatic or silent migration; a compatible generator must
+re-export the pack in the supported v1 contract.
 
 ## Use
 

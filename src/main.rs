@@ -139,6 +139,25 @@ fn run() -> Result<(), String> {
             pack.format_version,
             pack.base_theme.label()
         );
+        if let Some(layout) = &pack.layout {
+            let normal = layout
+                .pages
+                .iter()
+                .map(|page| page.widgets.len())
+                .sum::<usize>();
+            let compact = layout
+                .pages
+                .iter()
+                .map(|page| page.compact_widgets.len())
+                .sum::<usize>();
+            println!(
+                "Validated layout: {} pages, {} normal widgets, {} compact alternatives; compact breakpoint {} logical px; no scripts or additional permissions",
+                layout.pages.len(),
+                normal,
+                compact,
+                layout.compact_below.unwrap_or(680)
+            );
+        }
         return Ok(());
     }
     if ricepack_path.is_some() && (snapshot || install_desktop) {

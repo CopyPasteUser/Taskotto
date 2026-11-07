@@ -177,6 +177,23 @@ impl RicePack {
     }
 
     pub fn from_toml(source: &str) -> Result<Self, String> {
+        // Diagnose incompatible schemas before unknown future widget keys
+        // obscure the format error. Never silently migrate untrusted packs.
+        let root: toml::Table = toml::from_str(source).map_err(|err| err.to_string())?;
+        match root.get("format_version") {
+            Some(toml::Value::Integer(version)) if *version == i64::from(FORMAT_VERSION) => {}
+            Some(toml::Value::Integer(version)) => {
+                return Err(format!(
+                    "unsupported RicePack format_version {version}; this Taskotto supports format {FORMAT_VERSION}. No automatic migration is performed; re-export with a compatible Taskotto version"
+                ));
+            }
+            Some(_) => {
+                return Err("RicePack format_version must be the integer 1".into());
+            }
+            None => {
+                return Err("RicePack has no format_version; expected format_version = 1. Re-export a compatible RicePack before importing".into());
+            }
+        }
         let pack: Self = toml::from_str(source).map_err(|err| err.to_string())?;
         if pack.format_version != FORMAT_VERSION {
             return Err(format!(
@@ -319,6 +336,25 @@ mod tests {
             "text = \"Okay\"\nscript = \"sudo rm\"",
         );
         assert!(RicePack::from_toml(&unknown_compact).is_err());
+        let future = source
+            .replace("format_version = 1", "format_version = 2")
+            .replace(
+                "compact_below = 720",
+                "experimental_widget_scripting = true",
+            );
+        let error = RicePack::from_toml(&future).unwrap_err();
+        assert!(error.contains("unsupported RicePack format_version 2"));
+        assert!(error.contains("No automatic migration"));
+        assert!(
+            RicePack::from_toml(&source.replace("format_version = 1", "format_version = '1'"))
+                .unwrap_err()
+                .contains("must be the integer 1")
+        );
+        assert!(
+            RicePack::from_toml(&source.replace("format_version = 1", ""))
+                .unwrap_err()
+                .contains("no format_version")
+        );
     }
 
     #[test]
