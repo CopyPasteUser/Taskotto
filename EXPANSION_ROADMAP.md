@@ -179,7 +179,13 @@ non-AMD machine. No mandatory vendor SDK for the baseline binary.
   - [ ] Multi-cgroup and nested-hierarchy overview, dynamic group sample
     rates, container host/namespace accounting and native stress QA.
 - [ ] Show user systemd units and optional Podman/Docker associations.
+  - [x] RC46: selected-process cgroup inspection now displays **unverified**
+    systemd .service/.scope segments and strict Docker/Podman 64-hex scope
+    ID prefixes from kernel-reported membership, plus Flatpak-style scopes.
+    Real systemd and runtime API resolution remain open and optional.
 - [ ] Recognize Flatpak/containerized processes where kernel metadata allows.
+  - [x] RC46: bounded, read-only cgroup path hints; no API-based app identity
+    or runtime guarantee, no hidden process/container controller.
 - [ ] Start read-only; consider safe service actions only behind explicit
   permission and confirmation boundaries.
 
