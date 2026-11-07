@@ -15,6 +15,7 @@ USAGE
   taskotto --check-ricepack PATH
   taskotto --export-ricepack PATH
   taskotto --install-desktop
+  taskotto --uninstall-desktop
   taskotto --help | --version
 
 OPTIONS
@@ -26,6 +27,7 @@ OPTIONS
   --export-ricepack PATH  Save current design to a new RicePack TOML file
   --snapshot         Print a one-time unprivileged system snapshot and exit
   --install-desktop  Add a user-local application menu entry and icon
+  --uninstall-desktop  Remove only Taskotto-managed user-local menu files
   --json             Emit machine-readable JSON with --snapshot
 
 RICEBOWL
@@ -48,6 +50,7 @@ fn run() -> Result<(), String> {
     let mut snapshot = false;
     let mut json = false;
     let mut install_desktop = false;
+    let mut uninstall_desktop = false;
     let mut forced_theme = None;
     let mut refresh_ms = None;
     let mut ricepack_path: Option<PathBuf> = None;
@@ -82,6 +85,7 @@ fn run() -> Result<(), String> {
                 ));
             }
             "--install-desktop" => install_desktop = true,
+            "--uninstall-desktop" => uninstall_desktop = true,
             "--json" => json = true,
             "--theme" => {
                 let value = args.next().ok_or("--theme requires a name")?;
@@ -106,6 +110,7 @@ fn run() -> Result<(), String> {
         if snapshot
             || json
             || install_desktop
+            || uninstall_desktop
             || forced_theme.is_some()
             || ricepack_path.is_some()
             || check_ricepack_path.is_some()
@@ -125,6 +130,7 @@ fn run() -> Result<(), String> {
         if snapshot
             || json
             || install_desktop
+            || uninstall_desktop
             || forced_theme.is_some()
             || ricepack_path.is_some()
             || refresh_ms.is_some()
@@ -160,12 +166,23 @@ fn run() -> Result<(), String> {
         }
         return Ok(());
     }
-    if ricepack_path.is_some() && (snapshot || install_desktop) {
+    if ricepack_path.is_some() && (snapshot || install_desktop || uninstall_desktop) {
         return Err("--ricepack requires GUI mode".to_owned());
     }
-    if install_desktop {
-        if snapshot || json {
-            return Err("--install-desktop cannot be used with --snapshot or --json".to_owned());
+    if install_desktop || uninstall_desktop {
+        if snapshot
+            || json
+            || install_desktop == uninstall_desktop
+            || forced_theme.is_some()
+            || refresh_ms.is_some()
+        {
+            return Err("--install-desktop and --uninstall-desktop must be used alone".to_owned());
+        }
+        if uninstall_desktop {
+            let (launcher, icon) =
+                desktop::uninstall_for_current_user().map_err(|err| err.to_string())?;
+            println!("Taskotto managed menu files removed: launcher={launcher}, icon={icon}");
+            return Ok(());
         }
         let path = desktop::install_for_current_user().map_err(|err| err.to_string())?;
         println!("Taskotto application entry installed: {}", path.display());

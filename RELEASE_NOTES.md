@@ -1,4 +1,11 @@
-# Taskotto 1.0.0-rc.51 — release candidate
+# Taskotto 1.0.0-rc.52 — release candidate
+
+## RC52 — User-local desktop installation recovery
+
+- Added an explicit `taskotto --uninstall-desktop` command. Only entries matching Taskotto's own launcher template and exact icon are deleted; changed files and symlinks are rejected and no other app files, preferences or binary are touched. Reinstall with `--install-desktop` repairs the menu path after a binary move.
+- Release packaging adds a second-byte-identical deterministic archive check and a CLI install/uninstall smoke test, in addition to the existing SHA256 integrity metadata. Cross-machine compiled binary reproducibility remains unverified.
+- Unit tests cover normal, repeated, customized and symlinked removals; CLI tests cover standalone invocation and rejecting mixed commands. Native menu verification remains required for stable 1.0.
+
 
 ## RC51 — Opt-in low-overhead monitoring
 

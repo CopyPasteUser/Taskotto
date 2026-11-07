@@ -2,6 +2,12 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.52] — 2026-11-07
+
+- Added safe, idempotent `--uninstall-desktop` for removing only Taskotto-managed user-local launcher/icon files; refuses modified or symlinked files before removing either, preserves other apps and never deletes the Taskotto executable or preferences. Re-running `--install-desktop` repairs a stale launch path.
+- Release workflow verifies the determinism of its own sorted/timestamp-normalized archive by producing a second identical package; it still checks SHA256 integrity and now smoke-tests install and uninstall. This does not claim independently reproduced Rust binary bytes on dissimilar build hosts.
+- Added Rust file-integrity/symlink tests and CLI integration coverage for uninstall/idempotence/invalid flag combinations.
+
 ## [1.0.0-rc.51] — 2026-11-07
 
 - Added an optional persisted low-overhead profile in Preferences: the existing worker samples at no faster than every 3000 ms and egui motion transitions are disabled, without disabling any monitoring tab or process action. Switching off restores the user's configured 500–10000 ms interval, which is never overwritten by the profile.

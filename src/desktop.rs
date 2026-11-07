@@ -11,6 +11,14 @@ const ICON: &str = include_str!("../assets/io.github.copypasteuser.taskotto.svg"
 const APP_ID: &str = "io.github.copypasteuser.taskotto";
 
 pub fn install_for_current_user() -> io::Result<PathBuf> {
+    install(&data_home()?, &env::current_exe()?)
+}
+
+pub fn uninstall_for_current_user() -> io::Result<(bool, bool)> {
+    uninstall(&data_home()?)
+}
+
+fn data_home() -> io::Result<PathBuf> {
     let data = if let Some(home) = env::var_os("XDG_DATA_HOME").filter(|value| !value.is_empty()) {
         let path = PathBuf::from(home);
         if !path.is_absolute() {
@@ -27,7 +35,80 @@ pub fn install_for_current_user() -> io::Result<PathBuf> {
         )
         .join(".local/share")
     };
-    install(&data, &env::current_exe()?)
+    Ok(data)
+}
+
+/// Remove only entries Taskotto recognizes as its own, never modified or
+/// symlinked paths. False means that entry was already absent.
+pub fn uninstall(data_home: &Path) -> io::Result<(bool, bool)> {
+    if !data_home.is_absolute() {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "absolute XDG data path required",
+        ));
+    }
+    let desktop = data_home.join(format!("applications/{APP_ID}.desktop"));
+    let icon = data_home.join(format!("icons/hicolor/scalable/apps/{APP_ID}.svg"));
+    let old_desktop = read_regular_entry(&desktop)?;
+    let old_icon = read_regular_entry(&icon)?;
+    // Check both before removing either, so a customized icon cannot leave
+    // half an otherwise healthy installation removed.
+    if old_desktop
+        .as_deref()
+        .is_some_and(|text| !matches_desktop_template(text))
+    {
+        return Err(io::Error::new(
+            io::ErrorKind::PermissionDenied,
+            format!(
+                "Refusing to delete customized desktop entry: {}",
+                desktop.display()
+            ),
+        ));
+    }
+    if old_icon.as_deref().is_some_and(|text| text != ICON) {
+        return Err(io::Error::new(
+            io::ErrorKind::PermissionDenied,
+            format!("Refusing to delete customized icon: {}", icon.display()),
+        ));
+    }
+    if old_desktop.is_some() {
+        fs::remove_file(desktop)?;
+    }
+    if old_icon.is_some() {
+        fs::remove_file(icon)?;
+    }
+    Ok((old_desktop.is_some(), old_icon.is_some()))
+}
+
+fn read_regular_entry(path: &Path) -> io::Result<Option<String>> {
+    let metadata = match fs::symlink_metadata(path) {
+        Ok(metadata) => metadata,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(None),
+        Err(error) => return Err(error),
+    };
+    if !metadata.file_type().is_file() || metadata.len() > 65_536 {
+        return Err(io::Error::new(
+            io::ErrorKind::PermissionDenied,
+            format!(
+                "Refusing to delete non-regular or oversized entry: {}",
+                path.display()
+            ),
+        ));
+    }
+    fs::read_to_string(path).map(Some)
+}
+
+fn matches_desktop_template(installed: &str) -> bool {
+    let expected = DESKTOP.lines().collect::<Vec<_>>();
+    let actual = installed.lines().collect::<Vec<_>>();
+    actual.len() == expected.len()
+        && actual.iter().zip(expected).all(|(observed, template)| {
+            if template == "Exec=taskotto" {
+                observed.starts_with("Exec=") && observed.len() > "Exec=".len()
+            } else {
+                observed == &template
+            }
+        })
 }
 
 pub fn install(data_home: &Path, executable: &Path) -> io::Result<PathBuf> {
@@ -124,6 +205,63 @@ mod tests {
                 .join("icons/hicolor/scalable/apps/io.github.copypasteuser.taskotto.svg")
                 .exists()
         );
+        fs::remove_dir_all(folder).unwrap();
+    }
+
+    #[test]
+    fn uninstall_removes_only_owned_entries_and_is_idempotent() {
+        let folder = std::env::temp_dir().join(format!(
+            "taskotto-uninstall-test-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        install(&folder, Path::new("/opt/Taskotto/taskotto")).unwrap();
+        let unrelated = folder.join("applications/another-app.desktop");
+        fs::write(&unrelated, "Not Taskotto").unwrap();
+        assert_eq!(uninstall(&folder).unwrap(), (true, true));
+        assert_eq!(uninstall(&folder).unwrap(), (false, false));
+        assert_eq!(fs::read_to_string(unrelated).unwrap(), "Not Taskotto");
+        fs::remove_dir_all(folder).unwrap();
+    }
+
+    #[test]
+    fn uninstall_preserves_customized_entries_and_symlinks() {
+        use std::os::unix::fs::symlink;
+        let folder = std::env::temp_dir().join(format!(
+            "taskotto-uninstall-safety-test-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let desktop = install(&folder, Path::new("/usr/local/bin/taskotto")).unwrap();
+        let icon = folder.join(format!("icons/hicolor/scalable/apps/{APP_ID}.svg"));
+        fs::write(&icon, "custom icon").unwrap();
+        assert_eq!(
+            uninstall(&folder).unwrap_err().kind(),
+            io::ErrorKind::PermissionDenied
+        );
+        assert!(desktop.exists());
+        fs::write(&icon, ICON).unwrap();
+        fs::write(&desktop, "handwritten desktop entry").unwrap();
+        assert_eq!(
+            uninstall(&folder).unwrap_err().kind(),
+            io::ErrorKind::PermissionDenied
+        );
+        assert_eq!(fs::read_to_string(&icon).unwrap(), ICON);
+        fs::remove_file(&desktop).unwrap();
+        let unrelated = folder.join("unrelated.txt");
+        fs::write(&unrelated, "preserve me").unwrap();
+        symlink(&unrelated, &desktop).unwrap();
+        assert_eq!(
+            uninstall(&folder).unwrap_err().kind(),
+            io::ErrorKind::PermissionDenied
+        );
+        assert_eq!(fs::read_to_string(unrelated).unwrap(), "preserve me");
         fs::remove_dir_all(folder).unwrap();
     }
 
