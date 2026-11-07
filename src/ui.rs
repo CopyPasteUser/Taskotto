@@ -109,6 +109,10 @@ struct History {
     psi_memory_full: VecDeque<f32>,
     psi_io_some: VecDeque<f32>,
     psi_io_full: VecDeque<f32>,
+    /// Last eight consecutive sampler ticks, including absent PSI readings.
+    /// Unlike visual history, this cannot mistake data from before a gap for
+    /// consecutive pressure evidence.
+    psi_diagnostic_recent: VecDeque<[Option<f32>; 5]>,
     process_follow: Option<ProcessFollow>,
     pss_inspection: Option<PssInspection>,
     cgroup_inspection: Option<CgroupInspection>,
@@ -248,6 +252,24 @@ impl History {
                 queue.push_back(metric.avg10_percent);
             }
         }
+        if self.psi_diagnostic_recent.len() == 8 {
+            self.psi_diagnostic_recent.pop_front();
+        }
+        self.psi_diagnostic_recent.push_back([
+            snapshot.pressure.cpu_some.as_ref().map(|v| v.avg10_percent),
+            snapshot
+                .pressure
+                .memory_some
+                .as_ref()
+                .map(|v| v.avg10_percent),
+            snapshot
+                .pressure
+                .memory_full
+                .as_ref()
+                .map(|v| v.avg10_percent),
+            snapshot.pressure.io_some.as_ref().map(|v| v.avg10_percent),
+            snapshot.pressure.io_full.as_ref().map(|v| v.avg10_percent),
+        ]);
     }
 }
 
@@ -1719,6 +1741,20 @@ impl TaskottoApp {
                 graph_max(&self.history.psi_io_some, &self.history.psi_io_full).max(1.0),
             );
         }
+        let hints = diagnostics::analyze(&self.history, pressure, snapshot.cpu_percent);
+        if !hints.is_empty() {
+            ui.add_space(10.0);
+            ui.label(
+                RichText::new("Pressure investigation hints · hypotheses, not diagnoses").strong(),
+            );
+            for hint in hints {
+                ui.label(RichText::new(hint.label).strong());
+                ui.label(RichText::new(hint.evidence).small());
+                ui.label(RichText::new(hint.next_step).small().weak());
+                ui.add_space(5.0);
+            }
+            ui.label(RichText::new("Conservative display thresholds: repeated readings across 8 consecutive samples, with supporting 60s pressure. These are not kernel alert limits or proof of cause; validate with a controlled workload.").small().weak());
+        }
         if self.history.psi_cpu_some.len() >= 2 {
             ui.label(RichText::new("Each point is a kernel-provided rolling 10-second average at the GUI's sampling interval. Disconnected/missing measurements are not replaced with zero; trends do not prove causality.").small().weak());
         }
@@ -2553,6 +2589,7 @@ fn apply_theme(ctx: &egui::Context, settings: &Settings) {
 
 #[cfg(test)]
 mod captures;
+mod diagnostics;
 mod layout_editor;
 mod rices;
 

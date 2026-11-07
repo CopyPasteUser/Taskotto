@@ -362,6 +362,7 @@ fn generate_headless_ui_screenshots() {
                 psi_memory_full: history.psi_memory_full.clone(),
                 psi_io_some: history.psi_io_some.clone(),
                 psi_io_full: history.psi_io_full.clone(),
+                psi_diagnostic_recent: history.psi_diagnostic_recent.clone(),
                 process_follow: None,
                 pss_inspection: None,
                 cgroup_inspection: None,
