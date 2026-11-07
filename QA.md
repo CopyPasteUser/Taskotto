@@ -32,6 +32,7 @@ archive and invokes its binary and local desktop installer before publishing.
 - [ ] All seven dedicated rices plus System: verify exactly one native window frame, its correct RiceBowl-owned border/button colors, no duplicate title strips in Taskotto, and functional in-client menus and toolbars. Inspect a disposable process, use available safe signal actions after confirmation; verify no unintended actions or stale PID targets.
 - [ ] Capture and review a native Taskotto window screenshot on X11, KDE Wayland and labwc. The [headless README images](SCREENSHOTS.md) do not certify display-server rendering.
 - [ ] Linux Mint / X11: launch via `.desktop` menu, resize, minimize, close, reopen.
+- [ ] Move or reinstall the Taskotto binary, rerun `taskotto --install-desktop`, and verify the desktop menu points to the new absolute path. Then run `taskotto --uninstall-desktop`: only Taskotto's launcher and icon should disappear; the binary, preferences and other applications must remain. Repeat uninstall (idempotent), and verify customized launcher or icon files are refused instead of erased.
 - [ ] Fedora KDE / Wayland: repeat and test clipboard/focus.
 - [ ] labwc / Wayland: launch without XFCE/KDE services; confirm no missing runtime dependencies.
 - [ ] At 650×420, at Win98 minimum 490×340, and at a large desktop resolution, all controls remain reachable.

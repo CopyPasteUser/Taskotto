@@ -38,6 +38,12 @@ jobs:
             --owner=0 --group=0 --numeric-owner -C dist -cf - taskotto \
             | gzip -n > "taskotto-${GITHUB_REF_NAME}-linux-x86_64.tar.gz"
           sha256sum "taskotto-${GITHUB_REF_NAME}-linux-x86_64.tar.gz" > "taskotto-${GITHUB_REF_NAME}-SHA256SUMS.txt"
+          # Recreate the archive from the same release build and assert the
+          # package bytes (order, ownership, timestamps, gzip headers) match.
+          tar --sort=name --mtime="@${source_date_epoch}" \
+            --owner=0 --group=0 --numeric-owner -C dist -cf - taskotto \
+            | gzip -n > "taskotto-${GITHUB_REF_NAME}-repeat.tar.gz"
+          cmp "taskotto-${GITHUB_REF_NAME}-linux-x86_64.tar.gz" "taskotto-${GITHUB_REF_NAME}-repeat.tar.gz"
       - name: Smoke-test release archive and user-local installation
         run: |
           sha256sum -c "taskotto-${GITHUB_REF_NAME}-SHA256SUMS.txt"
@@ -48,6 +54,9 @@ jobs:
           XDG_DATA_HOME="$test_dir/user-data" "$test_dir/taskotto/taskotto" --install-desktop
           test -s "$test_dir/user-data/applications/io.github.copypasteuser.taskotto.desktop"
           test -s "$test_dir/user-data/icons/hicolor/scalable/apps/io.github.copypasteuser.taskotto.svg"
+          XDG_DATA_HOME="$test_dir/user-data" "$test_dir/taskotto/taskotto" --uninstall-desktop
+          test ! -e "$test_dir/user-data/applications/io.github.copypasteuser.taskotto.desktop"
+          test ! -e "$test_dir/user-data/icons/hicolor/scalable/apps/io.github.copypasteuser.taskotto.svg"
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}

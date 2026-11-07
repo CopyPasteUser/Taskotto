@@ -259,7 +259,10 @@ permission/ownership rules.
 - [x] RC51: optional reduced-animation/low-overhead profile, preserving all
   functionality and the preferred sampling interval; opt-in minimum 3-second
   worker cycle, no new daemon. Measured impact still requires physical-device QA.
-- [ ] Reproducible packages, integrity metadata and installation recovery.
+- [x] RC52: deterministic artifact packaging test, existing SHA256 release
+  integrity metadata, user-local reinstall repair and safe `--uninstall-desktop`
+  recovery. Cross-host Rust binary reproducibility and native launcher QA are
+  still release acceptance work, not claimed results.
 
 **Gate:** benchmarks accompany optimization claims; release builds remain
 lean, offline-capable and independent from RiceBowl.

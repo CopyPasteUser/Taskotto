@@ -34,6 +34,8 @@ fn cli_rejects_invalid_combinations_without_launching_gui() {
         vec!["--theme", "not-a-rice"],
         vec!["--refresh-ms", "20"],
         vec!["--install-desktop", "--snapshot"],
+        vec!["--uninstall-desktop", "--snapshot"],
+        vec!["--install-desktop", "--uninstall-desktop"],
     ] {
         let output = run(&args);
         assert!(!output.status.success(), "unexpected success for {args:?}");
@@ -50,6 +52,7 @@ fn cli_rejects_invalid_combinations_without_launching_gui() {
     assert!(String::from_utf8_lossy(&help.stdout).contains("--snapshot"));
     assert!(String::from_utf8_lossy(&help.stdout).contains("--check-ricepack"));
     assert!(String::from_utf8_lossy(&help.stdout).contains("--export-ricepack"));
+    assert!(String::from_utf8_lossy(&help.stdout).contains("--uninstall-desktop"));
 }
 
 #[test]
@@ -226,4 +229,27 @@ fn installer_creates_a_reusable_user_local_desktop_entry() {
         .unwrap();
     assert!(!output.status.success());
     assert!(String::from_utf8_lossy(&output.stderr).contains("XDG_DATA_HOME must be absolute"));
+
+    let desktop_path = home.0.join(format!("applications/{app_id}.desktop"));
+    let icon_path = home
+        .0
+        .join(format!("icons/hicolor/scalable/apps/{app_id}.svg"));
+    for (run, launcher_removed) in [(1, true), (2, false)] {
+        let output = Command::new(env!("CARGO_BIN_EXE_taskotto"))
+            .arg("--uninstall-desktop")
+            .env("XDG_DATA_HOME", &home.0)
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "uninstall run {run}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert!(
+            String::from_utf8_lossy(&output.stdout)
+                .contains(&format!("launcher={launcher_removed}"))
+        );
+        assert!(!desktop_path.exists());
+        assert!(!icon_path.exists());
+    }
 }
