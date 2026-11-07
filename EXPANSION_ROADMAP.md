@@ -100,7 +100,10 @@ Rust changes, while the legacy presets render and behave identically.
 - [x] Responsive screen capabilities and fallbacks for compact and large screens:
   RC31 adds an opt-in validated breakpoint and per-screen alternative widget
   composition; the legacy layout renders unchanged when no fallback is defined.
-- [ ] User-driven layout editor and reusable component presets.
+- [x] User-driven layout editor and reusable component presets: RC32 adds a
+  session-only draft with validated apply, bounded screen/widget edits,
+  binding controls, explicit compact alternatives, accessible reorder buttons,
+  and seven safe templates; export uses the existing non-overwriting RicePack path.
 - [ ] Visual regression captures, accessibility/focus checks and pack
   migration diagnostics for schema upgrades.
 

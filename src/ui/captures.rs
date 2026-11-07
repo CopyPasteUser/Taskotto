@@ -225,6 +225,11 @@ fn generate_headless_ui_screenshots() {
         ),
         (
             Theme::FrutigerAero,
+            Page::Preferences,
+            "taskotto-frutiger-aero-layout-editor.png",
+        ),
+        (
+            Theme::FrutigerAero,
             Page::Processes,
             "taskotto-frutiger-aero-lagoon-ricepack.png",
         ),
@@ -384,6 +389,9 @@ fn generate_headless_ui_screenshots() {
         if file.contains("ricepack-editor") {
             app.ricepack_library.source_path = "examples/ricepacks/sea-glass.toml".into();
             app.preview_ricepack(&ctx);
+        }
+        if file.contains("layout-editor") {
+            app.ricepack_library.editor_layout = Some(layout_editor::starter());
         }
         if file.contains("diagnostic-studio-traffic") {
             ctx.data_mut(|data| {
