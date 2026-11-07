@@ -1,8 +1,14 @@
-# Taskotto 1.0.0-rc.25 — release candidate
+# Taskotto 1.0.0-rc.26 — release candidate
 
 **Date:** 2026-11-06 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
 Rust-only Linux process manager and system monitor. This is a **prerelease**, not a stable 1.0 certification.
+
+## Changes since rc.25
+
+- Added strict session-safe `appearance.chart_scale` (0.75–1.5) and a Preferences slider. AI-authored packs can change genuine chart heights in XP Luna, Windows 7/10, Frutiger Aero, macOS and shared views; built-in sizes are unchanged without overrides.
+- Export/import, preview/revert, live reload and persistent settings preserve chart scaling. Invalid/nonfinite pack values are rejected; ordinary preferences normalize them. Process permissions and sampling behavior are unchanged.
+- Secondary-page palette extraction and the P2 layout schema remain open, as do real Mint/X11, KDE/Wayland and RiceBowl/labwc QA gates. Existing screenshots deliberately show original chart sizes.
 
 ## Changes since rc.24
 

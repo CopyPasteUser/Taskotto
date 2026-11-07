@@ -581,18 +581,18 @@ pub(super) fn performance(app: &mut TaskottoApp, ui: &mut egui::Ui) {
     };
     egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
         ui.horizontal_top(|ui| {
-            ui.vertical(|ui| usage_meter(ui, "CPU Usage", snapshot.cpu_percent, GREEN, 135.0));
+            ui.vertical(|ui| usage_meter(ui, "CPU Usage", snapshot.cpu_percent, GREEN, 135.0 * app.settings.chart_scale));
             ui.add_space(10.0);
             ui.vertical(|ui| {
                 let visible = if ui.available_width() < 750.0 { 2 } else { 4 };
                 let cores = app.history.cores.len().min(visible);
                 if cores == 0 {
-                    history_plot(ui, "CPU Usage History", &[(&app.history.cpu, GREEN)], 100.0, 135.0);
+                    history_plot(ui, "CPU Usage History", &[(&app.history.cpu, GREEN)], 100.0, 135.0 * app.settings.chart_scale);
                 } else {
                     ui.label(RichText::new("CPU Usage History").size(12.0).strong());
                     ui.columns(cores, |columns| {
                         for (index, column) in columns.iter_mut().enumerate() {
-                            let rect = performance::graph_rect(column, 135.0, BLACK, GRID);
+                            let rect = performance::graph_rect(column, 135.0 * app.settings.chart_scale, BLACK, GRID);
                             performance::plot_lines(column, rect.shrink(2.0), &[(&app.history.cores[index], GREEN)], 100.0, true);
                         }
                     });
@@ -604,9 +604,9 @@ pub(super) fn performance(app: &mut TaskottoApp, ui: &mut egui::Ui) {
         });
         ui.add_space(13.0);
         ui.horizontal_top(|ui| {
-            ui.vertical(|ui| usage_meter(ui, "Memory", snapshot.memory.used_fraction() * 100.0, BLUE, 129.0));
+            ui.vertical(|ui| usage_meter(ui, "Memory", snapshot.memory.used_fraction() * 100.0, BLUE, 129.0 * app.settings.chart_scale));
             ui.add_space(10.0);
-            ui.vertical(|ui| history_plot(ui, "Physical Memory Usage History", &[(&app.history.memory, BLUE)], 100.0, 129.0));
+            ui.vertical(|ui| history_plot(ui, "Physical Memory Usage History", &[(&app.history.memory, BLUE)], 100.0, 129.0 * app.settings.chart_scale));
         });
         ui.add_space(18.0);
         ui.columns(3, |columns| {
@@ -663,7 +663,7 @@ pub(super) fn networking(app: &TaskottoApp, ui: &mut egui::Ui) {
     );
     ui.add_space(7.0);
     let scale = super::super::graph_max(&app.history.received, &app.history.sent);
-    let height = ui.available_height().clamp(200.0, 440.0) * 0.65;
+    let height = ui.available_height().clamp(200.0, 440.0) * 0.65 * app.settings.chart_scale;
     let rect = performance::graph_rect(ui, height, BLACK, GRID);
     performance::plot_lines(
         ui,

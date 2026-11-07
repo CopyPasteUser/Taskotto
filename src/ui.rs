@@ -1290,6 +1290,7 @@ impl TaskottoApp {
             });
             changed |= ui.add(egui::Slider::new(&mut self.settings.font_scale, 0.8..=1.5).text("Font scale")).changed();
             changed |= ui.add(egui::Slider::new(&mut self.settings.ui_spacing, 3.0..=16.0).text("Widget spacing")).changed();
+            changed |= ui.add(egui::Slider::new(&mut self.settings.chart_scale, 0.75..=1.5).text("Chart size")).changed();
             let mut radius = self.settings.corner_radius.unwrap_or_else(|| ThemeStyle::from_settings(&self.settings).rounding);
             if ui.add(egui::Slider::new(&mut radius, 0..=16).text("Corner radius")).changed() {
                 self.settings.corner_radius = Some(radius);

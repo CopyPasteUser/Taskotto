@@ -209,6 +209,8 @@ pub struct Settings {
     pub layout_mode: LayoutMode,
     pub font_scale: f32,
     pub ui_spacing: f32,
+    /// Scales drawn performance charts while preserving each rice's proportions.
+    pub chart_scale: f32,
     pub corner_radius: Option<u8>,
     #[serde(skip_serializing_if = "ComponentColors::is_empty")]
     pub components: ComponentColors,
@@ -232,6 +234,7 @@ pub(crate) struct AppearanceBackup {
     text_hex: Option<String>,
     font_scale: f32,
     ui_spacing: f32,
+    chart_scale: f32,
     corner_radius: Option<u8>,
     table_row_height: Option<f32>,
     components: ComponentColors,
@@ -257,6 +260,7 @@ impl Default for Settings {
             layout_mode: LayoutMode::Auto,
             font_scale: 1.0,
             ui_spacing: 8.0,
+            chart_scale: 1.0,
             corner_radius: None,
             components: ComponentColors::default(),
             launch_theme_original: None,
@@ -278,6 +282,7 @@ impl Settings {
                 text_hex: self.text_hex.clone(),
                 font_scale: self.font_scale,
                 ui_spacing: self.ui_spacing,
+                chart_scale: self.chart_scale,
                 corner_radius: self.corner_radius,
                 table_row_height: self.table_row_height,
                 components: self.components.clone(),
@@ -298,6 +303,7 @@ impl Settings {
             self.text_hex.clone_from(&original.text_hex);
             self.font_scale = original.font_scale;
             self.ui_spacing = original.ui_spacing;
+            self.chart_scale = original.chart_scale;
             self.corner_radius = original.corner_radius;
             self.table_row_height = original.table_row_height;
             self.components.clone_from(&original.components);
@@ -327,6 +333,11 @@ impl Settings {
             self.ui_spacing.clamp(3.0, 16.0)
         } else {
             8.0
+        };
+        self.chart_scale = if self.chart_scale.is_finite() {
+            self.chart_scale.clamp(0.75, 1.5)
+        } else {
+            1.0
         };
         self.corner_radius = self.corner_radius.map(|radius| radius.min(16));
         self.table_row_height = self
@@ -369,6 +380,7 @@ impl Settings {
             persistent.text_hex.clone_from(&original.text_hex);
             persistent.font_scale = original.font_scale;
             persistent.ui_spacing = original.ui_spacing;
+            persistent.chart_scale = original.chart_scale;
             persistent.corner_radius = original.corner_radius;
             persistent.table_row_height = original.table_row_height;
             persistent.components.clone_from(&original.components);
@@ -464,6 +476,7 @@ mod tests {
             surface_hex: Some("wrong".into()),
             font_scale: f32::INFINITY,
             ui_spacing: -100.0,
+            chart_scale: f32::NAN,
             corner_radius: Some(255),
             table_row_height: Some(f32::NEG_INFINITY),
             components: ComponentColors {
@@ -478,6 +491,7 @@ mod tests {
         assert!(config.surface_hex.is_none());
         assert_eq!(config.font_scale, 1.0);
         assert_eq!(config.ui_spacing, 3.0);
+        assert_eq!(config.chart_scale, 1.0);
         assert_eq!(config.corner_radius, Some(16));
         assert!(config.table_row_height.is_none());
         assert!(config.components.control.is_none());
@@ -501,6 +515,20 @@ mod tests {
             LayoutMode::TopTabs
         );
         assert_eq!(settings.font_scale, 1.0);
+        assert_eq!(settings.chart_scale, 1.0);
+    }
+
+    #[test]
+    fn chart_scale_is_bounded_for_saved_preferences() {
+        let mut settings = Settings {
+            chart_scale: 8.0,
+            ..Settings::default()
+        };
+        settings.normalize();
+        assert_eq!(settings.chart_scale, 1.5);
+        settings.chart_scale = -1.0;
+        settings.normalize();
+        assert_eq!(settings.chart_scale, 0.75);
     }
 
     #[test]
@@ -548,6 +576,7 @@ mod tests {
                 ..ComponentColors::default()
             },
             layout_mode: LayoutMode::Sidebar,
+            chart_scale: 1.2,
             refresh_ms: 3_000,
             ..Settings::default()
         };
@@ -559,6 +588,7 @@ mod tests {
         let loaded: Settings = toml::from_str(&fs::read_to_string(&path).unwrap()).unwrap();
         assert_eq!(loaded.theme, Theme::Windows10);
         assert_eq!(loaded.layout_mode, LayoutMode::Sidebar);
+        assert_eq!(loaded.chart_scale, 1.2);
         assert_eq!(loaded.accent_hex.as_deref(), Some("#2277CC"));
         assert_eq!(loaded.components.border.as_deref(), Some("#123456"));
         assert!(loaded.components.selection.is_none());
