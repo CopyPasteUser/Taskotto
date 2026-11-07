@@ -119,6 +119,10 @@ with **no new Rust UI module**. No untrusted scripts or arbitrary shell hooks.
 
 - [ ] CPU affinity, `nice` priority and I/O priority where Linux permissions
   permit, with clear errors and explicit consent for mutations.
+  - [x] RC35: display actual leader Nice priority and permitted CPU list from
+    existing procfs sampling, with explicit thread scope and unavailable states.
+  - [ ] Implement any mutation only after an auditable PID-identity/race
+    strategy, explicit confirmation and permitted/unprivileged error tests.
 - [ ] Aggregate descendant-tree CPU and memory statistics without double
   counting; show collection scope accurately.
   - [x] RC34: count each observed descendant PID once, prevent cycles and PID

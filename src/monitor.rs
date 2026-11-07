@@ -15,6 +15,11 @@ pub struct Process {
     pub name: String,
     pub command: String,
     pub state: char,
+    /// /proc/PID/stat field 19: scheduler nice value for the group leader.
+    pub nice: i32,
+    /// /proc/PID/status leader affinity; other threads may differ.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cpus_allowed_list: Option<String>,
     pub threads: u32,
     pub resident_bytes: u64,
     pub virtual_bytes: u64,
@@ -409,6 +414,7 @@ fn read_process(pid: i32, page_size: u64) -> io::Result<Process> {
         .and_then(|s| s.split_whitespace().next())
         .and_then(|s| s.parse().ok())
         .unwrap_or(u32::MAX);
+    process.cpus_allowed_list = allowed_cpus(&status);
     if let Ok(command) = fs::read(directory.join("cmdline")) {
         let display = command
             .split(|byte| *byte == 0)
@@ -432,6 +438,15 @@ fn read_process(pid: i32, page_size: u64) -> io::Result<Process> {
         }
     }
     Ok(process)
+}
+
+fn allowed_cpus(status: &str) -> Option<String> {
+    status
+        .lines()
+        .find_map(|line| line.strip_prefix("Cpus_allowed_list:"))
+        .map(str::trim)
+        .filter(|mask| !mask.is_empty() && mask.len() <= 128)
+        .map(str::to_owned)
 }
 
 pub fn start_ticks(pid: i32) -> io::Result<u64> {
@@ -469,6 +484,10 @@ fn parse_process_stat(pid: i32, stat: &str, page_size: u64) -> io::Result<Proces
         command: name.clone(),
         name,
         state: fields[0].chars().next().unwrap_or('?'),
+        // Nice is signed and may be -20..19. This is the leader's value,
+        // not a promise that all threads share a scheduling priority.
+        nice: signed_field(16)?,
+        cpus_allowed_list: None,
         // /proc/PID/stat field 20 (num_threads): offset 17 from field 3.
         threads: field(17)?.min(u32::MAX as u64) as u32,
         resident_bytes: field(21)?.saturating_mul(page_size),
@@ -505,6 +524,9 @@ mod tests {
         assert_eq!(p.start_ticks, 1000);
         assert_eq!(p.resident_bytes, 49_152);
         assert_eq!(p.threads, 3);
+        assert_eq!(p.nice, 0);
+        let negative = stat.replace(" 20 0 3 0 1000", " 20 -5 3 0 1000");
+        assert_eq!(parse_process_stat(412, &negative, 4096).unwrap().nice, -5);
     }
 
     #[test]
@@ -569,6 +591,27 @@ mod tests {
                 .processes
                 .iter()
                 .any(|p| p.pid == std::process::id() as i32)
+        );
+        let own = snapshot
+            .processes
+            .iter()
+            .find(|p| p.pid == std::process::id() as i32)
+            .unwrap();
+        assert!((-20..=19).contains(&own.nice));
+        assert!(own.cpus_allowed_list.is_some());
+    }
+
+    #[test]
+    fn proc_status_affinity_is_available_only_when_explicitly_reported() {
+        assert_eq!(
+            allowed_cpus("Uid:\t1000\nCpus_allowed_list:\t0-3,5\n"),
+            Some("0-3,5".into())
+        );
+        assert_eq!(allowed_cpus("Uid:\t1000\n"), None);
+        assert_eq!(allowed_cpus("Cpus_allowed_list:\t\n"), None);
+        assert_eq!(
+            allowed_cpus(&format!("Cpus_allowed_list:\t{}", "1".repeat(129))),
+            None
         );
     }
 

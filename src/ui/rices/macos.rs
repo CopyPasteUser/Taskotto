@@ -824,6 +824,8 @@ pub(super) fn info_dialog(app: &mut TaskottoApp, ctx: &egui::Context) {
                         ),
                         ("Status", state_name(process.state).to_owned()),
                         ("CPU", format!("{:.1}%", process.cpu_percent)),
+                        ("Nice (leader)", process.nice.to_string()),
+                        ("CPU affinity (leader)", process.cpus_allowed_list.clone().unwrap_or_else(|| "Unavailable".into())),
                         ("Real Memory (RSS)", format::bytes(process.resident_bytes)),
                         ("Virtual Memory", format::bytes(process.virtual_bytes)),
                         ("Threads", process.threads.to_string()),
