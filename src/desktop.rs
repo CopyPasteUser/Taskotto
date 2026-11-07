@@ -8,6 +8,7 @@ use std::{
 
 const DESKTOP: &str = include_str!("../packaging/io.github.copypasteuser.taskotto.desktop");
 const ICON: &str = include_str!("../assets/io.github.copypasteuser.taskotto.svg");
+const ICON_PNG: &[u8] = include_bytes!("../assets/io.github.copypasteuser.taskotto.png");
 const APP_ID: &str = "io.github.copypasteuser.taskotto";
 
 pub fn install_for_current_user() -> io::Result<PathBuf> {
@@ -49,14 +50,16 @@ pub fn uninstall(data_home: &Path) -> io::Result<(bool, bool)> {
     }
     let desktop = data_home.join(format!("applications/{APP_ID}.desktop"));
     let icon = data_home.join(format!("icons/hicolor/scalable/apps/{APP_ID}.svg"));
+    let png = data_home.join(format!("icons/hicolor/256x256/apps/{APP_ID}.png"));
     let old_desktop = read_regular_entry(&desktop)?;
     let old_icon = read_regular_entry(&icon)?;
-    // Check both before removing either, so a customized icon cannot leave
-    // half an otherwise healthy installation removed.
-    if old_desktop
-        .as_deref()
-        .is_some_and(|text| !matches_desktop_template(text))
-    {
+    let old_png = read_regular_entry(&png)?;
+    // Check all three before removing anything, preserving customized files.
+    if old_desktop.as_deref().is_some_and(|bytes| {
+        std::str::from_utf8(bytes)
+            .map(|text| !matches_desktop_template(text, &png))
+            .unwrap_or(true)
+    }) {
         return Err(io::Error::new(
             io::ErrorKind::PermissionDenied,
             format!(
@@ -65,10 +68,19 @@ pub fn uninstall(data_home: &Path) -> io::Result<(bool, bool)> {
             ),
         ));
     }
-    if old_icon.as_deref().is_some_and(|text| text != ICON) {
+    if old_icon
+        .as_deref()
+        .is_some_and(|bytes| bytes != ICON.as_bytes())
+    {
         return Err(io::Error::new(
             io::ErrorKind::PermissionDenied,
             format!("Refusing to delete customized icon: {}", icon.display()),
+        ));
+    }
+    if old_png.as_deref().is_some_and(|bytes| bytes != ICON_PNG) {
+        return Err(io::Error::new(
+            io::ErrorKind::PermissionDenied,
+            format!("Refusing to delete customized icon: {}", png.display()),
         ));
     }
     if old_desktop.is_some() {
@@ -77,10 +89,16 @@ pub fn uninstall(data_home: &Path) -> io::Result<(bool, bool)> {
     if old_icon.is_some() {
         fs::remove_file(icon)?;
     }
-    Ok((old_desktop.is_some(), old_icon.is_some()))
+    if old_png.is_some() {
+        fs::remove_file(png)?;
+    }
+    Ok((
+        old_desktop.is_some(),
+        old_icon.is_some() || old_png.is_some(),
+    ))
 }
 
-fn read_regular_entry(path: &Path) -> io::Result<Option<String>> {
+fn read_regular_entry(path: &Path) -> io::Result<Option<Vec<u8>>> {
     let metadata = match fs::symlink_metadata(path) {
         Ok(metadata) => metadata,
         Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(None),
@@ -95,16 +113,18 @@ fn read_regular_entry(path: &Path) -> io::Result<Option<String>> {
             ),
         ));
     }
-    fs::read_to_string(path).map(Some)
+    fs::read(path).map(Some)
 }
 
-fn matches_desktop_template(installed: &str) -> bool {
+fn matches_desktop_template(installed: &str, png: &Path) -> bool {
     let expected = DESKTOP.lines().collect::<Vec<_>>();
     let actual = installed.lines().collect::<Vec<_>>();
     actual.len() == expected.len()
         && actual.iter().zip(expected).all(|(observed, template)| {
             if template == "Exec=taskotto" {
                 observed.starts_with("Exec=") && observed.len() > "Exec=".len()
+            } else if template == "Icon=io.github.copypasteuser.taskotto" {
+                observed == &template || *observed == format!("Icon={}", png.display())
             } else {
                 observed == &template
             }
@@ -132,18 +152,26 @@ pub fn install(data_home: &Path, executable: &Path) -> io::Result<PathBuf> {
     }
     let desktop_path = data_home.join(format!("applications/{APP_ID}.desktop"));
     let icon_path = data_home.join(format!("icons/hicolor/scalable/apps/{APP_ID}.svg"));
+    let png_path = data_home.join(format!("icons/hicolor/256x256/apps/{APP_ID}.png"));
+    let png = png_path
+        .to_str()
+        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "icon path is not UTF-8"))?;
     fs::create_dir_all(desktop_path.parent().unwrap())?;
     fs::create_dir_all(icon_path.parent().unwrap())?;
+    fs::create_dir_all(png_path.parent().unwrap())?;
     // Desktop entry Exec parsing is not a shell. Quotes are needed for spaces.
     let exec = if binary.contains(' ') {
         format!("\"{binary}\"")
     } else {
         binary.to_owned()
     };
-    let desktop_contents = DESKTOP.replace("Exec=taskotto", &format!("Exec={exec}"));
+    let desktop_contents = DESKTOP
+        .replace("Exec=taskotto", &format!("Exec={exec}"))
+        .replace(&format!("Icon={APP_ID}"), &format!("Icon={png}"));
     // Atomic replacement keeps a previously working launcher intact if disk
     // writes fail. Renaming over a leaf symlink also avoids writing through it.
     write_atomic(&icon_path, ICON.as_bytes())?;
+    write_atomic(&png_path, ICON_PNG)?;
     write_atomic(&desktop_path, desktop_contents.as_bytes())?;
     Ok(desktop_path)
 }
@@ -185,6 +213,7 @@ mod tests {
         assert!(DESKTOP.contains("Categories=System;Monitor;"));
         assert!(DESKTOP.contains("Icon=io.github.copypasteuser.taskotto"));
         assert!(ICON.contains("<svg"));
+        assert!(ICON_PNG.starts_with(b"\x89PNG\r\n\x1a\n"));
     }
 
     #[test]
@@ -200,6 +229,19 @@ mod tests {
         let desktop = install(&folder, Path::new("/opt/Test Taskotto/taskotto")).unwrap();
         let text = fs::read_to_string(desktop).unwrap();
         assert!(text.contains("Exec=\"/opt/Test Taskotto/taskotto\""));
+        assert!(text.contains(&format!(
+            "Icon={}",
+            folder
+                .join("icons/hicolor/256x256/apps/io.github.copypasteuser.taskotto.png")
+                .display()
+        )));
+        assert_eq!(
+            fs::read(
+                folder.join("icons/hicolor/256x256/apps/io.github.copypasteuser.taskotto.png")
+            )
+            .unwrap(),
+            ICON_PNG
+        );
         assert!(
             folder
                 .join("icons/hicolor/scalable/apps/io.github.copypasteuser.taskotto.svg")
@@ -247,6 +289,13 @@ mod tests {
         );
         assert!(desktop.exists());
         fs::write(&icon, ICON).unwrap();
+        let png = folder.join(format!("icons/hicolor/256x256/apps/{APP_ID}.png"));
+        fs::write(&png, "custom png").unwrap();
+        assert_eq!(
+            uninstall(&folder).unwrap_err().kind(),
+            io::ErrorKind::PermissionDenied
+        );
+        fs::write(&png, ICON_PNG).unwrap();
         fs::write(&desktop, "handwritten desktop entry").unwrap();
         assert_eq!(
             uninstall(&folder).unwrap_err().kind(),

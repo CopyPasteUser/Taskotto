@@ -32,6 +32,7 @@ jobs:
           install -Dm755 install.sh dist/taskotto/install.sh
           install -Dm644 packaging/io.github.copypasteuser.taskotto.desktop dist/taskotto/io.github.copypasteuser.taskotto.desktop
           install -Dm644 assets/io.github.copypasteuser.taskotto.svg dist/taskotto/io.github.copypasteuser.taskotto.svg
+          install -Dm644 assets/io.github.copypasteuser.taskotto.png dist/taskotto/io.github.copypasteuser.taskotto.png
           install -Dm644 README.md LICENSE QA.md RELEASE_NOTES.md CHANGELOG.md SECURITY.md dist/taskotto/
           # Stable ordering, ownership and timestamps for repeatable archive metadata.
           source_date_epoch=$(git log -1 --format=%ct)
@@ -57,9 +58,12 @@ jobs:
           XDG_DATA_HOME="$test_dir/user-data" "$test_dir/taskotto/taskotto" --install-desktop
           test -s "$test_dir/user-data/applications/io.github.copypasteuser.taskotto.desktop"
           test -s "$test_dir/user-data/icons/hicolor/scalable/apps/io.github.copypasteuser.taskotto.svg"
+          test -s "$test_dir/user-data/icons/hicolor/256x256/apps/io.github.copypasteuser.taskotto.png"
+          grep -Fqx "Icon=$test_dir/user-data/icons/hicolor/256x256/apps/io.github.copypasteuser.taskotto.png" "$test_dir/user-data/applications/io.github.copypasteuser.taskotto.desktop"
           XDG_DATA_HOME="$test_dir/user-data" "$test_dir/taskotto/taskotto" --uninstall-desktop
           test ! -e "$test_dir/user-data/applications/io.github.copypasteuser.taskotto.desktop"
           test ! -e "$test_dir/user-data/icons/hicolor/scalable/apps/io.github.copypasteuser.taskotto.svg"
+          test ! -e "$test_dir/user-data/icons/hicolor/256x256/apps/io.github.copypasteuser.taskotto.png"
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}

@@ -181,7 +181,7 @@ The first compilation may take a while because of the GUI toolkit. Later starts 
 bash install.sh
 ```
 
-This command installs or updates the binary and automatically creates the application-menu entry and SVG icon. It also works from an extracted release archive, without Cargo. The launcher uses the executable's absolute path, so the menu does not depend on your graphical session's `PATH`. Then launch **Taskotto** from the applications menu.
+This command installs or updates the binary and automatically creates the application-menu entry with an absolute PNG icon path (plus an SVG for theme integration). It also works from an extracted release archive, without Cargo. The launcher uses the executable's absolute path, so the menu does not depend on your graphical session's `PATH`. Then launch **Taskotto** from the applications menu.
 The launcher and icon are replaced atomically on reinstall, so interrupted writes do not truncate the previous files.
 To repair a stale launcher after moving Taskotto, run `taskotto --install-desktop` again from the current binary. To remove only Taskotto's user-local menu entry and icon, use `taskotto --uninstall-desktop`. Removal refuses customized files and symlinks; it leaves your binary, preferences and unrelated desktop entries untouched.
 
