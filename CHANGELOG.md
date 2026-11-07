@@ -6,6 +6,7 @@ Taskotto follows semantic versioning; hardware-dependent stable-release gates ar
 
 - Added an optional persisted low-overhead profile in Preferences: the existing worker samples at no faster than every 3000 ms and egui motion transitions are disabled, without disabling any monitoring tab or process action. Switching off restores the user's configured 500–10000 ms interval, which is never overwritten by the profile.
 - Session and followed-process CSV/JSON exports now state the effective nominal sample interval. Added legacy-config, serialization, effective-interval and animation restoration tests. This is an explicit tradeoff, not an unmeasured CPU/RAM savings claim.
+- Update-speed menus in the Windows-like, macOS and ChromeOS rices explicitly indicate the active 3-second floor, so their configured interval choices are not mistaken for the effective cadence.
 
 ## [1.0.0-rc.50] — 2026-11-07
 
