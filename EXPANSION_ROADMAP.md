@@ -106,6 +106,11 @@ Rust changes, while the legacy presets render and behave identically.
   and seven safe templates; export uses the existing non-overwriting RicePack path.
 - [ ] Visual regression captures, accessibility/focus checks and pack
   migration diagnostics for schema upgrades.
+  - [x] RC33: decode/verify all 50 genuine egui image captures, test generated
+    Ctrl+F focus with and without a search toolbar, and report legacy/future
+    pack version incompatibilities before parsing optional widget fields.
+  - [ ] Native keyboard traversal, screen-reader and screen-size acceptance on
+    Mint/X11, KDE/Wayland and RiceBowl/labwc; compare captures after refinement.
 
 **Gate:** build a new, visually distinct functional monitor in a RicePack
 with **no new Rust UI module**. No untrusted scripts or arbitrary shell hooks.
@@ -181,18 +186,19 @@ lean, offline-capable and independent from RiceBowl.
 
 ## Work order
 
-1. **Delivered (RC14–30):** P1 format/loader/CLI, secure reference pack,
-   headless export/check/re-import, live file reload and in-app library,
-   session-only preview/revert/import/export, semantic widget tokens, an
-   explicit RiceBowl export fixture and tokenized core and many secondary
-   clients for all seven rices.
-2. **Next:** Finish the P1 intentional widget-artwork audit and expand P2 with
-   responsive capability fallbacks and an interactive layout editor. RiceBowl's separate JSON
-   desktop pack still is not Taskotto TOML; the explicit RiceBowl exporter is
-   the validated conversion boundary.
-3. **Then:** P2 data-bound layout schema; P3 real process controls; P4/P5
-   optional telemetry backends; P6 diagnosis; P7 dashboards.
-4. **Throughout:** P0 device acceptance and P8 measured resource costs.
+1. **Delivered (RC14–33):** P1's validated RicePack format, live reload,
+   in-app preview/export and semantic component tokens; P2's typed functional
+   screens, real Linux bindings, seven safe widget kinds, responsive compact
+   layouts and session-only visual designer. All 50 genuine egui captures are
+   integrity-checked. RiceBowl's separate JSON desktop pack still requires
+   its explicitly tested TOML exporter bridge.
+2. **Next:** Finish the P1 intentional historical artwork/palette audit and
+   the P2 native accessibility, visual regression and keyboard QA on actual
+   Linux desktop sessions.
+3. **Then:** P3 advanced process controls; P4 GPU/hardware telemetry; P5
+   cgroups/services; P6 evidence-based diagnosis; P7 dashboards/exports.
+4. **Throughout:** P0 physical-device acceptance and P8 measured resource
+   costs, packaging recovery and stability gates.
 
 The stable 1.0 release remains gated by physical desktop verification, even
 when implementation work on the future feature track continues.

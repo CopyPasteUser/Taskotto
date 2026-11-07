@@ -94,6 +94,23 @@ fn ricepack_can_be_validated_headlessly_and_invalid_files_are_rejected() {
         String::from_utf8_lossy(&declarative.stderr)
     );
     assert!(String::from_utf8_lossy(&declarative.stdout).contains("Diagnostic Studio"));
+    let diagnostics = String::from_utf8_lossy(&declarative.stdout);
+    assert!(diagnostics.contains("Validated layout: 2 pages"));
+    assert!(diagnostics.contains("compact breakpoint 720 logical px"));
+    assert!(diagnostics.contains("no scripts or additional permissions"));
+
+    let scratch = TestDataHome::new();
+    let future_path = scratch.0.join("future-layout.toml");
+    fs::write(
+        &future_path,
+        "format_version = 9\nname = 'New pack'\nbase_theme = 'system'\n[unknown_future_widgets]\nscript = 'never-run'\n",
+    )
+    .unwrap();
+    let future = run(&["--check-ricepack", future_path.to_str().unwrap()]);
+    assert!(!future.status.success());
+    let error = String::from_utf8_lossy(&future.stderr);
+    assert!(error.contains("unsupported RicePack format_version 9"));
+    assert!(error.contains("No automatic migration"));
 }
 
 #[test]

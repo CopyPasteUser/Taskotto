@@ -1,5 +1,5 @@
-//! Keep the expandable README gallery in sync with the checked-in captures.
-use std::path::Path;
+//! Keep the expandable README gallery and real egui capture files in sync.
+use std::{collections::HashSet, fs::File, io::BufReader, path::Path};
 
 #[test]
 fn readme_all_screenshots_gallery_contains_every_capture() {
@@ -28,5 +28,42 @@ fn readme_all_screenshots_gallery_contains_every_capture() {
             gallery.contains(&clickable_preview),
             "{path} must have a clickable preview inside All screenshots"
         );
+        // Historical images vary with the live /proc workload, so exact
+        // pixel hashes would be unstable. Check every committed raster is a
+        // decodable, non-blank screenshot at its documented capture size.
+        let decoder = png::Decoder::new(BufReader::new(File::open(root.join(&path)).unwrap()));
+        let mut reader = decoder.read_info().expect("valid PNG metadata");
+        let info = reader.info();
+        let expected = if path.contains("diagnostic-studio-compact") {
+            (720, 800)
+        } else if path.contains("taskotto-win98-") {
+            (650, 450)
+        } else {
+            (1280, 800)
+        };
+        assert_eq!(
+            (info.width, info.height),
+            expected,
+            "wrong capture size: {path}"
+        );
+        let mut buf = vec![0; reader.output_buffer_size().unwrap()];
+        let image = reader
+            .next_frame(&mut buf)
+            .expect("decodable screenshot PNG");
+        let pixels = &buf[..image.buffer_size()];
+        assert_eq!(
+            image.color_type,
+            png::ColorType::Rgba,
+            "expected RGBA: {path}"
+        );
+        let stride = ((pixels.len() / 4) / 257).max(1);
+        let variety = pixels
+            .as_chunks::<4>()
+            .0
+            .iter()
+            .step_by(stride)
+            .map(|pixel| [pixel[0], pixel[1], pixel[2]])
+            .collect::<HashSet<_>>();
+        assert!(variety.len() >= 2, "screenshot appears blank: {path}");
     }
 }

@@ -2602,6 +2602,41 @@ mod tests {
             }
         }
 
+        // Keyboard Ctrl+F must focus a genuine process search field on both
+        // authored toolbars and lean AI layouts without a toolbar widget.
+        for with_toolbar in [true, false] {
+            let mut pack = generated.clone();
+            if !with_toolbar {
+                let layout = pack.layout.as_mut().unwrap();
+                for page in &mut layout.pages {
+                    page.widgets
+                        .retain(|widget| !matches!(widget, crate::layout::Widget::Toolbar { .. }));
+                    page.compact_widgets
+                        .retain(|widget| !matches!(widget, crate::layout::Widget::Toolbar { .. }));
+                }
+            }
+            pack.apply(&mut app.settings);
+            app.focus_search = true;
+            ctx.data_mut(|data| {
+                data.insert_temp(egui::Id::new("taskotto-declarative-screen"), 0_usize)
+            });
+            let _ = ctx.run(
+                egui::RawInput {
+                    screen_rect: Some(egui::Rect::from_min_size(
+                        egui::Pos2::ZERO,
+                        Vec2::new(1280.0, 800.0),
+                    )),
+                    ..Default::default()
+                },
+                |ctx| app.draw_contents(ctx),
+            );
+            assert!(!app.focus_search, "Ctrl+F ignored in generated layout");
+            assert!(
+                ctx.memory(|memory| memory.focused().is_some()),
+                "Ctrl+F did not focus a text input with_toolbar={with_toolbar}"
+            );
+        }
+
         // Secondary reports, performance metric tiles and the Windows 7
         // properties sheet should work with custom RicePack component colors.
         app.settings.components = dark_component_tokens();

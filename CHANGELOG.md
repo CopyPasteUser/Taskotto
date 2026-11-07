@@ -2,6 +2,12 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.33] — 2026-11-07
+
+- Fixed `Ctrl+F` in declarative TOML screens: generated toolbars now open and focus the actual process search; packs without any search toolbar get a keyboard-opened, dismissible fallback field. Closing a search also clears hidden filters instead of leaving an invisible query applied.
+- RicePack validation now diagnoses missing, malformed, future and legacy `format_version` before parsing unsupported new widget shapes. The CLI reports verified page/widget/compact capabilities after `--check-ricepack`, explicitly without unsafe permissions or unrequested automatic migration.
+- Added headless keyboard-focus regressions for generated screens with and without search toolbars, and tests that decode **all 50** bundled PNG screenshots, verify capture sizes and reject blank/corrupt images. Full native screen-reader, keyboard and display-server acceptance is still pending.
+
 ## [1.0.0-rc.32] — 2026-11-07
 
 - Added a functional, session-only **Screen layout designer** in Preferences. Users can start with a safe default, edit up to four pages, name and reorder widgets, choose verified metric/plot/gauge bindings and select predefined status, toolbar and process columns. The seven predefined widget templates need no scripting or compiling.

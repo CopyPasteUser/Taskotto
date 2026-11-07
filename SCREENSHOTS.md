@@ -14,6 +14,10 @@ the sparse CI environment has an actionable row to show. There are no hand-drawn
 components, synthetic process entries or proprietary OS graphics.
 
 The renderer is **headless and test-only** (the `png` crate is a dev-dependency).
+The automated gallery regression test decodes every committed capture, checks
+its dimensions and rejects blank/corrupt PNGs. Real Linux samples differ by
+machine and time, so pixel-exact screenshot hashes are intentionally not
+claimed as stable visual regression evidence.
 It is not a native GPU/desktop screenshot: there is no X11/Wayland window frame,
 and software antialiasing may differ slightly from the production renderer.
 The rc.13 captures show the app content **without** any extra XP/Seven/Ten
