@@ -1,8 +1,14 @@
-# Taskotto 1.0.0-rc.33 — release candidate
+# Taskotto 1.0.0-rc.34 — release candidate
 
 **Date:** 2026-11-07 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
 Rust-only Linux process manager and system monitor. This is a **prerelease**, not a stable 1.0 certification.
+
+## Changes since rc.33
+
+- Added observed Linux process-tree totals to generic Details, XP Properties and macOS Info: unique PID count, summed per-process CPU and summed RSS, using a single snapshot, safe start-tick matching and cycle guards.
+- The UI explains the exact scope: only observed descendants; RSS is not unique physical memory and can overlap because of shared pages. This is the first read-only P3 step, not completion of P3's future PSS-aware accounting or privilege-sensitive actions.
+- Added duplicate/cycle/stale PID and overflow tests; refreshed historical Details/Info captures and roadmap/QA documentation.
 
 ## Changes since rc.32
 

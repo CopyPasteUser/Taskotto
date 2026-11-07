@@ -130,6 +130,9 @@ uses the existing non-overwriting v1 RicePack writer.
 Generated process screens preserve `Ctrl+F` keyboard focus even when a safe
 custom toolbar was omitted. Pack compatibility is diagnosed explicitly via
 its versioned schema; incompatible variants are never silently converted.
+The process inspector can display observed descendant PID totals from a
+single snapshot, but labels summed RSS and its shared-page overlap rather
+than claiming deduplicated physical RAM or full-system process visibility.
 
 The interface is live and honest: charts use measured bounded history;
 labels distinguish system-wide traffic from per-process information. Motion

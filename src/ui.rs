@@ -1157,6 +1157,21 @@ impl TaskottoApp {
                     ui.end_row();
                 }
             });
+        if let Some(totals) = self
+            .snapshot
+            .as_ref()
+            .and_then(|snapshot| snapshot.tree_summary(process.pid, process.start_ticks))
+        {
+            ui.add_space(13.0);
+            ui.label(RichText::new("OBSERVED PROCESS TREE").strong());
+            ui.label(format!(
+                "{} observed processes · combined CPU {:.1}% · sum of RSS {}",
+                totals.process_count,
+                totals.cpu_percent,
+                format::bytes(totals.summed_rss_bytes),
+            ));
+            ui.label(RichText::new("Includes the selected PID and visible descendants only. RSS may count shared pages more than once; this is not unique physical memory.").small().weak());
+        }
         ui.add_space(18.0);
         ui.label(RichText::new("PROCESS ACTIONS").strong());
         ui.label(

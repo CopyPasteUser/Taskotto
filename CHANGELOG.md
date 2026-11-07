@@ -2,6 +2,12 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.34] — 2026-11-07
+
+- Started P3 read-only process tree aggregation: for any selected process, a single live Linux snapshot now yields the number of **distinct observed PIDs** in the descendant tree, their summed per-process CPU percentages, and their summed resident RSS. The traversal guards cycles, duplicate PID entries, stale root start ticks and byte-count overflow.
+- Added the observed-tree summary to the standalone process Details view, XP Luna properties and macOS-style Info. All three explicitly explain that totals include only visible processes and **summed RSS may count shared memory more than once**, so it is not unique physical usage or proportional set size (PSS).
+- Added deterministic malformed-tree/PID-reuse tests and updated native acceptance checks. P3 process priority/affinity safety, PSS-aware shared-memory accounting, app/window grouping and follow/history remain open.
+
 ## [1.0.0-rc.33] — 2026-11-07
 
 - Fixed `Ctrl+F` in declarative TOML screens: generated toolbars now open and focus the actual process search; packs without any search toolbar get a keyboard-opened, dismissible fallback field. Closing a search also clears hidden filters instead of leaving an invisible query applied.

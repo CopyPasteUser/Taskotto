@@ -1,7 +1,7 @@
 //! Unprivileged, on-demand Linux /proc sampler. No daemon and no shell commands.
 use serde::Serialize;
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     fs, io,
     path::Path,
     time::{Duration, Instant},
@@ -65,6 +65,60 @@ pub struct Snapshot {
     pub uptime_seconds: f64,
     pub processes: Vec<Process>,
     pub logical_cpus: usize,
+}
+
+/// Process-inclusive descendant totals from one observed /proc sample.
+/// Each PID contributes once even if malformed/cyclic ancestry is presented.
+/// RSS is **summed**, not unique physical memory: shared pages can overlap.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct TreeSummary {
+    pub process_count: usize,
+    pub cpu_percent: f64,
+    pub summed_rss_bytes: u64,
+}
+
+impl Snapshot {
+    pub fn tree_summary(&self, root_pid: i32, root_start_ticks: u64) -> Option<TreeSummary> {
+        let processes = self
+            .processes
+            .iter()
+            .map(|process| (process.pid, process))
+            .collect::<HashMap<_, _>>();
+        if processes.get(&root_pid)?.start_ticks != root_start_ticks {
+            return None;
+        }
+        let mut children: HashMap<i32, Vec<i32>> = HashMap::new();
+        for process in &self.processes {
+            if process.pid != process.parent_pid {
+                children
+                    .entry(process.parent_pid)
+                    .or_default()
+                    .push(process.pid);
+            }
+        }
+        let mut stack = vec![root_pid];
+        let mut visited = HashSet::new();
+        let mut cpu_percent = 0.0_f64;
+        let mut summed_rss_bytes = 0_u64;
+        while let Some(pid) = stack.pop() {
+            if !visited.insert(pid) {
+                continue;
+            }
+            let Some(process) = processes.get(&pid) else {
+                continue;
+            };
+            cpu_percent += f64::from(process.cpu_percent.max(0.0));
+            summed_rss_bytes = summed_rss_bytes.saturating_add(process.resident_bytes);
+            if let Some(offspring) = children.get(&pid) {
+                stack.extend(offspring.iter().copied());
+            }
+        }
+        Some(TreeSummary {
+            process_count: visited.len(),
+            cpu_percent,
+            summed_rss_bytes,
+        })
+    }
 }
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -516,5 +570,43 @@ mod tests {
                 .iter()
                 .any(|p| p.pid == std::process::id() as i32)
         );
+    }
+
+    #[test]
+    fn descendant_totals_count_each_snapshot_pid_once_and_reject_stale_roots() {
+        let proc = |pid, parent_pid, start_ticks, cpu_percent, resident_bytes| Process {
+            pid,
+            parent_pid,
+            start_ticks,
+            cpu_percent,
+            resident_bytes,
+            ..Process::default()
+        };
+        let snapshot = Snapshot {
+            cpu_percent: 20.0,
+            cores_percent: vec![],
+            memory: Memory::default(),
+            rates: Rates::default(),
+            uptime_seconds: 1.0,
+            processes: vec![
+                proc(10, 2, 7, 12.0, 100),
+                proc(11, 10, 8, 2.0, 200),
+                proc(12, 10, 9, 3.0, u64::MAX),
+                proc(13, 11, 10, 1.0, 300),
+                proc(14, 99, 11, 80.0, 500),
+                proc(11, 10, 8, 2.0, 200),
+            ],
+            logical_cpus: 2,
+        };
+        let summary = snapshot.tree_summary(10, 7).unwrap();
+        assert_eq!(summary.process_count, 4);
+        assert_eq!(summary.cpu_percent, 18.0);
+        assert_eq!(summary.summed_rss_bytes, u64::MAX); // saturating
+        assert_eq!(snapshot.tree_summary(10, 6), None); // PID reuse
+        assert_eq!(snapshot.tree_summary(99, 1), None); // missing root
+        assert_eq!(snapshot.tree_summary(14, 11).unwrap().process_count, 1);
+        let mut cycle = snapshot;
+        cycle.processes[0].parent_pid = 13;
+        assert_eq!(cycle.tree_summary(10, 7).unwrap().process_count, 4);
     }
 }
