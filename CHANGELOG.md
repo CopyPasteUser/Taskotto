@@ -2,6 +2,12 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.55] — 2026-11-07
+
+- Added three strictly typed RicePack v1 time-series comparisons: CPU versus RAM on one 0–100% scale, and RX/TX or disk read/write on one dynamically chosen bytes/s scale. Existing single-series plots and the stable pack schema remain compatible; missing samples are not synthesized. The custom screen shows a readable legend and its shared y-axis range without adding a polling thread.
+- Added a valid Comparison Studio pack with responsive fallback, headless egui screenshot and strict round-trip/unit tests. Extended the Windows 10 App history and Windows 10/XP process-owner panels to honor optional table/hover/border RicePack colors with legible foreground while keeping the original era-specific fallback.
+- Native comparison, live color/contrast and resource-usage acceptance on Mint/X11, KDE/Wayland and RiceBowl/labwc remain open. Driver-specific GPU telemetry and privileged scheduling controls remain separate post-foundation tracks, not silently counted as stable release gates.
+
 ## [1.0.0-rc.54] — 2026-11-07
 
 - Added explicit two-snapshot cgroup CPU usage and block I/O rate comparison on re-inspection of the same selected process, using monotonic actual elapsed time, cgroupfs inode and membership path identity. No continuous sampler, service, root permissions or extra background task is introduced.

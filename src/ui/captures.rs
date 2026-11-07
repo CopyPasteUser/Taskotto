@@ -269,6 +269,11 @@ fn generate_headless_ui_screenshots() {
         ),
         (
             Theme::System,
+            Page::Processes,
+            "taskotto-comparison-studio.png",
+        ),
+        (
+            Theme::System,
             Page::Details,
             "taskotto-system-process-follow.png",
         ),
@@ -345,6 +350,13 @@ fn generate_headless_ui_screenshots() {
                 "../../examples/ricepacks/diagnostic-studio.toml"
             ))
             .expect("checked-in Diagnostic Studio RicePack must remain valid");
+            pack.apply(&mut settings);
+        }
+        if file.contains("comparison-studio") {
+            let pack = crate::ricepack::RicePack::from_toml(include_str!(
+                "../../examples/ricepacks/comparison-studio.toml"
+            ))
+            .expect("checked-in Comparison Studio RicePack must remain valid");
             pack.apply(&mut settings);
         }
         apply_theme(&ctx, &settings);

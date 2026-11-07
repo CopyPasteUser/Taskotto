@@ -1,0 +1,69 @@
+format_version = 1
+name = "Comparison Studio"
+base_theme = "system"
+
+[appearance]
+accent = "#64D6BD"
+surface = "#101A29"
+text = "#EAF8F4"
+navigation = "top-tabs"
+chart_scale = 0.8
+
+[components]
+control = "#243B50"
+hover = "#36586B"
+border = "#497F83"
+table = "#192C3D"
+selection = "#66DCCA"
+
+[layout]
+compact_below = 720
+
+[[layout.pages]]
+id = "compare"
+title = "Live comparison"
+
+[[layout.pages.widgets]]
+kind = "heading"
+text = "Two signals, one honest scale"
+
+[[layout.pages.widgets]]
+kind = "plot"
+label = "CPU load and RAM used · percent"
+binding = "cpu-memory"
+
+[[layout.pages.widgets]]
+kind = "plot"
+label = "Network receive / send · bytes per second"
+binding = "network-traffic"
+
+[[layout.pages.widgets]]
+kind = "plot"
+label = "Disk read / write · bytes per second"
+binding = "disk-traffic"
+
+[[layout.pages.widgets]]
+kind = "status-strip"
+bindings = ["cpu-percent", "memory-percent", "network-received", "network-sent"]
+
+[[layout.pages.compact_widgets]]
+kind = "plot"
+label = "CPU and memory"
+binding = "cpu-memory"
+
+[[layout.pages.compact_widgets]]
+kind = "plot"
+label = "Network traffic"
+binding = "network-traffic"
+
+[[layout.pages]]
+id = "processes"
+title = "Processes"
+
+[[layout.pages.widgets]]
+kind = "toolbar"
+actions = ["refresh", "focus-search", "end-process"]
+
+[[layout.pages.widgets]]
+kind = "process-list"
+columns = ["name", "cpu", "memory", "pid"]

@@ -1,6 +1,7 @@
 //! Windows 10-style management tabs backed by Linux information. None of
 //! these views claims to expose Windows APIs or historical Windows counters.
 use super::*;
+use crate::theme::ComponentPaint;
 use std::{
     collections::HashSet,
     env, fs,
@@ -34,6 +35,7 @@ pub(in crate::ui) struct SystemPages {
 }
 
 pub(super) fn app_history(app: &mut TaskottoApp, ui: &mut egui::Ui) {
+    let paint = ComponentPaint::from_settings(&app.settings);
     ui.heading(RichText::new("App history").size(24.0));
     ui.label(
         RichText::new(
@@ -77,16 +79,23 @@ pub(super) fn app_history(app: &mut TaskottoApp, ui: &mut egui::Ui) {
                 ui.horizontal(|ui| {
                     let (rect, response) =
                         ui.allocate_exact_size(egui::vec2(270.0, 24.0), Sense::click());
-                    if response.hovered() {
-                        ui.painter()
-                            .rect_filled(rect, 0.0, Color32::from_rgb(226, 241, 252));
-                    }
+                    let base = Color32::WHITE;
+                    let row_fill = if response.hovered() {
+                        paint.hover(Color32::from_rgb(226, 241, 252))
+                    } else {
+                        paint.table(base)
+                    };
+                    ui.painter().rect_filled(rect, 0.0, row_fill);
                     ui.painter().with_clip_rect(rect.shrink(3.0)).text(
                         rect.left_center() + egui::vec2(9.0, 0.0),
                         egui::Align2::LEFT_CENTER,
                         &p.name,
                         egui::FontId::proportional(13.0),
-                        Color32::from_rgb(35, 35, 35),
+                        if paint.table.is_some() || (response.hovered() && paint.hover.is_some()) {
+                            crate::theme::readable_text(row_fill)
+                        } else {
+                            Color32::from_rgb(35, 35, 35)
+                        },
                     );
                     if response.on_hover_text(&p.command).clicked() {
                         app.selected = Some((p.pid, p.start_ticks));

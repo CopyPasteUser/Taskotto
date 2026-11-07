@@ -289,6 +289,9 @@ fn widget_controls(
                             (Plot::NetworkSent, "Network send"),
                             (Plot::DiskRead, "Disk read"),
                             (Plot::DiskWrite, "Disk write"),
+                            (Plot::CpuMemory, "CPU / RAM · %"),
+                            (Plot::NetworkTraffic, "Network receive / send · B/s"),
+                            (Plot::DiskTraffic, "Disk read / write · B/s"),
                         ] {
                             ui.selectable_value(binding, value, name);
                         }

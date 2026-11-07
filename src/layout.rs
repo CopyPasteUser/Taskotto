@@ -104,6 +104,12 @@ pub enum Plot {
     NetworkSent,
     DiskRead,
     DiskWrite,
+    /// Two observations on a single percentage axis (0–100%).
+    CpuMemory,
+    /// Both directions share one dynamically scaled bytes/second axis.
+    NetworkTraffic,
+    /// Both directions share one dynamically scaled bytes/second axis.
+    DiskTraffic,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -226,6 +232,31 @@ fn valid_caption(value: &str, max: usize, field: &str) -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn comparison_plot_bindings_are_data_only_and_roundtrip() {
+        let pack = crate::ricepack::RicePack::from_toml(include_str!(
+            "../examples/ricepacks/comparison-studio.toml"
+        ))
+        .expect("comparison example is a valid v1 RicePack");
+        let layout = pack.layout.as_ref().unwrap();
+        assert_eq!(layout.pages.len(), 2);
+        assert_eq!(layout.pages[0].compact_widgets.len(), 2);
+        for (idx, expected) in [Plot::CpuMemory, Plot::NetworkTraffic, Plot::DiskTraffic]
+            .into_iter()
+            .enumerate()
+        {
+            assert!(
+                matches!(&layout.pages[0].widgets[idx + 1], Widget::Plot { binding, .. } if *binding == expected)
+            );
+        }
+        let encoded = toml::to_string(&pack).unwrap();
+        assert_eq!(
+            crate::ricepack::RicePack::from_toml(&encoded).unwrap(),
+            pack
+        );
+        assert!(serde_json::from_str::<Plot>("\"arbitrary-process-network\"").is_err());
+    }
 
     #[test]
     fn strict_bounds_and_named_metrics_block_unsafe_layouts() {

@@ -1,4 +1,10 @@
-# Taskotto 1.0.0-rc.54 — release candidate
+# Taskotto 1.0.0-rc.55 — release candidate
+
+## RC55 — Comparable trends and historical palette consistency
+
+- Data-only v1 RicePacks and the native Screen layout designer now support three additional paired history plots. CPU/RAM share a 0–100% y-axis; network receive/send and disk read/write share one actual observed bytes-per-second axis. Each pair has a visible legend and scale, uses the already bounded session history, and requires no new background polling or permission.
+- Bundled Comparison Studio has a responsive compact alternative and existing safe process tools; the new headless screenshot is genuine Taskotto egui output with live Linux observations. Windows 10 App history and XP/Windows 10 process-owner surfaces also consume validated optional table/hover/border colors while preserving original fallbacks.
+- v1 RicePack schema remains backwards-compatible and executable content remains impossible. Tests verify new bindings, strict validation, round trips and chart scaling. **Not stable 1.0:** all native X11/Wayland/labwc display, accessibility, lifetime, driver, installation and GUI resource-use gates still require measured acceptance on the user's devices.
 
 ## RC54 — Re-inspect to compare cgroup rates
 
