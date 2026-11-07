@@ -259,6 +259,13 @@ fn tools_menu(app: &mut TaskottoApp, ui: &mut egui::Ui) {
         app.save_preferences(ui.ctx());
     }
     ui.menu_button("Update interval", |ui| {
+        if app.settings.low_overhead {
+            ui.label(
+                RichText::new("Low-overhead active: minimum 3 s actual interval")
+                    .small()
+                    .weak(),
+            );
+        }
         for (ms, label) in [
             (500, "Fast · 0.5 s"),
             (1_500, "Normal · 1.5 s"),

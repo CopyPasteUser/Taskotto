@@ -62,6 +62,13 @@ pub(super) fn menu_bar(app: &mut TaskottoApp, ctx: &egui::Context) {
                         app.save_preferences(ctx);
                     }
                     ui.menu_button("Update speed", |ui| {
+                        if app.settings.low_overhead {
+                            ui.label(
+                                RichText::new("Low-overhead active: minimum 3 s actual interval")
+                                    .small()
+                                    .weak(),
+                            );
+                        }
                         for (ms, label) in [
                             (500, "High (0.5 s)"),
                             (1_500, "Normal (1.5 s)"),

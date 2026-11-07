@@ -256,7 +256,9 @@ permission/ownership rules.
   modern desktops before optimizing.
 - [ ] Profile and optimize only measured hot paths (sampling, rendering,
   allocations and polling frequency).
-- [ ] Optional reduced-animation/low-overhead profile, preserving functions.
+- [x] RC51: optional reduced-animation/low-overhead profile, preserving all
+  functionality and the preferred sampling interval; opt-in minimum 3-second
+  worker cycle, no new daemon. Measured impact still requires physical-device QA.
 - [ ] Reproducible packages, integrity metadata and installation recovery.
 
 **Gate:** benchmarks accompany optimization claims; release builds remain

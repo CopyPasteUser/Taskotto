@@ -91,6 +91,13 @@ pub(super) fn topbar(app: &mut TaskottoApp, ctx: &egui::Context) {
                         app.save_preferences(ctx);
                     }
                     ui.menu_button("Update Frequency", |ui| {
+                        if app.settings.low_overhead {
+                            ui.label(
+                                RichText::new("Low-overhead active: minimum 3 s actual interval")
+                                    .small()
+                                    .weak(),
+                            );
+                        }
                         for (interval, name) in [
                             (500, "Very often"),
                             (1500, "Often"),
