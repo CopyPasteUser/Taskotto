@@ -1,7 +1,7 @@
 //! Explicit, bounded exports of the current GUI session's sampler-visible
-//! system metrics; procfs/namespace visibility can vary in containers.
-//! samples. No PIDs, process names, commands, retained files or worker daemon.
-use super::History;
+//! system metrics and opt-in process-follow data. Process export includes PID
+//! identity by explicit choice; neither mode retains files automatically.
+use super::{History, ProcessFollow};
 use serde::Serialize;
 use std::{
     fmt::Write as _,
@@ -33,6 +33,24 @@ struct Row {
     psi_memory_full_avg10_percent: Option<f32>,
     psi_io_some_avg10_percent: Option<f32>,
     psi_io_full_avg10_percent: Option<f32>,
+}
+
+#[derive(Serialize)]
+struct ProcessExport {
+    format_version: u8,
+    scope: &'static str,
+    pid: i32,
+    start_ticks: u64,
+    nominal_interval_ms: u64,
+    sample_count: usize,
+    samples: Vec<ProcessRow>,
+}
+
+#[derive(Serialize)]
+struct ProcessRow {
+    timestamp_unix_ms: Option<u64>,
+    cpu_percent: Option<f32>,
+    resident_mib: Option<f32>,
 }
 
 fn valid(value: f32) -> Option<f32> {
@@ -151,6 +169,92 @@ pub(super) fn write_new(
             ));
         }
     };
+    write_private_new(path, &contents)?;
+    Ok(export.sample_count)
+}
+
+fn process_rows(follow: &ProcessFollow, interval_ms: u64) -> io::Result<ProcessExport> {
+    let count = follow.cpu.len();
+    if count == 0 {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "Followed process has no samples yet",
+        ));
+    }
+    if count > ProcessFollow::LIMIT
+        || count != follow.rss_mib.len()
+        || count != follow.sampled_at_unix_ms.len()
+    {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "Process-follow history is not aligned",
+        ));
+    }
+    let samples = (0..count)
+        .map(|index| ProcessRow {
+            timestamp_unix_ms: follow.sampled_at_unix_ms[index],
+            cpu_percent: valid(follow.cpu[index]),
+            resident_mib: valid(follow.rss_mib[index]),
+        })
+        .collect();
+    Ok(ProcessExport {
+        format_version: 1,
+        scope: "linux-observed-process",
+        pid: follow.pid,
+        start_ticks: follow.start_ticks,
+        nominal_interval_ms: interval_ms,
+        sample_count: count,
+        samples,
+    })
+}
+
+pub(super) fn write_process_new(
+    follow: &ProcessFollow,
+    path: &Path,
+    interval_ms: u64,
+) -> io::Result<usize> {
+    if !path.is_absolute() {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "Enter an absolute destination path",
+        ));
+    }
+    let export = process_rows(follow, interval_ms)?;
+    let contents = match path.extension().and_then(|ext| ext.to_str()) {
+        Some("json") => serde_json::to_vec_pretty(&export).map_err(io::Error::other)?,
+        Some("csv") => {
+            let mut csv = String::from(
+                "format_version,scope,pid,start_ticks,nominal_interval_ms,timestamp_unix_ms,cpu_percent,resident_mib\n",
+            );
+            for sample in &export.samples {
+                writeln!(
+                    &mut csv,
+                    "{},{},{},{},{},{},{},{}",
+                    export.format_version,
+                    export.scope,
+                    export.pid,
+                    export.start_ticks,
+                    export.nominal_interval_ms,
+                    cell(sample.timestamp_unix_ms),
+                    cell(sample.cpu_percent),
+                    cell(sample.resident_mib)
+                )
+                .expect("writing to a String cannot fail");
+            }
+            csv.into_bytes()
+        }
+        _ => {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "Destination must end in .csv or .json",
+            ));
+        }
+    };
+    write_private_new(path, &contents)?;
+    Ok(export.sample_count)
+}
+
+fn write_private_new(path: &Path, contents: &[u8]) -> io::Result<()> {
     let mut options = OpenOptions::new();
     options.write(true).create_new(true);
     #[cfg(unix)]
@@ -159,11 +263,11 @@ pub(super) fn write_new(
         options.mode(0o600);
     }
     let mut file = options.open(path)?;
-    if let Err(error) = file.write_all(&contents).and_then(|()| file.sync_all()) {
+    if let Err(error) = file.write_all(contents).and_then(|()| file.sync_all()) {
         let _ = std::fs::remove_file(path);
         return Err(error);
     }
-    Ok(export.sample_count)
+    Ok(())
 }
 
 #[cfg(test)]
@@ -233,5 +337,51 @@ mod tests {
         std::fs::remove_file(&path).unwrap();
         assert!(write_new(&test_history(), Path::new("relative.csv"), 1000).is_err());
         assert!(write_new(&test_history(), Path::new("/tmp/unsupported.txt"), 1000).is_err());
+    }
+
+    #[test]
+    fn process_follow_export_preserves_identity_and_gaps_without_commands() {
+        let mut follow = ProcessFollow::new(&crate::monitor::Process {
+            pid: 1234,
+            start_ticks: 5678,
+            name: "secret-command".into(),
+            ..Default::default()
+        });
+        follow.cpu = VecDeque::from([5.0, 6.0]);
+        follow.rss_mib = VecDeque::from([2.0, 3.0]);
+        follow.sampled_at_unix_ms = VecDeque::from([Some(1_700_000_000_000), None]);
+        let export = process_rows(&follow, 1500).unwrap();
+        assert_eq!(export.sample_count, 2);
+        let json = serde_json::to_string(&export).unwrap();
+        assert!(json.contains("\"pid\":1234"));
+        assert!(json.contains("\"start_ticks\":5678"));
+        assert!(json.contains("\"resident_mib\":3.0"));
+        assert!(!json.contains("secret-command"));
+        assert!(json.contains("\"timestamp_unix_ms\":null"));
+        let path = std::env::temp_dir().join(format!(
+            "taskotto-follow-export-{}-{}.csv",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        assert_eq!(write_process_new(&follow, &path, 1500).unwrap(), 2);
+        assert!(write_process_new(&follow, &path, 1500).is_err());
+        let csv = std::fs::read_to_string(&path).unwrap();
+        assert_eq!(csv.lines().count(), 3);
+        assert!(csv.contains("linux-observed-process,1234,5678,1500"));
+        assert!(!csv.contains("secret-command"));
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            assert_eq!(
+                std::fs::metadata(&path).unwrap().permissions().mode() & 0o777,
+                0o600
+            );
+        }
+        std::fs::remove_file(&path).unwrap();
+        follow.rss_mib.pop_back();
+        assert!(process_rows(&follow, 1500).is_err());
     }
 }
