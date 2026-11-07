@@ -411,6 +411,11 @@ impl TaskottoApp {
         } else {
             Page::Processes
         };
+        let startup_source = settings
+            .startup_ricepack
+            .as_ref()
+            .map(|path| path.display().to_string())
+            .unwrap_or_default();
         Self {
             worker: Worker::start(settings.effective_refresh_ms(), context.egui_ctx.clone()),
             settings,
@@ -434,7 +439,10 @@ impl TaskottoApp {
             new_task: NewTaskDialog::default(),
             mac_info_open: false,
             ricepack_watcher: None,
-            ricepack_library: RicePackLibraryUi::default(),
+            ricepack_library: RicePackLibraryUi {
+                source_path: startup_source,
+                ..RicePackLibraryUi::default()
+            },
         }
     }
 
@@ -570,6 +578,9 @@ impl TaskottoApp {
         settings.show_kernel_threads = current.show_kernel_threads;
         settings.show_io_column = current.show_io_column;
         settings.show_user_column = current.show_user_column;
+        settings
+            .startup_ricepack
+            .clone_from(&current.startup_ricepack);
         self.settings = settings;
         self.ricepack_watcher = previous.watcher;
         self.sync_page_for_theme();
@@ -651,6 +662,39 @@ impl TaskottoApp {
                     .hint_text("/absolute/path/to/design.toml"),
             );
         });
+        ui.horizontal_wrapped(|ui| {
+            if ui.button("Use this RicePack at startup").clicked() {
+                let path = PathBuf::from(self.ricepack_library.source_path.trim());
+                if !crate::config::valid_startup_ricepack_path(&path) {
+                    self.notification =
+                        Some("Startup RicePack must be an absolute .toml file path".into());
+                } else {
+                    match RicePack::load(&path) {
+                        Ok(_) => {
+                            self.settings.startup_ricepack = Some(path);
+                            self.save_preferences(ui.ctx());
+                        }
+                        Err(error) => {
+                            self.notification = Some(format!("Cannot pin RicePack: {error}"))
+                        }
+                    }
+                }
+            }
+            if self.settings.startup_ricepack.is_some()
+                && ui.button("Clear startup RicePack").clicked()
+            {
+                self.settings.startup_ricepack = None;
+                self.save_preferences(ui.ctx());
+            }
+        });
+        if let Some(path) = &self.settings.startup_ricepack {
+            ui.label(
+                RichText::new(format!("Startup design: {}", path.display()))
+                    .small()
+                    .weak(),
+            );
+        }
+        ui.label(RichText::new("Opt-in only. A missing or broken saved design falls back to normal Taskotto on next start. CLI and RiceBowl RicePack paths take precedence.").small().weak());
         ui.horizontal_wrapped(|ui| {
             if ui.button("Preview design").clicked() {
                 self.preview_ricepack(ui.ctx());
@@ -3414,9 +3458,14 @@ mod tests {
         assert!(app.ricepack_watcher.is_none());
         assert!(app.ricepack_library.preview.is_some());
         app.settings.refresh_ms = 5_000;
+        app.settings.startup_ricepack = Some(path.clone());
         app.restore_ricepack_preview(&ctx);
         assert_eq!(app.settings.theme, Theme::Windows10);
         assert_eq!(app.settings.refresh_ms, 5_000);
+        assert_eq!(
+            app.settings.startup_ricepack.as_deref(),
+            Some(path.as_path())
+        );
         assert_eq!(app.ricepack_watcher.as_ref().unwrap().path, path);
 
         app.preview_ricepack(&ctx);

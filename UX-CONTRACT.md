@@ -38,6 +38,7 @@ server pagination exists; do not invent equivalents to fill a template.
 | Inspect | Select a process/Details | None | Show actual process information | Show vanished or inaccessible process clearly |
 | Signal | Chosen process + action | Explicit confirmation | Report resulting action | PID reuse, permission, no longer running: reject safely |
 | RicePack preview | Library/CLI pack selection | Validate up front | Session-only appearance | Invalid pack retains last good appearance |
+| Pinned personal dashboard | Choose a valid file → Use at startup | Validate absolute TOML and save user-only path | Next GUI run applies the transient layout; explicit launch overrides win | Missing saved file opens regular rice with actionable warning; clear or repair the path |
 | Export design | Explicit path | Write a new file atomically | Re-importable TOML | Never overwrite an existing destination |
 
 ## Stability and verification
