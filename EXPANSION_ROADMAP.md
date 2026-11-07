@@ -82,6 +82,9 @@ Development on later milestones may proceed while user-hardware QA is pending.
     process/performance hero are now palette-aware with contrast-safe text;
     chart plot outlines honor the border token. The original Y2K lens and
     meter artwork stays intentionally distinct when no override is supplied.
+  - [x] RC55: Windows 10 App history text/hover rows and Windows 10/XP owner
+    summary surfaces honor optional table/hover/border colors. Historical
+    graph series colors remain intentional resource identity cues.
   - [ ] Audit remaining intentional artwork, complex per-widget charts and
     secondary controls for hardcoded palette tokens without homogenizing rices.
 
@@ -252,6 +255,10 @@ units, threshold behavior and no false certainty.
     nominal polling interval and measured CPU, RAM, network, disk and PSI;
     absent pressure sources remain null/blank, not zero.
 - [ ] Time-series comparisons without a mandatory always-on daemon.
+  - [x] RC55: RicePack v1 declarative screens can graph real CPU/RAM %,
+    network RX/TX B/s or disk read/write B/s together on a shared scale,
+    using only the existing capped in-memory sampler. The new pack has
+    a compact fallback and normal process actions; native QA remains open.
 
 **Gate:** export/import/retention tests, low-memory history bounds and clear
 permission/ownership rules.

@@ -77,7 +77,12 @@ columns = ["name", "cpu", "memory", "pid"]
   `memory-percent`, `processes`, `uptime`, `network-received`, `network-sent`,
   `disk-read`, `disk-write`.
 - `plot` bindings: `cpu`, `memory`, `network-received`, `network-sent`,
-  `disk-read`, `disk-write` (observed session samples, no invented counters).
+  `disk-read`, `disk-write`, `cpu-memory`, `network-traffic`, `disk-traffic`
+  (observed session samples, no invented counters). The three comparison
+  bindings overlay two independently measured series on **one** y-axis:
+  CPU/RAM both use 0–100%, while network receive/send and disk read/write
+  each share the maximum observed byte-per-second scale. Lines are labeled
+  and no byte rate is compared against a percentage.
 - `gauge` accepts a `label` (1–48) and a percentage `binding` of either
   `cpu-percent` or `memory-percent`. It reads live Linux samples and displays
   an explicit waiting state until data is available.
@@ -97,7 +102,10 @@ All other fields, kinds, bindings, scripts and shell hooks are rejected.
 Generated screens retain keyboard process search via `Ctrl+F`. If a page has
 no search-enabled toolbar, Taskotto opens a temporary focused search control
 instead; dismissing either search clears its filter.
-Try the complete two-tab [Diagnostic Studio](examples/ricepacks/diagnostic-studio.toml):
+Try the complete two-tab [Diagnostic Studio](examples/ricepacks/diagnostic-studio.toml)
+or the live [Comparison Studio](examples/ricepacks/comparison-studio.toml),
+which overlays related history samples and retains an independently usable
+process page plus a compact fallback:
 
 ```toml
 [layout]

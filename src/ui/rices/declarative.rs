@@ -328,16 +328,44 @@ fn fallback_search(app: &mut TaskottoApp, ui: &mut egui::Ui) {
 }
 
 fn plot(app: &TaskottoApp, ui: &mut egui::Ui, binding: Plot, paint: ComponentPaint) {
-    let (series, max, color) = match binding {
-        Plot::Cpu => (&app.history.cpu, 100.0, Color32::from_rgb(45, 169, 115)),
-        Plot::Memory => (&app.history.memory, 100.0, Color32::from_rgb(64, 138, 222)),
-        Plot::NetworkReceived => (&app.history.received, 0.0, Color32::from_rgb(44, 139, 221)),
-        Plot::NetworkSent => (&app.history.sent, 0.0, Color32::from_rgb(229, 147, 64)),
-        Plot::DiskRead => (&app.history.disk_read, 0.0, Color32::from_rgb(44, 139, 221)),
-        Plot::DiskWrite => (
-            &app.history.disk_write,
+    let cpu = Color32::from_rgb(45, 169, 115);
+    let memory = Color32::from_rgb(64, 138, 222);
+    let inbound = Color32::from_rgb(44, 139, 221);
+    let outbound = Color32::from_rgb(229, 147, 64);
+    let (primary, secondary, fixed_max, unit): (_, Option<_>, _, _) = match binding {
+        Plot::Cpu => ((&app.history.cpu, cpu, "CPU"), None, 100.0, "%"),
+        Plot::Memory => ((&app.history.memory, memory, "Memory"), None, 100.0, "%"),
+        Plot::NetworkReceived => (
+            (&app.history.received, inbound, "Receive"),
+            None,
             0.0,
-            Color32::from_rgb(229, 147, 64),
+            "B/s",
+        ),
+        Plot::NetworkSent => ((&app.history.sent, outbound, "Send"), None, 0.0, "B/s"),
+        Plot::DiskRead => ((&app.history.disk_read, inbound, "Read"), None, 0.0, "B/s"),
+        Plot::DiskWrite => (
+            (&app.history.disk_write, outbound, "Write"),
+            None,
+            0.0,
+            "B/s",
+        ),
+        Plot::CpuMemory => (
+            (&app.history.cpu, cpu, "CPU"),
+            Some((&app.history.memory, memory, "RAM")),
+            100.0,
+            "%",
+        ),
+        Plot::NetworkTraffic => (
+            (&app.history.received, inbound, "Receive"),
+            Some((&app.history.sent, outbound, "Send")),
+            0.0,
+            "B/s",
+        ),
+        Plot::DiskTraffic => (
+            (&app.history.disk_read, inbound, "Read"),
+            Some((&app.history.disk_write, outbound, "Write")),
+            0.0,
+            "B/s",
         ),
     };
     let height = 142.0 * app.settings.chart_scale;
@@ -356,12 +384,8 @@ fn plot(app: &TaskottoApp, ui: &mut egui::Ui, binding: Plot, paint: ComponentPai
         ),
         StrokeKind::Inside,
     );
-    let maximum = if max > 0.0 {
-        max
-    } else {
-        series.iter().copied().fold(1.0_f32, f32::max) * 1.2
-    };
-    if series.len() < 2 {
+    let maximum = plot_maximum(primary.0, secondary.map(|line| line.0), fixed_max);
+    if primary.0.len() < 2 && secondary.is_none_or(|line| line.0.len() < 2) {
         ui.painter().text(
             rect.center(),
             Align2::CENTER_CENTER,
@@ -369,11 +393,53 @@ fn plot(app: &TaskottoApp, ui: &mut egui::Ui, binding: Plot, paint: ComponentPai
             FontId::proportional(12.0),
             paint.on_table(ui.visuals().text_color()),
         );
-    } else {
-        ui.painter().add(egui::Shape::line(
-            super::super::chart_points(series, rect.shrink(7.0), maximum),
-            egui::Stroke::new(2.0_f32, color),
-        ));
+    }
+    for (series, color, _) in [Some(primary), secondary].into_iter().flatten() {
+        if series.len() >= 2 {
+            ui.painter().add(egui::Shape::line(
+                super::super::chart_points(series, rect.shrink(7.0), maximum),
+                egui::Stroke::new(2.0_f32, color),
+            ));
+        }
+    }
+    if let Some(second) = secondary {
+        ui.horizontal_wrapped(|ui| {
+            for (_, color, label) in [primary, second] {
+                ui.colored_label(color, label);
+            }
+            ui.label(if unit == "%" {
+                "Common scale: 0–100%".to_owned()
+            } else {
+                format!("Common scale: 0–{}", format::rate(maximum as u64))
+            });
+        });
+    }
+}
+
+fn plot_maximum(first: &VecDeque<f32>, second: Option<&VecDeque<f32>>, fixed_max: f32) -> f32 {
+    if fixed_max > 0.0 {
+        return fixed_max;
+    }
+    first
+        .iter()
+        .chain(second.into_iter().flatten())
+        .copied()
+        .filter(|point| point.is_finite() && *point >= 0.0)
+        .fold(1.0_f32, f32::max)
+        * 1.2
+}
+
+#[cfg(test)]
+mod comparisons_tests {
+    use super::*;
+
+    #[test]
+    fn compare_plots_share_a_scale_and_ignore_invalid_samples() {
+        let received = VecDeque::from([8.0, 16.0, 4.0]);
+        let sent = VecDeque::from([0.0, 40.0]);
+        assert_eq!(plot_maximum(&received, Some(&sent), 0.0), 48.0);
+        assert_eq!(plot_maximum(&received, Some(&sent), 100.0), 100.0);
+        assert_eq!(plot_maximum(&VecDeque::from([f32::NAN]), None, 0.0), 1.2);
     }
 }
 

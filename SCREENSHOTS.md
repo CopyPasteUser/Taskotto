@@ -1,6 +1,6 @@
 # Screenshot provenance and reproduction
 
-[**View all 51 screenshots in the expandable README gallery**](README.md#screenshots).
+[**View all 52 screenshots in the expandable README gallery**](README.md#screenshots).
 The gallery groups every image by rice, including the supplementary pages
 and alternate layouts; click any preview to see its full-resolution PNG.
 
@@ -52,6 +52,7 @@ The command samples real system activity and writes:
 - `assets/screenshots/taskotto-diagnostic-studio-ricepack.png` — original two-tab Diagnostic Studio composed entirely from a validated TOML RicePack. Includes safe refresh/search/termination actions, genuine host CPU, a memory percentage gauge, a live Linux process list and a real-value status strip. Process termination uses the existing PID-safe confirmation path.
 - `assets/screenshots/taskotto-diagnostic-studio-traffic.png` — the second generated tab of the same TOML layout: actual network receive and disk-write rates, history, a live I/O status strip and real Linux threads/PID report; no theme-specific Rust module is needed for this second tab.
 - `assets/screenshots/taskotto-diagnostic-studio-compact.png` — a third capture of the same validated pack at 720×800; its content-area width falls below the pack's typed breakpoint, activating a different compact Overview widget list with a two-column process report. It uses real live samples and the original safe process confirmation path.
+- `assets/screenshots/taskotto-comparison-studio.png` — original validated multi-series v1 RicePack using real sampled Linux CPU/RAM percentages plus bidirectional network and disk histories. Related lines share one correctly labeled percent or bytes-per-second scale; there is no fabricated per-process network attribution. Real X11/Wayland visual acceptance is still required.
 
 ### ChromeOS Task manager (primary task table and supplementary tools)
 
