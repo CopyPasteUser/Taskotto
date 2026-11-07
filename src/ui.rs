@@ -121,6 +121,7 @@ struct History {
 
 struct CgroupInspection {
     target: (i32, u64),
+    previous: Option<Box<crate::monitor::cgroup::CgroupReport>>,
     state: CgroupState,
 }
 
@@ -1960,6 +1961,16 @@ impl TaskottoApp {
             .clicked()
             && let Some(target) = selected
         {
+            let previous = self.history.cgroup_inspection.as_ref().and_then(|inspection| {
+                if inspection.target != target {
+                    return None;
+                }
+                match &inspection.state {
+                    CgroupState::Ready(Ok(report)) => Some(report.clone()),
+                    CgroupState::Ready(Err(_)) => inspection.previous.clone(),
+                    _ => None,
+                }
+            });
             let (tx, rx) = mpsc::channel();
             let ctx = ui.ctx().clone();
             thread::spawn(move || {
@@ -1969,6 +1980,7 @@ impl TaskottoApp {
             });
             self.history.cgroup_inspection = Some(CgroupInspection {
                 target,
+                previous,
                 state: CgroupState::Loading(rx),
             });
         }
@@ -2068,6 +2080,37 @@ impl TaskottoApp {
                             ui.end_row();
                         }
                     });
+                if let Some(earlier) = &inspection.previous {
+                    ui.add_space(8.0);
+                    if let Some(rates) = crate::monitor::cgroup::compare_rates(earlier, report) {
+                        let cpu = rates.cpu_core_percent.map_or_else(
+                            || "Unavailable".to_owned(),
+                            |percent| format!("{percent:.1}% of one logical core"),
+                        );
+                        let bytes_per_second = |value: Option<f64>| {
+                            value.map_or_else(
+                                || "Unavailable".to_owned(),
+                                |value| format!("{:.1} KiB/s", value / 1024.0),
+                            )
+                        };
+                        ui.label(
+                            RichText::new(format!(
+                                "Between two explicit inspections ({:.2}s):",
+                                rates.elapsed_seconds
+                            ))
+                            .strong(),
+                        );
+                        ui.label(format!(
+                            "CPU use: {cpu} · I/O read: {} · I/O write: {}",
+                            bytes_per_second(rates.io_read_bytes_per_second),
+                            bytes_per_second(rates.io_write_bytes_per_second)
+                        ));
+                    } else {
+                        ui.label(RichText::new("Rates unavailable: group identity changed, a counter reset or less than 0.25 s elapsed.").small().weak());
+                    }
+                } else {
+                    ui.label(RichText::new("Re-inspect the same selected process to compare CPU/I/O rates without continuous background polling.").small().weak());
+                }
                 ui.add_space(8.0);
                 ui.collapsing("Parent and immediate child cgroups · one-time snapshot", |ui| {
                     let show_neighbor = |ui: &mut egui::Ui,

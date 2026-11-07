@@ -4,11 +4,15 @@ use super::{PressureMetric, psi::parse_pressure, start_ticks};
 use std::{
     fs,
     path::{Component, Path, PathBuf},
+    time::Instant,
 };
 
 #[derive(Clone, Debug)]
 pub(crate) struct CgroupReport {
     pub path: String,
+    /// Cgroupfs inode disambiguates deletion/recreation at the same path.
+    pub inode: u64,
+    pub collected_at: Instant,
     /// Bounded one-level neighborhood from the same read-only cgroupfs view.
     pub neighborhood: CgroupNeighborhood,
     /// Names inferred strictly from kernel cgroup path segments; no runtime or
@@ -22,6 +26,49 @@ pub(crate) struct CgroupReport {
     pub memory_limit: MemoryLimit,
     pub io_read_bytes: Option<u64>,
     pub io_write_bytes: Option<u64>,
+}
+
+#[derive(Clone, Debug)]
+pub(crate) struct CgroupRateComparison {
+    pub elapsed_seconds: f64,
+    /// CPU time relative to one logical core: >100% is possible.
+    pub cpu_core_percent: Option<f64>,
+    pub io_read_bytes_per_second: Option<f64>,
+    pub io_write_bytes_per_second: Option<f64>,
+}
+
+/// Compare only two explicit inspections of the same kernel cgroup inode.
+/// Counter reset, insufficient elapsed time or a missing source stays unknown.
+pub(crate) fn compare_rates(
+    older: &CgroupReport,
+    newer: &CgroupReport,
+) -> Option<CgroupRateComparison> {
+    if older.path != newer.path || older.inode != newer.inode {
+        return None;
+    }
+    let elapsed = newer
+        .collected_at
+        .checked_duration_since(older.collected_at)?
+        .as_secs_f64();
+    if elapsed < 0.25 {
+        return None;
+    }
+    let cpu_usage = counter_rate(older.cpu_usage_usec, newer.cpu_usage_usec, elapsed);
+    Some(CgroupRateComparison {
+        elapsed_seconds: elapsed,
+        cpu_core_percent: cpu_usage.map(|value| value * 100.0 / 1_000_000.0),
+        io_read_bytes_per_second: counter_rate(older.io_read_bytes, newer.io_read_bytes, elapsed),
+        io_write_bytes_per_second: counter_rate(
+            older.io_write_bytes,
+            newer.io_write_bytes,
+            elapsed,
+        ),
+    })
+}
+
+fn counter_rate(previous: Option<u64>, current: Option<u64>, seconds: f64) -> Option<f64> {
+    let delta = current?.checked_sub(previous?)?;
+    (seconds.is_finite() && seconds >= 0.25).then_some(delta as f64 / seconds)
 }
 
 #[derive(Clone, Debug)]
@@ -96,6 +143,10 @@ fn inspect_under(pid: i32, original_start: u64, root: &Path) -> Result<CgroupRep
     if !canonical_target.starts_with(&canonical_root) {
         return Err("Cgroup path escapes mounted hierarchy".into());
     }
+    use std::os::unix::fs::MetadataExt;
+    let inode = fs::metadata(&canonical_target)
+        .map_err(|err| format!("Cannot identify cgroup inode: {err}"))?
+        .ino();
     let cpu = fs::read_to_string(target.join("cpu.stat")).unwrap_or_default();
     let memory_bytes = read_number(&target.join("memory.current"));
     let memory_limit = match fs::read_to_string(target.join("memory.max")) {
@@ -122,8 +173,17 @@ fn inspect_under(pid: i32, original_start: u64, root: &Path) -> Result<CgroupRep
     if parse_unified_path(&latest_membership).as_deref() != Some(path.as_str()) {
         return Err("Selected process moved to another cgroup during inspection".into());
     }
+    if fs::metadata(&canonical_target)
+        .map_err(|err| format!("Cgroup changed during inspection: {err}"))?
+        .ino()
+        != inode
+    {
+        return Err("Cgroup was replaced during inspection".into());
+    }
     Ok(CgroupReport {
         associations: associations_from_path(&path),
+        inode,
+        collected_at: Instant::now(),
         neighborhood,
         pressure,
         path,
@@ -492,5 +552,51 @@ mod tests {
         let missing = read_neighborhood(&root, &root.join("not-found"));
         assert!(missing.children.is_none());
         fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn cgroup_rates_require_matching_inode_elapsed_time_and_monotonic_counters() {
+        use std::time::Duration;
+        let earlier = CgroupReport {
+            path: "/user.slice/sample.scope".into(),
+            inode: 7,
+            collected_at: Instant::now(),
+            neighborhood: CgroupNeighborhood::default(),
+            associations: Vec::new(),
+            pressure: CgroupPressure::default(),
+            cpu_usage_usec: Some(1_000_000),
+            cpu_throttled_usec: None,
+            cpu_throttled_events: None,
+            memory_bytes: None,
+            memory_limit: MemoryLimit::Unavailable,
+            io_read_bytes: Some(10_000),
+            io_write_bytes: None,
+        };
+        let mut later = earlier.clone();
+        later.collected_at += Duration::from_secs(2);
+        later.cpu_usage_usec = Some(1_400_000);
+        later.io_read_bytes = Some(18_192);
+        let rates = compare_rates(&earlier, &later).unwrap();
+        assert_eq!(rates.elapsed_seconds, 2.0);
+        assert_eq!(rates.cpu_core_percent, Some(20.0));
+        assert_eq!(rates.io_read_bytes_per_second, Some(4_096.0));
+        assert!(rates.io_write_bytes_per_second.is_none());
+        later.io_read_bytes = Some(5_000);
+        assert!(
+            compare_rates(&earlier, &later)
+                .unwrap()
+                .io_read_bytes_per_second
+                .is_none()
+        );
+        later.inode = 8; // path was reused after cgroup deletion
+        assert!(compare_rates(&earlier, &later).is_none());
+        later.inode = 7;
+        later.path = "/user.slice/new.scope".into();
+        assert!(compare_rates(&earlier, &later).is_none());
+        later.path = earlier.path.clone();
+        later.collected_at = earlier.collected_at + Duration::from_millis(100);
+        assert!(compare_rates(&earlier, &later).is_none());
+        assert!(counter_rate(Some(100), Some(90), 2.0).is_none());
+        assert!(counter_rate(Some(100), None, 2.0).is_none());
     }
 }

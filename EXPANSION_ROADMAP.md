@@ -194,6 +194,9 @@ non-AMD machine. No mandatory vendor SDK for the baseline binary.
   - [x] RC53: bounded direct-parent/16-child cgroup v2 neighborhood in the
     on-demand inspector, at most 128 directory entries, explicit truncation
     and separate cumulative CPU/memory values. Not a recursive tree or rate.
+  - [x] RC54: on-demand two-snapshot rate comparison for the same selected PID,
+    cgroupfs inode and hierarchy path; real monotonic CPU and I/O counter
+    deltas, with reset/missing/too-fast samples unavailable. Not a daemon.
   - [ ] Multi-cgroup and nested-hierarchy overview, dynamic group sample
     rates, container host/namespace accounting and native stress QA.
 - [ ] Show user systemd units and optional Podman/Docker associations.

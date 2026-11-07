@@ -1,4 +1,11 @@
-# Taskotto 1.0.0-rc.53 — release candidate
+# Taskotto 1.0.0-rc.54 — release candidate
+
+## RC54 — Re-inspect to compare cgroup rates
+
+- Repeating a selected-process cgroup v2 inspection compares two observed kernel snapshots (CPU used relative to one core; block I/O read/write KiB/s) over their actual monotonic interval. The second reading must belong to the exact same cgroupfs inode and membership path, with the same PID/start identity guarded by the inspector.
+- Counter reset, a disappeared controller, a different/recreated group and less than 250 ms between observations yield an unavailable result, never a misleading rate. No daemon or periodic cgroup sampling was added.
+- Added unit tests for actual units, positive counter deltas, missing counters, reset, inode/path replacement and too-short intervals. Native cgroup workload acceptance is still pending.
+
 
 ## RC53 — Bounded parent/child cgroup context
 
