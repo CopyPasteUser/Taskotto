@@ -156,6 +156,7 @@ mod tests {
             logical_cpus: 1,
             gpus: vec![],
             power: Default::default(),
+            pressure: Default::default(),
         };
         assert!(
             inspect_tree(&snapshot, (400, 322))
@@ -187,6 +188,7 @@ mod tests {
             logical_cpus: 1,
             gpus: vec![],
             power: Default::default(),
+            pressure: Default::default(),
         };
         let result = inspect_tree(&snapshot, (pid, start)).unwrap();
         assert_eq!(result.observed, 1);

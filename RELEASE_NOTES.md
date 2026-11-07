@@ -1,8 +1,14 @@
-# Taskotto 1.0.0-rc.41 — release candidate
+# Taskotto 1.0.0-rc.42 — release candidate
 
 **Date:** 2026-11-07 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
 Rust-only Linux process manager and system monitor. This is a **prerelease**, not a stable 1.0 certification.
+
+## Changes since rc.41
+
+- Began P6 pressure diagnostics with genuine Linux PSI readings from `/proc/pressure/cpu`, `memory` and `io`. The monitor captures CPU SOME, memory SOME/FULL and I/O SOME/FULL stalls as distinct 10s, 60s and 300s percentages plus cumulative stall microseconds.
+- These metrics now appear in System Performance and all rice Preferences, with a compact layout for narrow screens. PSI measures **stalled-task time**, not CPU load, memory occupation or disk activity. System-level CPU FULL is excluded; missing kernels and invalid/NaN/out-of-range readings remain unavailable rather than zero.
+- Added strict parser and best-effort Linux PSI tests. Automated slowdown diagnoses and hardware workload/false-positive acceptance remain future P6 work; Taskotto does not claim a cause from a single pressure reading.
 
 ## Changes since rc.40
 

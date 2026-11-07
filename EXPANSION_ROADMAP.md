@@ -190,6 +190,11 @@ attribution, graceful behavior when cgroups or container APIs are unavailable.
 
 - [ ] Use Linux Pressure Stall Information (CPU, memory, I/O) and actual
   historical samples to identify likely bottlenecks.
+  - [x] RC42: truthful system-level CPU SOME and memory/I/O SOME/FULL PSI,
+    10/60/300 s averages and cumulative stall time, with
+    compact UI and no false utilization or unsupported field defaults.
+  - [ ] Correlate PSI trends with process/cgroup pressure and actual resource
+    history before emitting bounded, evidence-based bottleneck hypotheses.
 - [ ] Expose process/cgroup throttling, memory pressure and I/O congestion.
 - [ ] Evidence-first diagnostic explanations; clearly label hypotheses.
 - [ ] No claim of measuring the cause of a slowdown from a single percentage.
