@@ -1,8 +1,14 @@
-# Taskotto 1.0.0-rc.26 — release candidate
+# Taskotto 1.0.0-rc.27 — release candidate
 
-**Date:** 2026-11-06 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
+**Date:** 2026-11-07 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
 Rust-only Linux process manager and system monitor. This is a **prerelease**, not a stable 1.0 certification.
+
+## Changes since rc.26
+
+- Extended validated semantic RicePack table/border/selection colors into Windows 7 Users/Services, performance statistics and properties inspector; XP properties, performance and networking; Windows 10 performance selectors and focused chart; the macOS Info dialog; and Frutiger Aero network metric chips.
+- Added contrast-aware text where dark generated table backgrounds cover historical light panels, preserving every original built-in palette in the absence of overrides. Automated layout regressions now exercise dark component tokens on compact and large historical secondary pages.
+- The remaining widget-level palette audit, future declarative screen layout API and required native desktop hardware acceptance remain open. No stable 1.0 certification is implied.
 
 ## Changes since rc.25
 

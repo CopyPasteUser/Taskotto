@@ -1,6 +1,7 @@
 //! Native-feeling XP process properties; uses real Linux process fields and
 //! the same PID-reuse-safe signal confirmation as the regular inspector.
 use super::*;
+use crate::theme::ComponentPaint;
 
 pub(super) fn xp_page(app: &mut TaskottoApp, ui: &mut egui::Ui) {
     let Some(p) = app.selected_process().cloned() else {
@@ -17,10 +18,12 @@ pub(super) fn xp_page(app: &mut TaskottoApp, ui: &mut egui::Ui) {
     );
     ui.add_space(8.0);
     let seven = app.settings.theme == Theme::Windows7;
+    let paint = ComponentPaint::from_settings(&app.settings);
     egui::ScrollArea::vertical().show(ui, |ui| {
         classic_group(
             ui,
             seven,
+            paint,
             "Identification",
             &[
                 ("Image Name", p.name.clone()),
@@ -43,6 +46,7 @@ pub(super) fn xp_page(app: &mut TaskottoApp, ui: &mut egui::Ui) {
         classic_group(
             ui,
             seven,
+            paint,
             "Performance",
             &[
                 ("CPU Usage", format!("{:.1}%", p.cpu_percent)),
@@ -57,6 +61,7 @@ pub(super) fn xp_page(app: &mut TaskottoApp, ui: &mut egui::Ui) {
         classic_group(
             ui,
             seven,
+            paint,
             "I/O Counters",
             &[
                 (
@@ -112,24 +117,33 @@ fn short_command(value: &str) -> String {
     result
 }
 
-fn classic_group(ui: &mut egui::Ui, seven: bool, title: &str, rows: &[(&str, String)]) {
+fn classic_group(
+    ui: &mut egui::Ui,
+    seven: bool,
+    paint: ComponentPaint,
+    title: &str,
+    rows: &[(&str, String)],
+) {
     ui.label(RichText::new(title).size(12.0).strong());
     egui::Frame::new()
-        .fill(if seven {
+        .fill(paint.table(if seven {
             Color32::WHITE
         } else {
             Color32::from_rgb(250, 249, 241)
-        })
+        }))
         .stroke(Stroke::new(
             1.0_f32,
-            if seven {
+            paint.border(if seven {
                 Color32::from_rgb(145, 162, 178)
             } else {
                 Color32::from_rgb(156, 154, 137)
-            },
+            }),
         ))
         .inner_margin(egui::Margin::same(9))
         .show(ui, |ui| {
+            if paint.table.is_some() {
+                ui.visuals_mut().override_text_color = Some(paint.on_table(Color32::BLACK));
+            }
             ui.set_min_width(ui.available_width().max(320.0) - 20.0);
             egui::Grid::new(("xp-properties", title))
                 .num_columns(2)

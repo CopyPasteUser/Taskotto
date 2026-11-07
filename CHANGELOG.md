@@ -2,6 +2,12 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.27] — 2026-11-07
+
+- Continued data-only RicePack component-color propagation into historical secondary pages: Windows 7 Users/Services reports, performance statistic boxes and process properties; XP properties, performance groups and networking summary; Windows 10 focused chart and metric selector; macOS process inspector; Frutiger Aero network activity chips.
+- Matched user-supplied dark table backgrounds with legible light foreground, applied semantic border and selection colors, and retained each rice's original appearance when overrides are absent. Added narrow/wide live-page rendering regression runs with a dark generated palette.
+- Left intentional artwork, platform-specific chrome and untested native display-server acceptance untouched. Remaining secondary surface audit and declarative screen schema stay open on the roadmap.
+
 ## [1.0.0-rc.26] — 2026-11-07
 
 - Added bounded performance chart-size customization to RicePack v1 and Preferences while preserving every built-in rice's default dimensions.

@@ -443,6 +443,9 @@ fn report_frame(
         .show(ui, |ui| {
             ui.set_min_height(height);
             ui.set_min_width(width - 2.0);
+            if paint.table.is_some() {
+                ui.visuals_mut().override_text_color = Some(paint.on_table(INK));
+            }
             contents(ui);
         });
 }
@@ -579,6 +582,7 @@ pub(super) fn performance(app: &mut TaskottoApp, ui: &mut egui::Ui) {
         ui.label("Reading system performance…");
         return;
     };
+    let paint = ComponentPaint::from_settings(&app.settings);
     egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
         ui.horizontal_top(|ui| {
             ui.vertical(|ui| usage_meter(ui, "CPU Usage", snapshot.cpu_percent, GREEN, 135.0 * app.settings.chart_scale));
@@ -614,30 +618,33 @@ pub(super) fn performance(app: &mut TaskottoApp, ui: &mut egui::Ui) {
                 ("Total", (snapshot.memory.total / 1_048_576).to_string()),
                 ("Available", (snapshot.memory.available / 1_048_576).to_string()),
                 ("In Use", (snapshot.memory.used() / 1_048_576).to_string()),
-            ]);
+            ], paint);
             stats_box(&mut columns[1], "System", &[
                 ("Processes", snapshot.processes.len().to_string()),
                 ("Threads", snapshot.processes.iter().map(|p| p.threads as u64).sum::<u64>().to_string()),
                 ("Up Time", format::duration(snapshot.uptime_seconds)),
-            ]);
+            ], paint);
             stats_box(&mut columns[2], "Swap (MB)", &[
                 ("Total", (snapshot.memory.swap_total / 1_048_576).to_string()),
                 ("Available", (snapshot.memory.swap_free / 1_048_576).to_string()),
                 ("In Use", ((snapshot.memory.swap_total - snapshot.memory.swap_free) / 1_048_576).to_string()),
-            ]);
+            ], paint);
         });
         ui.add_space(9.0);
         ui.label(RichText::new("Performance data from Linux /proc. Memory uses available-page accounting; no Windows commit/kernel counters are invented.").small().weak());
     });
 }
 
-fn stats_box(ui: &mut egui::Ui, name: &str, items: &[(&str, String)]) {
+fn stats_box(ui: &mut egui::Ui, name: &str, items: &[(&str, String)], paint: ComponentPaint) {
     ui.label(RichText::new(name).size(12.0).strong());
     Frame::NONE
-        .fill(Color32::from_rgb(247, 250, 252))
-        .stroke(Stroke::new(1.0_f32, BORDER))
+        .fill(paint.table(Color32::from_rgb(247, 250, 252)))
+        .stroke(Stroke::new(1.0_f32, paint.border(BORDER)))
         .inner_margin(Margin::same(8))
         .show(ui, |ui| {
+            if paint.table.is_some() {
+                ui.visuals_mut().override_text_color = Some(paint.on_table(INK));
+            }
             ui.set_min_width(ui.available_width().max(120.0) - 16.0);
             for (label, value) in items {
                 ui.horizontal(|ui| {
@@ -709,29 +716,34 @@ pub(super) fn users(app: &mut TaskottoApp, ui: &mut egui::Ui) {
         value.2 = value.2.saturating_add(row.process.resident_bytes);
     }
     let height = (ui.available_height() - 45.0).max(96.0);
-    report_frame(ui, height, ComponentPaint::default(), |ui| {
-        egui::Grid::new("seven-user-header")
-            .num_columns(4)
-            .spacing([20.0, 7.0])
-            .show(ui, |ui| {
-                for heading in ["User Name", "Processes", "CPU", "Memory (RSS)"] {
-                    ui.label(RichText::new(heading).strong());
-                }
-                ui.end_row();
-                for (uid, (count, cpu, rss)) in groups {
-                    ui.label(
-                        app.users
-                            .get(&uid)
-                            .cloned()
-                            .unwrap_or_else(|| uid.to_string()),
-                    );
-                    ui.label(count.to_string());
-                    ui.label(format!("{cpu:.1}%"));
-                    ui.label(format::bytes(rss));
+    report_frame(
+        ui,
+        height,
+        ComponentPaint::from_settings(&app.settings),
+        |ui| {
+            egui::Grid::new("seven-user-header")
+                .num_columns(4)
+                .spacing([20.0, 7.0])
+                .show(ui, |ui| {
+                    for heading in ["User Name", "Processes", "CPU", "Memory (RSS)"] {
+                        ui.label(RichText::new(heading).strong());
+                    }
                     ui.end_row();
-                }
-            });
-    });
+                    for (uid, (count, cpu, rss)) in groups {
+                        ui.label(
+                            app.users
+                                .get(&uid)
+                                .cloned()
+                                .unwrap_or_else(|| uid.to_string()),
+                        );
+                        ui.label(count.to_string());
+                        ui.label(format!("{cpu:.1}%"));
+                        ui.label(format::bytes(rss));
+                        ui.end_row();
+                    }
+                });
+        },
+    );
     ui.add_space(5.0);
     ui.label(RichText::new("Linux process owners (UIDs), not verified Windows-style desktop login sessions. RSS can include shared pages.").size(10.0).weak());
 }
@@ -748,41 +760,46 @@ pub(super) fn services(app: &mut TaskottoApp, ui: &mut egui::Ui) {
     });
     system::poll_services(app, ui.ctx());
     let height = (ui.available_height() - 51.0).max(95.0);
-    report_frame(ui, height, ComponentPaint::default(), |ui| {
-        let Some(result) = &app.system_pages.services else {
-            ui.spinner();
-            ui.label("Reading systemd user service units…");
-            return;
-        };
-        let Ok(entries) = result else {
-            ui.colored_label(Color32::from_rgb(155, 66, 26), "systemd --user unavailable");
-            ui.add(egui::Label::new(result.as_ref().unwrap_err()).wrap());
-            return;
-        };
-        if entries.is_empty() {
-            ui.label("No user service units loaded.");
-            return;
-        }
-        egui::ScrollArea::both().show(ui, |ui| {
-            egui::Grid::new("seven-services-table")
-                .striped(true)
-                .num_columns(4)
-                .spacing([22.0, 7.0])
-                .show(ui, |ui| {
-                    for title in ["Name", "Status", "Unit state", "Description"] {
-                        ui.label(RichText::new(title).strong());
-                    }
-                    ui.end_row();
-                    for entry in entries {
-                        ui.label(&entry.unit);
-                        ui.label(&entry.active);
-                        ui.label(&entry.state);
-                        ui.label(&entry.description);
+    report_frame(
+        ui,
+        height,
+        ComponentPaint::from_settings(&app.settings),
+        |ui| {
+            let Some(result) = &app.system_pages.services else {
+                ui.spinner();
+                ui.label("Reading systemd user service units…");
+                return;
+            };
+            let Ok(entries) = result else {
+                ui.colored_label(Color32::from_rgb(155, 66, 26), "systemd --user unavailable");
+                ui.add(egui::Label::new(result.as_ref().unwrap_err()).wrap());
+                return;
+            };
+            if entries.is_empty() {
+                ui.label("No user service units loaded.");
+                return;
+            }
+            egui::ScrollArea::both().show(ui, |ui| {
+                egui::Grid::new("seven-services-table")
+                    .striped(true)
+                    .num_columns(4)
+                    .spacing([22.0, 7.0])
+                    .show(ui, |ui| {
+                        for title in ["Name", "Status", "Unit state", "Description"] {
+                            ui.label(RichText::new(title).strong());
+                        }
                         ui.end_row();
-                    }
-                });
-        });
-    });
+                        for entry in entries {
+                            ui.label(&entry.unit);
+                            ui.label(&entry.active);
+                            ui.label(&entry.state);
+                            ui.label(&entry.description);
+                            ui.end_row();
+                        }
+                    });
+            });
+        },
+    );
     ui.add_space(5.0);
     ui.label(RichText::new("Read-only Linux user units; no invented Windows service PID, group or service-control privileges.").size(10.0).weak());
 }
@@ -790,6 +807,7 @@ pub(super) fn services(app: &mut TaskottoApp, ui: &mut egui::Ui) {
 pub(super) fn properties_dialog(app: &mut TaskottoApp, ctx: &egui::Context) {
     // A classic floating properties sheet rather than a fictitious seventh tab.
     // The existing Linux inspector and PID-safe actions live in this dialog.
+    let paint = ComponentPaint::from_settings(&app.settings);
     let mut open = true;
     egui::Window::new("Process Properties")
         .id(egui::Id::new("seven-process-properties"))
@@ -800,10 +818,15 @@ pub(super) fn properties_dialog(app: &mut TaskottoApp, ctx: &egui::Context) {
         .resizable(true)
         .frame(
             Frame::window(&ctx.style())
-                .fill(Color32::from_rgb(237, 245, 250))
-                .stroke(Stroke::new(1.0_f32, BORDER)),
+                .fill(paint.table(Color32::from_rgb(237, 245, 250)))
+                .stroke(Stroke::new(1.0_f32, paint.border(BORDER))),
         )
-        .show(ctx, |ui| details::xp_page(app, ui));
+        .show(ctx, |ui| {
+            if paint.table.is_some() {
+                ui.visuals_mut().override_text_color = Some(paint.on_table(INK));
+            }
+            details::xp_page(app, ui)
+        });
     if !open {
         app.page = Page::Processes;
     }
