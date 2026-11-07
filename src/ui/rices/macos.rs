@@ -38,13 +38,17 @@ fn focus(page: Page) -> Focus {
 }
 
 pub(super) fn topbar(app: &mut TaskottoApp, ctx: &egui::Context) {
+    let paint = ComponentPaint::from_settings(&app.settings);
     egui::TopBottomPanel::top("mac-activity-toolbar")
         .frame(
             Frame::NONE
-                .fill(TOOLBAR)
+                .fill(paint.control(TOOLBAR))
                 .inner_margin(Margin::symmetric(12, 9)),
         )
         .show(ctx, |ui| {
+            if paint.control.is_some() || ThemeStyle::from_settings(&app.settings).dark {
+                ui.visuals_mut().override_text_color = Some(paint.on_control(TOOLBAR, INK));
+            }
             ui.horizontal(|ui| {
                 // This is a toolbar, not another app caption. The compositor
                 // renders the app icon/title and the window controls.
@@ -52,7 +56,8 @@ pub(super) fn topbar(app: &mut TaskottoApp, ctx: &egui::Context) {
                     .add_enabled(
                         app.selected_process().is_some_and(can_signal_process),
                         egui::Button::new(
-                            RichText::new("Stop").color(Color32::from_rgb(163, 53, 57)),
+                            RichText::new("Stop")
+                                .color(paint.on_control(TOOLBAR, Color32::from_rgb(163, 53, 57))),
                         ),
                     )
                     .on_hover_text("Quit the selected process (confirmation required)")
@@ -128,7 +133,7 @@ pub(super) fn navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
     egui::TopBottomPanel::top("mac-activity-segments")
         .frame(
             Frame::NONE
-                .fill(TOOLBAR)
+                .fill(paint.control(TOOLBAR))
                 .inner_margin(Margin::symmetric(12, 5)),
         )
         .show(ctx, |ui| {
@@ -176,11 +181,19 @@ pub(super) fn vertical_navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
         .exact_width(147.0)
         .frame(
             Frame::NONE
-                .fill(TOOLBAR)
+                .fill(paint.control(TOOLBAR))
                 .inner_margin(Margin::symmetric(9, 12)),
         )
         .show(ctx, |ui| {
-            ui.label(RichText::new("ACTIVITY").small().strong().color(MUTED));
+            if paint.control.is_some() || ThemeStyle::from_settings(&app.settings).dark {
+                ui.visuals_mut().override_text_color = Some(paint.on_control(TOOLBAR, INK));
+            }
+            ui.label(
+                RichText::new("ACTIVITY")
+                    .small()
+                    .strong()
+                    .color(paint.on_control(TOOLBAR, MUTED)),
+            );
             ui.add_space(7.0);
             for (page, name, _) in TABS {
                 let active = app.page == page;
@@ -213,18 +226,22 @@ pub(super) fn vertical_navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
 
 pub(super) fn statusbar(app: &TaskottoApp, ctx: &egui::Context) {
     let current = focus(app.page);
+    let paint = ComponentPaint::from_settings(&app.settings);
     egui::TopBottomPanel::bottom("mac-activity-summary")
         .resizable(false)
         .exact_height(133.0 * app.settings.chart_scale)
         .frame(
             Frame::NONE
-                .fill(Color32::from_rgb(246, 247, 250))
+                .fill(paint.table(Color32::from_rgb(246, 247, 250)))
                 .inner_margin(Margin::symmetric(14, 11)),
         )
         .show(ctx, |ui| {
+            if paint.table.is_some() || ThemeStyle::from_settings(&app.settings).dark {
+                ui.visuals_mut().override_text_color = Some(paint.on_table(INK));
+            }
             ui.painter().line_segment(
                 [ui.max_rect().left_top(), ui.max_rect().right_top()],
-                Stroke::new(1.0_f32, BORDER),
+                Stroke::new(1.0_f32, paint.border(BORDER)),
             );
             ui.horizontal_top(|ui| {
                 let available = ui.available_width();
@@ -240,7 +257,12 @@ pub(super) fn statusbar(app: &TaskottoApp, ctx: &egui::Context) {
                             Focus::Disk => "DISK ACTIVITY",
                             Focus::Network => "NETWORK ACTIVITY",
                         };
-                        ui.label(RichText::new(label).size(10.0).color(MUTED).strong());
+                        ui.label(
+                            RichText::new(label)
+                                .size(10.0)
+                                .color(paint.on_table(MUTED))
+                                .strong(),
+                        );
                         let series: Vec<(&VecDeque<f32>, Color32)> = match current {
                             Focus::Cpu | Focus::Energy => vec![(&app.history.cpu, BLUE)],
                             Focus::Memory => vec![(&app.history.memory, GREEN)],
@@ -263,6 +285,7 @@ pub(super) fn statusbar(app: &TaskottoApp, ctx: &egui::Context) {
                             max,
                             chart_width - 2.0,
                             60.0 * app.settings.chart_scale,
+                            paint,
                         );
                     },
                 );
@@ -320,8 +343,15 @@ pub(super) fn statusbar(app: &TaskottoApp, ctx: &egui::Context) {
                         .spacing([15.0, 8.0])
                         .show(ui, |ui| {
                             for (title, value) in stats {
-                                ui.label(RichText::new(title).size(11.0).color(MUTED));
-                                ui.label(RichText::new(value).size(11.0).strong().color(INK));
+                                ui.label(
+                                    RichText::new(title).size(11.0).color(paint.on_table(MUTED)),
+                                );
+                                ui.label(
+                                    RichText::new(value)
+                                        .size(11.0)
+                                        .strong()
+                                        .color(paint.on_table(INK)),
+                                );
                                 ui.end_row();
                             }
                         });
@@ -339,16 +369,21 @@ fn sparkline(
     max: f32,
     width: f32,
     height: f32,
+    paint: ComponentPaint,
 ) {
     let (rect, _) = ui.allocate_exact_size(egui::vec2(width.max(115.0), height), Sense::hover());
-    ui.painter().rect_filled(rect, 3.0, WHITE);
-    ui.painter()
-        .rect_stroke(rect, 3.0, Stroke::new(1.0_f32, BORDER), StrokeKind::Inside);
+    ui.painter().rect_filled(rect, 3.0, paint.table(WHITE));
+    ui.painter().rect_stroke(
+        rect,
+        3.0,
+        Stroke::new(1.0_f32, paint.border(BORDER)),
+        StrokeKind::Inside,
+    );
     for level in [0.25, 0.5, 0.75] {
         let y = rect.bottom() - rect.height() * level;
         ui.painter().line_segment(
             [egui::pos2(rect.left(), y), egui::pos2(rect.right(), y)],
-            Stroke::new(0.5_f32, Color32::from_rgb(232, 235, 241)),
+            Stroke::new(0.5_f32, paint.border(Color32::from_rgb(232, 235, 241))),
         );
     }
     for &(data, color) in series {
@@ -711,13 +746,17 @@ pub(super) fn network_page(app: &TaskottoApp, ui: &mut egui::Ui) {
         ui.label("Reading network activity…");
         return;
     };
+    let paint = ComponentPaint::from_settings(&app.settings);
+    let style = ThemeStyle::from_settings(&app.settings);
+    let ink = if style.dark { style.text } else { INK };
+    let muted = if style.dark { style.text } else { MUTED };
     egui::ScrollArea::vertical().show(ui, |ui| {
-        ui.label(RichText::new("Network Activity").size(17.0).strong().color(INK));
-        ui.label(RichText::new("Linux-wide non-loopback interfaces · true rate samples, not per-process networking").small().color(MUTED));
+        ui.label(RichText::new("Network Activity").size(17.0).strong().color(ink));
+        ui.label(RichText::new("Linux-wide non-loopback interfaces · true rate samples, not per-process networking").small().color(muted));
         ui.add_space(11.0);
         let max = super::super::graph_max(&app.history.received, &app.history.sent);
         sparkline(ui, &[(&app.history.received, BLUE), (&app.history.sent, ORANGE)],
-            max, ui.available_width() - 5.0, ui.available_height().clamp(125.0, 310.0) * 0.62 * app.settings.chart_scale);
+            max, ui.available_width() - 5.0, ui.available_height().clamp(125.0, 310.0) * 0.62 * app.settings.chart_scale, paint);
         ui.add_space(16.0);
         egui::Grid::new("mac-network-details").num_columns(2).spacing([32.0, 12.0]).show(ui, |ui| {
             for (label, value) in [
@@ -726,11 +765,11 @@ pub(super) fn network_page(app: &TaskottoApp, ui: &mut egui::Ui) {
                 ("Sample history", app.history.received.len().to_string()),
                 ("Interfaces", "Aggregate, excluding loopback".to_owned()),
             ] {
-                ui.label(RichText::new(label).color(MUTED)); ui.label(value); ui.end_row();
+                ui.label(RichText::new(label).color(muted)); ui.label(value); ui.end_row();
             }
         });
         ui.add_space(16.0);
-        ui.label(RichText::new("Taskotto does not attribute aggregate /proc/net/dev counters to individual PIDs. Virtual adapters may double-count traffic.").small().color(MUTED));
+        ui.label(RichText::new("Taskotto does not attribute aggregate /proc/net/dev counters to individual PIDs. Virtual adapters may double-count traffic.").small().color(muted));
     });
 }
 

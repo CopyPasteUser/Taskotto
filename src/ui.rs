@@ -2148,6 +2148,32 @@ mod tests {
                 });
             }
         }
+
+        // A dark AI-authored surface can be used without optional per-widget
+        // colors; light legacy menu/status bars still need readable captions.
+        settings.surface_hex = Some("#101B2B".into());
+        settings.text_hex = Some("#FFFFFF".into());
+        for theme in Theme::ALL {
+            settings.theme = theme;
+            app.settings = settings.clone();
+            apply_theme(&ctx, &app.settings);
+            for (width, height) in [(650.0, 420.0), (1280.0, 800.0)] {
+                let output = ctx.run(
+                    egui::RawInput {
+                        screen_rect: Some(egui::Rect::from_min_size(
+                            egui::Pos2::ZERO,
+                            Vec2::new(width, height),
+                        )),
+                        ..Default::default()
+                    },
+                    |ctx| app.draw_contents(ctx),
+                );
+                assert!(
+                    !output.shapes.is_empty(),
+                    "dark surface {theme:?} did not paint"
+                );
+            }
+        }
     }
 
     #[test]
@@ -2282,6 +2308,27 @@ mod tests {
                     };
                     let _ = ctx.run(input, |ctx| app.draw_contents(ctx));
                 }
+            }
+        }
+        app.settings.components = dark_component_tokens();
+        apply_theme(&ctx, &app.settings);
+        for page in [Page::Processes, Page::Performance, Page::Networking] {
+            app.page = page;
+            for dimensions in [(650.0, 420.0), (1280.0, 800.0)] {
+                let output = ctx.run(
+                    egui::RawInput {
+                        screen_rect: Some(egui::Rect::from_min_size(
+                            egui::Pos2::ZERO,
+                            Vec2::new(dimensions.0, dimensions.1),
+                        )),
+                        ..Default::default()
+                    },
+                    |ctx| app.draw_contents(ctx),
+                );
+                assert!(
+                    !output.shapes.is_empty(),
+                    "dark Aero {page:?} did not paint"
+                );
             }
         }
         assert!(app.pending.is_none());
@@ -2515,7 +2562,12 @@ mod tests {
         // Secondary reports, performance metric tiles and the Windows 7
         // properties sheet should work with custom RicePack component colors.
         app.settings.components = dark_component_tokens();
-        for theme in [Theme::XpLuna, Theme::Windows7, Theme::Windows10] {
+        for theme in [
+            Theme::Windows98,
+            Theme::XpLuna,
+            Theme::Windows7,
+            Theme::Windows10,
+        ] {
             app.settings.theme = theme;
             apply_theme(&ctx, &app.settings);
             for page in [

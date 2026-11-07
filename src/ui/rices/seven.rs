@@ -31,7 +31,11 @@ pub(super) fn topbar(app: &mut TaskottoApp, ctx: &egui::Context) {
 pub(super) fn navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
     let paint = ComponentPaint::from_settings(&app.settings);
     egui::TopBottomPanel::top("seven-era-tabs")
-        .frame(Frame::NONE.fill(PALE).inner_margin(Margin::symmetric(9, 3)))
+        .frame(
+            Frame::NONE
+                .fill(paint.control(PALE))
+                .inner_margin(Margin::symmetric(9, 3)),
+        )
         .show(ctx, |ui| {
             ui.horizontal(|ui| {
                 ui.spacing_mut().item_spacing.x = 2.0;
@@ -82,10 +86,13 @@ pub(super) fn statusbar(app: &TaskottoApp, ctx: &egui::Context) {
     egui::TopBottomPanel::bottom("seven-status")
         .frame(
             Frame::NONE
-                .fill(Color32::from_rgb(232, 240, 245))
+                .fill(paint.control(Color32::from_rgb(232, 240, 245)))
                 .inner_margin(Margin::symmetric(10, 5)),
         )
         .show(ctx, |ui| {
+            if paint.control.is_some() || ThemeStyle::from_settings(&app.settings).dark {
+                ui.visuals_mut().override_text_color = Some(paint.on_control(PALE, INK));
+            }
             ui.painter().line_segment(
                 [ui.max_rect().left_top(), ui.max_rect().right_top()],
                 Stroke::new(1.0_f32, paint.border(BORDER)),

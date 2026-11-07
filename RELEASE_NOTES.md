@@ -1,8 +1,14 @@
-# Taskotto 1.0.0-rc.27 — release candidate
+# Taskotto 1.0.0-rc.28 — release candidate
 
 **Date:** 2026-11-07 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
 Rust-only Linux process manager and system monitor. This is a **prerelease**, not a stable 1.0 certification.
+
+## Changes since rc.27
+
+- Historical menu, navigation, status and toolbar strips in XP Luna, Windows 7/10, Classic 98, macOS and Frutiger Aero use validated RicePack control/table and border colors, with contrast-appropriate foreground. Default rices retain original strips and drawing; the window frame remains the compositor's responsibility.
+- macOS live summary and network sparkline chart surfaces adopt table/border tokens. Dark custom global surfaces no longer force white text on fixed light strips where local foreground is needed.
+- Regression rendering now checks dark custom statusbars at compact and desktop widths and an all-theme case with only dark global surface/text customization. Native display-server acceptance and further declarative layout work remain open.
 
 ## Changes since rc.26
 

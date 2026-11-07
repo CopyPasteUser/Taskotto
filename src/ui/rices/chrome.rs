@@ -10,6 +10,7 @@ pub(super) fn topbar(app: &mut TaskottoApp, ctx: &egui::Context) {
 
 pub(super) fn menu_bar(app: &mut TaskottoApp, ctx: &egui::Context) {
     let xp = is_xp(app);
+    let paint = ComponentPaint::from_settings(&app.settings);
     let surface = if xp {
         Color32::from_rgb(236, 233, 216)
     } else {
@@ -18,10 +19,14 @@ pub(super) fn menu_bar(app: &mut TaskottoApp, ctx: &egui::Context) {
     egui::TopBottomPanel::top("rice-menu-strip")
         .frame(
             Frame::NONE
-                .fill(surface)
+                .fill(paint.control(surface))
                 .inner_margin(Margin::symmetric(if xp { 6 } else { 8 }, 2)),
         )
         .show(ctx, |ui| {
+            if paint.control.is_some() || ThemeStyle::from_settings(&app.settings).dark {
+                ui.visuals_mut().override_text_color =
+                    Some(paint.on_control(surface, Color32::BLACK));
+            }
             ui.horizontal(|ui| {
                 ui.spacing_mut().item_spacing.x = if xp { 5.0 } else { 10.0 };
                 ui.menu_button("File", |ui| {
@@ -129,10 +134,14 @@ pub(super) fn navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
     egui::TopBottomPanel::top("rice-navigation-tabs")
         .frame(
             Frame::NONE
-                .fill(surface)
+                .fill(paint.control(surface))
                 .inner_margin(Margin::symmetric(8, if xp { 1 } else { 2 })),
         )
         .show(ctx, |ui| {
+            if paint.control.is_some() || ThemeStyle::from_settings(&app.settings).dark {
+                ui.visuals_mut().override_text_color =
+                    Some(paint.on_control(surface, Color32::BLACK));
+            }
             ui.horizontal_wrapped(|ui| {
                 ui.spacing_mut().item_spacing.x = if xp { 2.0 } else { 0.0 };
                 let tabs: &[(Page, &str)] = if xp {
@@ -163,6 +172,11 @@ pub(super) fn navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
                     let title = if selected && paint.selection.is_some() {
                         RichText::new(label)
                             .color(paint.on_selection(Color32::WHITE, Color32::BLACK))
+                    } else if selected
+                        && (paint.control.is_some()
+                            || ThemeStyle::from_settings(&app.settings).dark)
+                    {
+                        RichText::new(label).color(Color32::BLACK)
                     } else if !selected && paint.control.is_some() {
                         RichText::new(label).color(paint.on_control(surface, Color32::BLACK))
                     } else {
@@ -252,15 +266,19 @@ pub(super) fn vertical_navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
         .exact_width(188.0)
         .frame(
             Frame::NONE
-                .fill(Color32::from_rgb(248, 249, 250))
+                .fill(paint.control(Color32::from_rgb(248, 249, 250)))
                 .inner_margin(Margin::symmetric(8, 12)),
         )
         .show(ctx, |ui| {
+            if paint.control.is_some() || ThemeStyle::from_settings(&app.settings).dark {
+                ui.visuals_mut().override_text_color =
+                    Some(paint.on_control(Color32::WHITE, Color32::BLACK));
+            }
             ui.label(
                 RichText::new("TASKOTTO")
                     .size(12.0)
                     .strong()
-                    .color(Color32::from_rgb(82, 90, 98)),
+                    .color(paint.on_control(Color32::WHITE, Color32::from_rgb(82, 90, 98))),
             );
             ui.add_space(10.0);
             for (page, title) in [
@@ -300,7 +318,7 @@ pub(super) fn vertical_navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
                     } else if response.hovered() && paint.hover.is_some() {
                         readable_text(paint.hover(Color32::from_rgb(236, 240, 243)))
                     } else {
-                        Color32::from_rgb(30, 35, 43)
+                        paint.on_control(Color32::WHITE, Color32::from_rgb(30, 35, 43))
                     },
                 );
                 if response.has_focus() {
@@ -332,6 +350,7 @@ pub(super) fn vertical_navigation(app: &mut TaskottoApp, ctx: &egui::Context) {
 
 pub(super) fn statusbar(app: &mut TaskottoApp, ctx: &egui::Context) {
     let xp = is_xp(app);
+    let paint = ComponentPaint::from_settings(&app.settings);
     let color = if xp {
         Color32::from_rgb(236, 233, 216)
     } else {
@@ -348,17 +367,21 @@ pub(super) fn statusbar(app: &mut TaskottoApp, ctx: &egui::Context) {
     egui::TopBottomPanel::bottom("rice-statusbar")
         .frame(
             Frame::NONE
-                .fill(color)
+                .fill(paint.control(color))
                 .inner_margin(Margin::symmetric(12, if xp { 5 } else { 8 })),
         )
         .show(ctx, |ui| {
+            if paint.control.is_some() || ThemeStyle::from_settings(&app.settings).dark {
+                ui.visuals_mut().override_text_color =
+                    Some(paint.on_control(color, Color32::BLACK));
+            }
             subtle_separator(
                 ui,
-                if xp {
+                paint.border(if xp {
                     Color32::from_rgb(163, 159, 144)
                 } else {
                     Color32::from_rgb(221, 221, 221)
-                },
+                }),
             );
             ui.horizontal(|ui| {
                 if xp {
