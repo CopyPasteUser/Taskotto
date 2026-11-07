@@ -245,7 +245,12 @@ units, threshold behavior and no false certainty.
 
 ## P7 — Composable dashboards and exports
 
-- [ ] Build per-user dashboards from the P2 component schema.
+- [x] Build per-user dashboards from the P2 component schema.
+  - [x] RC56: opt-in persisted path to a strictly validated user-owned
+    P2 RicePack makes personal multi-page dashboards available on restart,
+    with explicit precedence, in-app clearing and recoverable missing-file
+    fallback. Layout editing and importing are provided by the RC32 editor
+    and RC17 library; individual samples remain session-only.
 - [ ] Session-only history by default; opt-in bounded retention and export.
   - [x] RC45: session RAM history stays capped at 120 system ticks, with
     explicit non-overwriting CSV/JSON export from every rice's Preferences;
@@ -254,7 +259,7 @@ units, threshold behavior and no false certainty.
   - [x] RC45: host-aggregate export includes per-observation Unix milliseconds,
     nominal polling interval and measured CPU, RAM, network, disk and PSI;
     absent pressure sources remain null/blank, not zero.
-- [ ] Time-series comparisons without a mandatory always-on daemon.
+- [x] Time-series comparisons without a mandatory always-on daemon.
   - [x] RC55: RicePack v1 declarative screens can graph real CPU/RAM %,
     network RX/TX B/s or disk read/write B/s together on a shared scale,
     using only the existing capped in-memory sampler. The new pack has

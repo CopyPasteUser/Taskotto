@@ -216,6 +216,10 @@ pub struct Settings {
     pub corner_radius: Option<u8>,
     #[serde(skip_serializing_if = "ComponentColors::is_empty")]
     pub components: ComponentColors,
+    /// Opt-in, user-local dashboard/design to load on the next GUI start.
+    /// Only the path is persisted; the design itself remains a RicePack file.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub startup_ricepack: Option<PathBuf>,
     /// A generated screen layout belongs to the active RicePack session only.
     #[serde(skip)]
     pub(crate) custom_layout: Option<crate::layout::LayoutSpec>,
@@ -270,6 +274,7 @@ impl Default for Settings {
             chart_scale: 1.0,
             corner_radius: None,
             components: ComponentColors::default(),
+            startup_ricepack: None,
             custom_layout: None,
             launch_theme_original: None,
             launch_ricepack_original: None,
@@ -366,6 +371,11 @@ impl Settings {
             .filter(|value| value.is_finite())
             .map(|value| value.clamp(22.0, 48.0));
         self.components.normalize();
+        // Pinned files must not depend on the launcher's working directory.
+        self.startup_ricepack = self
+            .startup_ricepack
+            .take()
+            .filter(|path| valid_startup_ricepack_path(path));
     }
 
     pub fn load() -> io::Result<Self> {
@@ -462,6 +472,12 @@ pub fn is_hex_color(text: &str) -> bool {
         && text[1..].bytes().all(|byte| byte.is_ascii_hexdigit())
 }
 
+pub(crate) fn valid_startup_ricepack_path(path: &Path) -> bool {
+    path.is_absolute()
+        && path.as_os_str().len() <= 4_096
+        && path.extension().is_some_and(|ext| ext == "toml")
+}
+
 pub fn config_file() -> io::Result<PathBuf> {
     if let Some(base) = env::var_os("XDG_CONFIG_HOME").filter(|value| !value.is_empty()) {
         let base = PathBuf::from(base);
@@ -504,6 +520,7 @@ mod tests {
                 control: Some("invalid".into()),
                 ..ComponentColors::default()
             },
+            startup_ricepack: Some(PathBuf::from("relative/rice.toml")),
             ..Settings::default()
         };
         config.normalize();
@@ -516,15 +533,24 @@ mod tests {
         assert_eq!(config.corner_radius, Some(16));
         assert!(config.table_row_height.is_none());
         assert!(config.components.control.is_none());
+        assert!(config.startup_ricepack.is_none());
     }
 
     #[test]
     fn toml_settings_roundtrip() {
-        let config = Settings::default();
+        let config = Settings {
+            startup_ricepack: Some(PathBuf::from("/home/test/ricepacks/dashboard.toml")),
+            ..Settings::default()
+        };
         let encoded = toml::to_string(&config).unwrap();
         let decoded: Settings = toml::from_str(&encoded).unwrap();
         assert_eq!(decoded.refresh_ms, config.refresh_ms);
         assert_eq!(decoded.theme, config.theme);
+        assert_eq!(decoded.startup_ricepack, config.startup_ricepack);
+        let mut wrong_extension = decoded;
+        wrong_extension.startup_ricepack = Some(PathBuf::from("/tmp/dashboard.sh"));
+        wrong_extension.normalize();
+        assert!(wrong_extension.startup_ricepack.is_none());
     }
 
     #[test]
@@ -620,6 +646,7 @@ mod tests {
             layout_mode: LayoutMode::Sidebar,
             chart_scale: 1.2,
             refresh_ms: 3_000,
+            startup_ricepack: Some(PathBuf::from("/home/test/ricepacks/dashboard.toml")),
             ..Settings::default()
         };
         crate::ricepack::RicePack::from_toml(include_str!("../examples/ricepacks/sea-glass.toml"))
@@ -635,6 +662,7 @@ mod tests {
         assert_eq!(loaded.components.border.as_deref(), Some("#123456"));
         assert!(loaded.components.selection.is_none());
         assert_eq!(loaded.refresh_ms, 5_000);
+        assert_eq!(loaded.startup_ricepack, config.startup_ricepack);
         assert!(loaded.launch_ricepack_name.is_none());
         fs::remove_file(path).unwrap();
         fs::remove_dir(test_dir).unwrap();

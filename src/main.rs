@@ -1,4 +1,10 @@
-use std::{env, path::PathBuf, process::ExitCode, thread, time::Duration};
+use std::{
+    env,
+    path::{Path, PathBuf},
+    process::ExitCode,
+    thread,
+    time::Duration,
+};
 use taskotto::{
     config::{Settings, Theme, configured_theme},
     desktop, format,
@@ -43,6 +49,38 @@ fn main() -> ExitCode {
             eprintln!("taskotto: {message}");
             ExitCode::FAILURE
         }
+    }
+}
+
+/// Explicit caller choices always override an opt-in saved per-user pack.
+/// The boolean marks the only source for which a missing file is recoverable:
+/// a saved startup preference must never prevent the GUI from launching.
+fn select_startup_pack(
+    cli: Option<PathBuf>,
+    ricebowl: Option<PathBuf>,
+    legacy_environment: Option<PathBuf>,
+    saved: Option<PathBuf>,
+) -> Option<(PathBuf, bool)> {
+    cli.or(ricebowl)
+        .or(legacy_environment)
+        .map(|path| (path, false))
+        .or_else(|| saved.map(|path| (path, true)))
+}
+
+fn load_startup_pack(
+    path: &Path,
+    saved: bool,
+) -> Result<(Option<RicePack>, Option<String>), String> {
+    match RicePack::load(path) {
+        Ok(pack) => Ok((Some(pack), None)),
+        Err(error) if saved => Ok((
+            None,
+            Some(format!(
+                "Saved startup RicePack unavailable (using normal theme selection): {}: {error}. Repair or clear it in Preferences → RicePack library",
+                path.display()
+            )),
+        )),
+        Err(error) => Err(format!("invalid RicePack {}: {error}", path.display())),
     }
 }
 
@@ -225,15 +263,20 @@ fn run() -> Result<(), String> {
         }
     };
     let original_theme = settings.theme;
-    let pack_path = ricepack_path
-        .or_else(|| env::var_os("RICEBOWL_TASKOTTO_RICEPACK").map(PathBuf::from))
-        .or_else(|| env::var_os("TASKOTTO_RICEPACK").map(PathBuf::from));
+    let pack_path = select_startup_pack(
+        ricepack_path,
+        env::var_os("RICEBOWL_TASKOTTO_RICEPACK").map(PathBuf::from),
+        env::var_os("TASKOTTO_RICEPACK").map(PathBuf::from),
+        settings.startup_ricepack.clone(),
+    );
     let mut active_pack = None;
-    if let Some(path) = pack_path {
-        let pack = RicePack::load(&path)
-            .map_err(|err| format!("invalid RicePack {}: {err}", path.display()))?;
-        pack.apply(&mut settings);
-        active_pack = Some((path, pack));
+    if let Some((path, saved)) = pack_path {
+        let (loaded, skipped_warning) = load_startup_pack(&path, saved)?;
+        if let Some(pack) = loaded {
+            pack.apply(&mut settings);
+            active_pack = Some((path, pack));
+        }
+        warning = skipped_warning.or(warning);
     }
     let selected_theme = forced_theme.or_else(|| {
         if settings.launch_ricepack_name.is_some() {
@@ -282,4 +325,58 @@ fn run() -> Result<(), String> {
         }),
     )
     .map_err(|err| format!("GUI startup failed: {err}"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn explicit_ricepack_sources_precede_saved_dashboard() {
+        let cli = PathBuf::from("cli.toml");
+        let desktop = PathBuf::from("ricebowl.toml");
+        let legacy = PathBuf::from("legacy.toml");
+        let saved = PathBuf::from("/home/user/default.toml");
+        assert_eq!(
+            select_startup_pack(
+                Some(cli.clone()),
+                Some(desktop.clone()),
+                Some(legacy.clone()),
+                Some(saved.clone())
+            ),
+            Some((cli, false))
+        );
+        assert_eq!(
+            select_startup_pack(
+                None,
+                Some(desktop.clone()),
+                Some(legacy.clone()),
+                Some(saved.clone())
+            ),
+            Some((desktop, false))
+        );
+        assert_eq!(
+            select_startup_pack(None, None, Some(legacy.clone()), Some(saved.clone())),
+            Some((legacy, false))
+        );
+        assert_eq!(
+            select_startup_pack(None, None, None, Some(saved.clone())),
+            Some((saved, true))
+        );
+        assert_eq!(select_startup_pack(None, None, None, None), None);
+    }
+
+    #[test]
+    fn missing_saved_dashboard_is_recoverable_but_explicit_invalid_pack_fails() {
+        let missing = Path::new("/this/does/not/exist/taskotto-default.toml");
+        let (loaded, warning) = load_startup_pack(missing, true).unwrap();
+        assert!(loaded.is_none());
+        assert!(warning.unwrap().contains("using normal theme selection"));
+        assert!(load_startup_pack(missing, false).is_err());
+        let (loaded, warning) =
+            load_startup_pack(Path::new("examples/ricepacks/comparison-studio.toml"), true)
+                .unwrap();
+        assert_eq!(loaded.unwrap().name, "Comparison Studio");
+        assert!(warning.is_none());
+    }
 }

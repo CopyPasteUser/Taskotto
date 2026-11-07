@@ -171,6 +171,14 @@ a design in the list. You can also enter a RicePack file path directly.
   **Revert preview** restores the previous appearance and active file watcher.
 - **Keep for session** applies the preview for this run and resumes live
   reloads. Neither preview nor keep silently changes saved appearance.
+- **Use this RicePack at startup** validates an absolute `.toml` file path
+  and saves only that path in the current user's Taskotto preferences. Next
+  GUI launch loads the selected dashboard/palette as a still-transient pack;
+  its colors and screen layout never overwrite the underlying saved profile.
+  **Clear startup RicePack** removes that association immediately. Missing or
+  malformed pinned files show a recoverable GUI warning and fall back to the
+  saved rice; explicit `--ricepack` or pack environment variables override
+  the saved default and remain strict errors when invalid.
 - **Import to library** validates a source file and creates a distinct new
   file. Repeated imports get numbered suffixes; existing files are untouched.
 - **Export current appearance** writes the visible settings to a new file.

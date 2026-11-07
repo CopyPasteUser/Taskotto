@@ -2,6 +2,12 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.56] — 2026-11-07
+
+- Added opt-in **per-user startup RicePack** from Preferences → RicePack library: a validated absolute `.toml` path is persisted independently of session-only appearance overrides, and can be cleared with one click. This makes user-authored P2 dashboards reusable after restart without a resident service or executable RicePack content.
+- Explicit `--ricepack`, `RICEBOWL_TASKOTTO_RICEPACK` and `TASKOTTO_RICEPACK` still override the saved default in that order; a broken explicit pack remains an error, but a missing/invalid saved pack falls back to normal saved appearance with an actionable UI warning. The normal session-only reload/watcher is retained.
+- Added startup precedence, broken-file recovery, path-bound and legacy preference tests. No auto-save of process/system history, no privilege change, and no stable-1.0 hardware sign-off is implied.
+
 ## [1.0.0-rc.55] — 2026-11-07
 
 - Added three strictly typed RicePack v1 time-series comparisons: CPU versus RAM on one 0–100% scale, and RX/TX or disk read/write on one dynamically chosen bytes/s scale. Existing single-series plots and the stable pack schema remain compatible; missing samples are not synthesized. The custom screen shows a readable legend and its shared y-axis range without adding a polling thread.

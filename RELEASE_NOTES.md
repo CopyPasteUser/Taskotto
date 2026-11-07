@@ -1,4 +1,10 @@
-# Taskotto 1.0.0-rc.55 — release candidate
+# Taskotto 1.0.0-rc.56 — release candidate
+
+## RC56 — Opt-in reusable personal dashboards
+
+- The existing data-only RicePack library now offers **Use this RicePack at startup** and **Clear startup RicePack**. Only the explicitly selected absolute `.toml` path is stored in user-local Taskotto preferences; session pack appearance and monitoring samples are not silently persisted. Generated functional dashboards and their safe controls can reappear on launch.
+- A missing or invalid **saved** default reports a recoverable warning and opens Taskotto with the regular saved appearance. An invalid explicitly supplied CLI/environment pack still fails fast. CLI > RiceBowl pack environment > Taskotto pack environment > saved user default determines the chosen source. Changes to a valid active pack continue to reload through the existing safe file watcher.
+- New unit tests cover path validation, old configuration fallback, startup precedence, recovery and round-trip. Native GUI, keyboard and RiceBowl launch acceptance remains outstanding; this is still a prerelease.
 
 ## RC55 — Comparable trends and historical palette consistency
 
