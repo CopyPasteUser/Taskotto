@@ -2,6 +2,11 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.49] — 2026-11-07
+
+- Added genuine cgroup-local CPU, memory and I/O PSI to the existing selected-PID, asynchronous read-only cgroup v2 inspector. Reuses Taskotto's strictly validated kernel PSI parser for SOME/FULL 10/60/300-second stalled-task percentages and cumulative microseconds; cgroup CPU FULL is supported when present, unlike meaningless system CPU FULL.
+- Missing/unsupported cgroup files and explicitly disabled `cgroup.pressure` accounting remain unavailable; namespaced cgroup data is never presented as host pressure. The expanded report is boxed in the GUI state to avoid inefficient enum layout. Synthetic parsing, missing-source and non-finite cases tested; native load comparison remains open.
+
 ## [1.0.0-rc.48] — 2026-11-07
 
 - Added optional elapsed 30-second and 2-minute views (or entire session retention) to the opt-in per-PID CPU/RSS follow panel, based on GUI-receipt timestamps rather than assuming equally spaced samples. CPU/RSS peaks reflect the selected window, and missing timestamps cannot masquerade as recent evidence.

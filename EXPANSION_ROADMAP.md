@@ -184,6 +184,10 @@ non-AMD machine. No mandatory vendor SDK for the baseline binary.
   - [x] RC41: explicit selected-process cgroup v2 inspector for actual
     membership, cumulative group CPU/throttling, memory current/max and
     aggregated per-device I/O, with PID/membership revalidation.
+  - [x] RC49: read-on-demand cgroup-local `cpu.pressure`, `memory.pressure`
+    and `io.pressure` SOME/FULL with kernel parser, accurate 10/60/300-second
+    stall percentages and cumulative microseconds; absent sources unavailable,
+    never host/cgroup scope conflation. Live workload QA still open.
   - [ ] Multi-cgroup and nested-hierarchy overview, dynamic group sample
     rates, container host/namespace accounting and native stress QA.
 - [ ] Show user systemd units and optional Podman/Docker associations.
@@ -213,6 +217,9 @@ attribution, graceful behavior when cgroups or container APIs are unavailable.
     memory SOME/FULL and I/O SOME/FULL; no fabricated gap zeros or false
     causal attribution.
 - [ ] Expose process/cgroup throttling, memory pressure and I/O congestion.
+  - [x] RC41 and RC49: selected-cgroup cumulative CPU throttling, memory
+    current/max, I/O bytes and cgroup-local PSI stalls on demand. Real-time
+    rates, per-process attribution and controlled-load QA remain open.
 - [ ] Evidence-first diagnostic explanations; clearly label hypotheses.
   - [x] RC44: non-actionable CPU, memory and I/O investigation hints require
     repeated PSI readings from eight consecutive monitor samples plus a

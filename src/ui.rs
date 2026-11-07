@@ -126,7 +126,7 @@ struct CgroupInspection {
 
 enum CgroupState {
     Loading(Receiver<Result<crate::monitor::cgroup::CgroupReport, String>>),
-    Ready(Result<crate::monitor::cgroup::CgroupReport, String>),
+    Ready(Result<Box<crate::monitor::cgroup::CgroupReport>, String>),
 }
 
 struct PssInspection {
@@ -751,7 +751,7 @@ impl TaskottoApp {
                 None
             };
             if let Some(result) = result {
-                inspection.state = CgroupState::Ready(result);
+                inspection.state = CgroupState::Ready(result.map(Box::new));
             }
         }
     }
@@ -2061,6 +2061,33 @@ impl TaskottoApp {
                             ui.end_row();
                         }
                     });
+                if !report.pressure.is_empty() {
+                    ui.add_space(8.0);
+                    ui.label(
+                        RichText::new("Cgroup-local stalled-task pressure · actual PSI").strong(),
+                    );
+                    for (name, metric) in [
+                        ("CPU SOME", report.pressure.cpu_some.as_ref()),
+                        ("CPU FULL", report.pressure.cpu_full.as_ref()),
+                        ("Memory SOME", report.pressure.memory_some.as_ref()),
+                        ("Memory FULL", report.pressure.memory_full.as_ref()),
+                        ("I/O SOME", report.pressure.io_some.as_ref()),
+                        ("I/O FULL", report.pressure.io_full.as_ref()),
+                    ] {
+                        if let Some(metric) = metric {
+                            ui.label(format!(
+                                "{name} · 10s {:.2}% / 60s {:.2}% / 300s {:.2}% · total {:.2}s",
+                                metric.avg10_percent,
+                                metric.avg60_percent,
+                                metric.avg300_percent,
+                                metric.total_stall_usec as f64 / 1_000_000.0
+                            ));
+                        }
+                    }
+                    ui.label(RichText::new("Cgroup PSI reflects task stalls in this hierarchy, NOT host-wide PSI or CPU utilization. CPU FULL is meaningful for a cgroup even though Taskotto omits system-level CPU FULL. Unsupported controllers are not reported as 0.").small().weak());
+                } else {
+                    ui.label(RichText::new("Cgroup-local PSI unavailable (kernel, permissions or controller support).").small().weak());
+                }
                 ui.label(RichText::new("These are cumulative counters for this Linux cgroup, potentially including other processes and nested cgroups. They are not per-PID or container-API values; collection is a non-atomic snapshot.").small().weak());
             }
         }

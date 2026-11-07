@@ -1,6 +1,6 @@
 //! Linux pressure stall information (PSI) via the kernel's read-only
 //! /proc/pressure interface. Percentages measure stalled task time, not
-//! resource utilization; cgroup-specific PSI is a separate future backend.
+//! resource utilization; the same strict parser is reused for cgroup v2 PSI.
 use serde::Serialize;
 use std::{fs, path::Path};
 
@@ -58,7 +58,7 @@ fn sample_from(root: &Path) -> PressureSnapshot {
     }
 }
 
-fn parse_pressure(text: &str, level: &str) -> Option<PressureMetric> {
+pub(super) fn parse_pressure(text: &str, level: &str) -> Option<PressureMetric> {
     let row = text
         .lines()
         .find(|line| line.split_whitespace().next() == Some(level))?;
