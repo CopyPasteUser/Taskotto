@@ -1188,6 +1188,8 @@ impl TaskottoApp {
             ui.label(RichText::new("The first sample has no rate baseline. Network totals can include virtual interfaces; disk data represents block-layer traffic, not filesystem-only I/O.").small().weak());
             ui.add_space(18.0);
             self.gpu_telemetry_ui(ui);
+            ui.add_space(18.0);
+            self.power_telemetry_ui(ui);
         });
     }
 
@@ -1505,6 +1507,9 @@ impl TaskottoApp {
             preference_section(ui, "GPU sensors · read only", xp);
             self.gpu_telemetry_ui(ui);
             ui.add_space(18.0);
+            preference_section(ui, "Battery and external power · read only", xp);
+            self.power_telemetry_ui(ui);
+            ui.add_space(18.0);
             preference_section(ui, "Monitoring", xp);
             changed |= ui.add(egui::Slider::new(&mut self.settings.refresh_ms, 500..=10_000).text("Refresh interval (ms)")).changed();
             changed |= ui.checkbox(&mut self.settings.only_my_processes, "Show only my processes").changed();
@@ -1531,6 +1536,70 @@ impl TaskottoApp {
         if changed {
             self.save_preferences(ui.ctx());
         }
+    }
+
+    fn power_telemetry_ui(&self, ui: &mut egui::Ui) {
+        let Some(snapshot) = &self.snapshot else {
+            ui.label(RichText::new("Power sensors: waiting for Linux system sample…").weak());
+            return;
+        };
+        let power = &snapshot.power;
+        if power.is_empty() {
+            ui.label(
+                RichText::new("No power_supply battery or adapter sensors available.")
+                    .small()
+                    .weak(),
+            );
+            return;
+        }
+        if let Some(online) = power.external_power_online {
+            ui.label(if online {
+                "External power: connected"
+            } else {
+                "External power: disconnected"
+            });
+        }
+        for battery in &power.batteries {
+            ui.label(RichText::new(format!("Battery · {}", battery.name)).strong());
+            let unknown = || "Unavailable".to_owned();
+            let rows = [
+                ("Status", battery.status.clone().unwrap_or_else(unknown)),
+                (
+                    "Charge",
+                    battery
+                        .capacity_percent
+                        .map(|value| format!("{value}%"))
+                        .unwrap_or_else(unknown),
+                ),
+                (
+                    "Stored energy",
+                    match (battery.energy_now_wh, battery.energy_full_wh) {
+                        (Some(now), Some(full)) => format!("{now:.1} / {full:.1} Wh"),
+                        (Some(now), None) => format!("{now:.1} Wh (full capacity unavailable)"),
+                        _ => unknown(),
+                    },
+                ),
+                (
+                    "Power rate",
+                    battery
+                        .power_watts
+                        .map(|value| format!("{value:.1} W"))
+                        .unwrap_or_else(unknown),
+                ),
+            ];
+            egui::Grid::new(("battery-power", &battery.name))
+                .num_columns(2)
+                .spacing([20.0, 6.0])
+                .show(ui, |ui| {
+                    for (name, value) in rows {
+                        ui.label(RichText::new(name).weak());
+                        ui.label(value);
+                        ui.end_row();
+                    }
+                });
+            ui.add_space(8.0);
+        }
+        ui.label(RichText::new("Linux energy fields use Wh, current capacity uses %. Charge-based sensors use different units and are never mislabeled as Wh. Missing hardware readings are not zero; no synthetic battery runtime is calculated.").small().weak());
     }
 
     fn gpu_telemetry_ui(&self, ui: &mut egui::Ui) {
@@ -2264,6 +2333,7 @@ mod tests {
                 uptime_seconds: 0.0,
                 logical_cpus: 1,
                 gpus: vec![],
+                power: Default::default(),
             }),
             history: History::default(),
             page: Page::Processes,
@@ -2344,6 +2414,7 @@ mod tests {
             uptime_seconds: 0.0,
             logical_cpus: 1,
             gpus: vec![],
+            power: Default::default(),
         };
         history.process_follow = Some(ProcessFollow::new(&process));
         for _ in 0..200 {
@@ -2382,6 +2453,7 @@ mod tests {
             processes: vec![],
             logical_cpus: 1,
             gpus: vec![],
+            power: Default::default(),
         };
         for _ in 0..200 {
             history.record(&snapshot);
@@ -2490,6 +2562,7 @@ mod tests {
                 }],
                 logical_cpus: 2,
                 gpus: vec![],
+                power: Default::default(),
             }),
             history: History::default(),
             page: Page::Processes,
@@ -2798,6 +2871,7 @@ mod tests {
             }],
             logical_cpus: 2,
             gpus: vec![],
+            power: Default::default(),
         };
         let mut history = History::default();
         for _ in 0..4 {
@@ -2915,6 +2989,7 @@ mod tests {
                 }],
                 logical_cpus: 2,
                 gpus: vec![],
+                power: Default::default(),
             }),
             history: History::default(),
             page: Page::Processes,
@@ -3024,6 +3099,7 @@ mod tests {
                 }],
                 logical_cpus: 24,
                 gpus: vec![],
+                power: Default::default(),
             }),
             history: History::default(),
             page: Page::Processes,

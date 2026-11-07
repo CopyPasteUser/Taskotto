@@ -163,6 +163,9 @@ distinction between processes, GUI windows and logical applications.
   trustworthy process attribution.
 - [ ] Battery/power information where available; distinguish unavailable
   metrics from zero.
+  - [x] RC40: battery/adapter discovery via Linux power_supply, with actual
+    status, capacity %, energy Wh, power W and no mixed electrical units.
+  - [ ] Cross-vendor real laptop, dual-battery and AC hot-plug acceptance.
 
 **Gate:** feature and overhead tests across at least one AMD and one
 non-AMD machine. No mandatory vendor SDK for the baseline binary.

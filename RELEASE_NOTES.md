@@ -1,8 +1,14 @@
-# Taskotto 1.0.0-rc.39 — release candidate
+# Taskotto 1.0.0-rc.40 — release candidate
 
 **Date:** 2026-11-07 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
 Rust-only Linux process manager and system monitor. This is a **prerelease**, not a stable 1.0 certification.
+
+## Changes since rc.39
+
+- Completed the first P4 power-supply slice: Linux battery inventory and external-adapter status from `/sys/class/power_supply`, including genuine battery percentage, charging status, energy in Wh and current power in W when the driver provides them.
+- Preserved the kernel's distinction between `energy_*` (micro-watt-hours) and `charge_*` (micro-amp-hours); fallback charge percentages never masquerade as physical energy or invented remaining runtime. Absent battery/adapter sensors produce truthful unavailable states.
+- Added deterministic synthetic laptop/adapter, missing-sysfs, unit-conversion and malformed-sensor tests. System Performance and every rice's Preferences display the data without an extra daemon, privilege or dependency. Laptop and multi-battery acceptance remains pending.
 
 ## Changes since rc.38
 

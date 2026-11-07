@@ -2,6 +2,12 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.40] — 2026-11-07
+
+- Added read-only battery and external-power sampling through the standard Linux `power_supply` sysfs class inside the existing worker loop. System Performance and every rice's Preferences show reported charge percentage, charging state, actual Wh, W and external-source availability when present.
+- Precisely distinguish `energy_now/full` microWh from `charge_now/full` microAh; the latter can calculate a percentage but is **never** displayed as Wh. Reject inconsistent or out-of-range capacity/energy readings rather than showing synthetic zeroes or fabricated run times.
+- Added fake-sysfs tests for Wh/W conversion, separate charge/energy fallback, invalid percentages and missing hardware. Real ThinkPad battery, dual-battery and AC hot-plug tests remain part of physical acceptance.
+
 ## [1.0.0-rc.39] — 2026-11-07
 
 - Began P4 read-only GPU telemetry with small DRM/sysfs probes inside the existing monitor sampling cycle. AMDGPU busy percentage and VRAM usage/total use documented kernel counters; accessible hwmon temperature, power and core clock and Intel GT clock values use their actual units.

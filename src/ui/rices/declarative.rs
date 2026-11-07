@@ -507,6 +507,7 @@ mod tests {
             processes: Vec::new(),
             logical_cpus: 1,
             gpus: vec![],
+            power: Default::default(),
         };
         assert_eq!(metric_value(Some(&sample), Metric::CpuPercent), "25.0%");
         assert_eq!(metric_value(Some(&sample), Metric::Processes), "0");
