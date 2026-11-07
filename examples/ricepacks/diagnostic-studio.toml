@@ -26,6 +26,10 @@ kind = "heading"
 text = "Real Linux signals"
 
 [[layout.pages.widgets]]
+kind = "toolbar"
+actions = ["refresh", "focus-search", "end-process"]
+
+[[layout.pages.widgets]]
 kind = "metric"
 label = "CPU load"
 binding = "cpu-percent"
@@ -36,6 +40,11 @@ label = "Available process count"
 binding = "processes"
 
 [[layout.pages.widgets]]
+kind = "gauge"
+label = "Physical memory use"
+binding = "memory-percent"
+
+[[layout.pages.widgets]]
 kind = "plot"
 label = "CPU history"
 binding = "cpu"
@@ -43,6 +52,10 @@ binding = "cpu"
 [[layout.pages.widgets]]
 kind = "process-list"
 columns = ["name", "cpu", "memory", "pid"]
+
+[[layout.pages.widgets]]
+kind = "status-strip"
+bindings = ["uptime", "memory-used", "memory-total"]
 
 [[layout.pages]]
 id = "traffic"
@@ -62,6 +75,10 @@ binding = "disk-write"
 kind = "plot"
 label = "Network receive history"
 binding = "network-received"
+
+[[layout.pages.widgets]]
+kind = "status-strip"
+bindings = ["network-received", "network-sent", "disk-read", "disk-write"]
 
 [[layout.pages.widgets]]
 kind = "process-list"

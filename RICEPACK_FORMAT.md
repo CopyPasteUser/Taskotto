@@ -35,7 +35,7 @@ table = "#F7FFFD"
 selection = "#148E94"
 ```
 
-### Custom screens (P2 foundation, RC29)
+### Custom screens (P2 widgets, RC30)
 
 If `[layout]` is absent, all original rice screens remain unchanged. When it
 is present, the active RicePack replaces only the **Processes client page**
@@ -72,6 +72,16 @@ columns = ["name", "cpu", "memory", "pid"]
   `disk-read`, `disk-write`.
 - `plot` bindings: `cpu`, `memory`, `network-received`, `network-sent`,
   `disk-read`, `disk-write` (observed session samples, no invented counters).
+- `gauge` accepts a `label` (1–48) and a percentage `binding` of either
+  `cpu-percent` or `memory-percent`. It reads live Linux samples and displays
+  an explicit waiting state until data is available.
+- `status-strip` accepts 1–5 distinct named `metric` bindings, displayed
+  compactly with the same live values as metric tiles.
+- `toolbar` accepts 1–3 distinct `actions`: `refresh` (request another
+  sample), `focus-search` (show and focus the process search), and
+  `end-process` (open the existing PID-safe termination confirmation for the
+  currently selected process). These are predefined application actions;
+  arbitrary commands, scripts, and network calls cannot be expressed.
 - `process-list` accepts 1–5 unique columns chosen from `name`, `pid`, `cpu`,
   `memory`, `threads` (including required clickable `name`). Rows are
   virtualized. Selection and End Process follow

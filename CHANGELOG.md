@@ -2,6 +2,12 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.30] — 2026-11-07
+
+- Completed the initial P2 safe widget vocabulary: generated TOML screens can now compose real CPU/memory percentage gauges, read-only aggregate status strips and a toolbar with only `refresh`, `focus-search` and confirmation-backed `end-process` actions, in addition to the existing live metrics, plots, tabs and process lists.
+- Extended strict schema validation for missing/duplicate/unknown bindings and toolbar actions; unavailable gauge values remain explicitly unmeasured instead of becoming fake zeroes. Search focuses its input, process actions retain the same PID-safe confirmation and duplicate End Process buttons are suppressed when the generated toolbar supplies one.
+- Updated the two genuinely rendered Diagnostic Studio gallery scenes and CLI/format/QA documentation. The P2 responsive capability contract, interactive editor and migration/visual-focus testing remain open.
+
 ## [1.0.0-rc.29] — 2026-11-07
 
 - Began P2 with a strictly bounded, data-only declarative screen layout in RicePack TOML: up to four named screens with 16 widgets each, typed headings, live metrics, historical plots and virtualized real-process lists. Screen tabs and safe process selection/confirmation run through existing unprivileged Linux code.
