@@ -1,8 +1,14 @@
-# Taskotto 1.0.0-rc.37 — release candidate
+# Taskotto 1.0.0-rc.38 — release candidate
 
 **Date:** 2026-11-07 · **Platform:** Linux x86_64 development/CI build; X11/Wayland GUI hardware acceptance pending.
 
 Rust-only Linux process manager and system monitor. This is a **prerelease**, not a stable 1.0 certification.
+
+## Changes since rc.37
+
+- Added opt-in **Measure PSS now** for a selected Linux process and its visible descendants. A bounded background worker reads kernel `/proc/PID/smaps_rollup` proportional set sizes; the normal on-demand sampler does not acquire expensive memory-map reads.
+- The worker processes at most 128 distinct observed PIDs and confirms each PID's original start ticks before and after reading. Inaccessible/exited entries are counted as **unavailable**; the UI distinguishes complete from partial PSS, never reports partial sums as a complete unique-memory total and discloses that maps may change during collection.
+- Unit tests cover strict kernel PSS field parsing, overflow/units, stale PID rejection, tree-size cap and optional real-process reading without demanding elevated permissions. X11/Wayland/labwc and shared-page physical QA remain pending.
 
 ## Changes since rc.36
 
