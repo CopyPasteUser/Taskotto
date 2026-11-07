@@ -2,6 +2,12 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.47] — 2026-11-07
+
+- Audited Frutiger Aero's remaining high-visibility navigation and hero panel hardcoded surfaces: horizontal tabs and opt-in sidebar use semantic control color, hero/layered backdrop and heading/subheading use table and readable-on-table colors, chart outlines honor the border token.
+- Historical vector lens, glossy bubbles and ring meters remain intentionally rice-specific rather than genericizing the Y2K UI. Default unmodified presets preserve their palette; custom RicePacks gain reliable contrast in prominent areas. Native comparison remains pending.
+- Regenerated all eight Frutiger Aero screenshots through the real headless egui renderer, including the dark Aero Lagoon process and performance views; kept the README's complete 51-capture gallery intact.
+
 ## [1.0.0-rc.46] — 2026-11-07
 
 - Added strictly read-only, bounded cgroup v2 membership naming hints for systemd-like services/scopes, Flatpak-like app scopes, and Docker/Podman-style 64-hex unit IDs. Only the cgroup path is authoritative; display explicitly refuses to claim verified service ownership, API linkage or PID-container attribution.

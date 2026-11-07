@@ -1,4 +1,13 @@
-# Taskotto 1.0.0-rc.46 — release candidate
+# Taskotto 1.0.0-rc.47 — release candidate
+
+## RC47 — Frutiger Aero visual polish for custom RicePacks
+
+- The Frutiger Aero horizontal navigation, opt-in sidebar, prominent layered hero background, title/subtitle text and performance plot strokes now use the same validated semantic component palette as its tables and action buttons.
+- Dark/generated RicePacks receive readable hero and sidebar text; the original aqua/sky, translucent vector lens and circular CPU/RAM indicators remain visually unique to Aero. Default fallback colors are preserved, without adding window-frame elements (RiceBowl/compositor still own them).
+- Re-rendered all eight Aero screenshots (including both Aero Lagoon captures) from current Taskotto UI paint output, preserving the 51-image README gallery and capture provenance.
+- This addresses an additional P1 hardcoded-surface seam; remaining historical artwork/complex widget audits and native fidelity remain open. Screenshots are genuine Taskotto egui captures, not reconstructed static mockups.
+
+## RC46 — Read-only service and container naming hints
 
 ## RC46 — Read-only service and container naming hints
 

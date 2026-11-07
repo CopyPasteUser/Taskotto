@@ -43,6 +43,7 @@ and fonts are **not** copied or bundled.
 - System Vitals features four genuine rolling charts (CPU, memory, disk read/write, network receive/send) and circular percent meters; displays do not invent CPU, GPU or battery readings. Network is explicitly non-loopback **system-wide** traffic, which can double-count virtual interfaces.
 - The masthead is **application content**, not simulated X11/Wayland title-bar buttons, borders or caption. Native decorations belong to RiceBowl/the compositor. Users/Services/Details/Settings reuse validated Linux functionality; fully custom Aero detail page designs can be iterated without sacrificing those controls.
 - Headless screenshots demonstrate the egui surfaces but not native input latency, compositor styling, accessibility tree or exact monitor color. Physical Linux Mint/Fedora and labwc checks remain in release QA.
+- RC47's prominence pass makes the Aero tab bar, opt-in sidebar and layered hero foreground/background respond to semantic generated RicePack colors while retaining the original translucent orbs and meter art in the unmodified preset. Remaining detailed fidelity checks still require native screen comparisons.
 
 ## Windows 98 Close Program
 
@@ -197,6 +198,6 @@ and fonts are **not** copied or bundled.
 - Headless screenshot renders prove actual egui layout/paint commands and real
   procfs values, **not native desktop output**. [QA.md](QA.md) retains the Mint
   X11, KDE Wayland and labwc visual/keyboard/performance sign-off gates.
-- The README gallery and provenance describe all 37 current client-only
+- The README gallery and provenance describe all 51 current client-only
   captures across seven dedicated visual styles; old generic renders were
   removed, while all eight rice presets remain available.
