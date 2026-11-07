@@ -11,7 +11,7 @@ use std::{
     collections::{HashMap, HashSet, VecDeque},
     io,
     path::PathBuf,
-    sync::mpsc::{self, Receiver, Sender, TrySendError},
+    sync::mpsc::{self, Receiver, Sender, TryRecvError, TrySendError},
     thread::{self, JoinHandle},
     time::{Duration, Instant},
 };
@@ -105,6 +105,17 @@ struct History {
     disk_read: VecDeque<f32>,
     disk_write: VecDeque<f32>,
     process_follow: Option<ProcessFollow>,
+    pss_inspection: Option<PssInspection>,
+}
+
+struct PssInspection {
+    target: (i32, u64),
+    state: PssState,
+}
+
+enum PssState {
+    Loading(Receiver<Result<crate::monitor::pss::TreePss, String>>),
+    Ready(Result<crate::monitor::pss::TreePss, String>),
 }
 
 /// Explicitly followed process only; avoids keeping an unbounded global PID
@@ -627,6 +638,22 @@ impl TaskottoApp {
                     self.snapshot = Some(snapshot);
                 }
                 Err(err) => self.notification = Some(format!("Monitoring error: {err}")),
+            }
+        }
+        if let Some(inspection) = &mut self.history.pss_inspection {
+            let result = if let PssState::Loading(rx) = &inspection.state {
+                match rx.try_recv() {
+                    Ok(result) => Some(result),
+                    Err(TryRecvError::Disconnected) => {
+                        Some(Err("PSS inspection worker exited unexpectedly".into()))
+                    }
+                    Err(TryRecvError::Empty) => None,
+                }
+            } else {
+                None
+            };
+            if let Some(result) = result {
+                inspection.state = PssState::Ready(result);
             }
         }
     }
@@ -1184,6 +1211,7 @@ impl TaskottoApp {
         ui.heading(&process.name);
         ui.label(RichText::new(&process.command).weak());
         self.process_follow_controls(ui);
+        self.pss_inspection_controls(ui);
         ui.add_space(8.0);
         egui::Grid::new("process-details")
             .num_columns(2)
@@ -1469,6 +1497,9 @@ impl TaskottoApp {
             self.process_follow_controls(ui);
             ui.label(RichText::new("Only a deliberately followed process is recorded. Its PID and start time must both match; samples are bounded to 120, and tracking stops after three missed samples. No file is written.").small().weak());
             ui.add_space(18.0);
+            preference_section(ui, "Proportional memory · on demand", xp);
+            self.pss_inspection_controls(ui);
+            ui.add_space(18.0);
             preference_section(ui, "Monitoring", xp);
             changed |= ui.add(egui::Slider::new(&mut self.settings.refresh_ms, 500..=10_000).text("Refresh interval (ms)")).changed();
             changed |= ui.checkbox(&mut self.settings.only_my_processes, "Show only my processes").changed();
@@ -1494,6 +1525,71 @@ impl TaskottoApp {
         });
         if changed {
             self.save_preferences(ui.ctx());
+        }
+    }
+
+    fn pss_inspection_controls(&mut self, ui: &mut egui::Ui) {
+        let selected = self.selected_process().map(|p| (p.pid, p.start_ticks));
+        let loading = self
+            .history
+            .pss_inspection
+            .as_ref()
+            .is_some_and(|inspection| matches!(inspection.state, PssState::Loading(_)));
+        if ui
+            .add_enabled(selected.is_some() && !loading, egui::Button::new("Measure PSS now"))
+            .on_hover_text("Read selected process and observed descendants from /proc/*/smaps_rollup on a background worker. No persistent sampling.")
+            .clicked()
+            && let (Some(target), Some(snapshot)) = (selected, self.snapshot.clone())
+        {
+            let (tx, rx) = mpsc::channel();
+            let ctx = ui.ctx().clone();
+            thread::spawn(move || {
+                let result = crate::monitor::pss::inspect_tree(&snapshot, target);
+                let _ = tx.send(result);
+                ctx.request_repaint();
+            });
+            self.history.pss_inspection = Some(PssInspection {
+                target,
+                state: PssState::Loading(rx),
+            });
+        }
+        let Some(inspection) = &self.history.pss_inspection else {
+            return;
+        };
+        if selected != Some(inspection.target) {
+            ui.label(
+                RichText::new(format!(
+                    "Last PSS inspection: PID {} (different from current selection)",
+                    inspection.target.0
+                ))
+                .small()
+                .weak(),
+            );
+        }
+        match &inspection.state {
+            PssState::Loading(_) => {
+                ui.spinner();
+                ui.label("Reading proportional memory asynchronously…");
+            }
+            PssState::Ready(Ok(report)) => {
+                if report.complete() {
+                    ui.label(format!(
+                        "Observed tree PSS: {} across {} processes",
+                        format::bytes(report.proportional_bytes),
+                        report.observed
+                    ));
+                } else {
+                    ui.label(format!("Incomplete PSS: {} from {} of {} observed processes; missing values unavailable (not zero)", format::bytes(report.proportional_bytes), report.readable, report.observed));
+                }
+                ui.label(RichText::new("PSS is each process's proportional share of its resident pages, not unique RAM owned by this tree. Memory maps may change during collection; permission restrictions and exiting PIDs can make results incomplete.").small().weak());
+            }
+            PssState::Ready(Err(error)) => {
+                ui.label(
+                    RichText::new(format!("PSS unavailable: {error}"))
+                        .small()
+                        .weak(),
+                );
+            }
         }
     }
 

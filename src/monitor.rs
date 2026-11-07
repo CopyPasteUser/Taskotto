@@ -1,5 +1,6 @@
 //! Unprivileged, on-demand Linux /proc sampler. No daemon and no shell commands.
 use serde::Serialize;
+pub(crate) mod pss;
 use std::{
     collections::{HashMap, HashSet},
     fs, io,

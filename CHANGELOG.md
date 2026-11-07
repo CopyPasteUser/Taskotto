@@ -2,6 +2,12 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## [1.0.0-rc.38] — 2026-11-07
+
+- Added one-shot asynchronous **PSS memory inspection** for the selected Linux process and at most 127 observed descendants using `/proc/PID/smaps_rollup`. Taskotto's usual fast sampler remains unaffected, with no daemon or root service. Accessible via generic Details or Preferences, including historical rices.
+- Rejects stale root identity and any tree above 128 observed processes before memory-map reads; revalidates each PID's start time around its own read. Missing privileges, unsupported kernels, disappearing processes or unreadable files yield an explicitly **incomplete** proportional-memory report instead of a bogus zero. Results reflect non-atomic procfs observations, not exclusively owned physical memory.
+- Added strict parser/overflow tests, actual-proc best-effort tests, stale-PID and size-cap tests. P3's privileged controls, compositor window grouping and native memory-accounting QA remain open.
+
 ## [1.0.0-rc.37] — 2026-11-07
 
 - Added explicit **Follow selected process** in generic Details and Preferences; at most one exact PID+start-time identity is tracked per open window, storing a maximum of 120 real CPU and RSS samples entirely in memory. No idle sampler, daemon, file write or extra permission is involved.
