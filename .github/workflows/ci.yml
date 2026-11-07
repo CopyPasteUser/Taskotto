@@ -30,7 +30,9 @@ jobs:
           test -x "$test_dir/home/.cargo/bin/taskotto"
           test -s "$test_dir/user-data/applications/io.github.copypasteuser.taskotto.desktop"
           test -s "$test_dir/user-data/icons/hicolor/scalable/apps/io.github.copypasteuser.taskotto.svg"
+          test -s "$test_dir/user-data/icons/hicolor/256x256/apps/io.github.copypasteuser.taskotto.png"
           grep -Fq "$test_dir/home/.cargo/bin/taskotto" "$test_dir/user-data/applications/io.github.copypasteuser.taskotto.desktop"
+          grep -Fqx "Icon=$test_dir/user-data/icons/hicolor/256x256/apps/io.github.copypasteuser.taskotto.png" "$test_dir/user-data/applications/io.github.copypasteuser.taskotto.desktop"
       - run: ./target/release/taskotto --snapshot
       - run: ./target/release/taskotto --snapshot --json | jq -e '.logical_cpus > 0 and .memory.total > 0'
       - run: RUSTDOCFLAGS='-D warnings' cargo doc --locked --no-deps
