@@ -44,13 +44,25 @@ enum PerformanceFocus {
 enum Command {
     Refresh,
     SetPeriod(u64),
+    SetMinimized(bool),
     Shutdown,
+}
+
+/// Background windows do not need the same system-wide /proc scan cadence.
+/// Keep the user-selected interval intact so restoring is immediate.
+fn sampler_period(base_ms: u64, minimized: bool) -> u64 {
+    if minimized {
+        base_ms.max(5_000)
+    } else {
+        base_ms
+    }
 }
 
 struct Worker {
     commands: Sender<Command>,
     snapshots: Receiver<io::Result<Snapshot>>,
     thread: Option<JoinHandle<()>>,
+    minimized: bool,
 }
 
 impl Worker {
@@ -62,6 +74,7 @@ impl Worker {
         let thread = thread::spawn(move || {
             let mut monitor = Monitor::default();
             let mut interval = interval;
+            let mut minimized = false;
             loop {
                 let result = monitor.sample();
                 match tx.try_send(result) {
@@ -70,9 +83,12 @@ impl Worker {
                     Err(TrySendError::Disconnected(_)) => break,
                 }
                 loop {
-                    match rx.recv_timeout(Duration::from_millis(interval)) {
+                    match rx
+                        .recv_timeout(Duration::from_millis(sampler_period(interval, minimized)))
+                    {
                         Ok(Command::Refresh) | Err(mpsc::RecvTimeoutError::Timeout) => break,
                         Ok(Command::SetPeriod(ms)) => interval = ms,
+                        Ok(Command::SetMinimized(value)) => minimized = value,
                         Ok(Command::Shutdown) | Err(mpsc::RecvTimeoutError::Disconnected) => return,
                     }
                 }
@@ -82,6 +98,7 @@ impl Worker {
             commands,
             snapshots,
             thread: Some(thread),
+            minimized: false,
         }
     }
 }
@@ -2627,6 +2644,14 @@ impl TaskottoApp {
 
 impl eframe::App for TaskottoApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // Some platforms report None; keep normal sampling if the window
+        // manager cannot provide reliable minimized state.
+        if let Some(minimized) = ctx.input(|input| input.viewport().minimized)
+            && self.worker.minimized != minimized
+        {
+            self.worker.minimized = minimized;
+            let _ = self.worker.commands.send(Command::SetMinimized(minimized));
+        }
         self.accept_snapshots();
         self.maybe_reload_ricepack(ctx);
         ctx.input(|input| {
@@ -2958,6 +2983,16 @@ mod rices;
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn minimized_sampling_throttles_without_changing_user_interval() {
+        assert_eq!(sampler_period(500, false), 500);
+        assert_eq!(sampler_period(1_500, false), 1_500);
+        assert_eq!(sampler_period(500, true), 5_000);
+        assert_eq!(sampler_period(3_000, true), 5_000);
+        assert_eq!(sampler_period(10_000, true), 10_000);
+        assert_eq!(sampler_period(1_500, false), 1_500);
+    }
 
     fn dark_component_tokens() -> crate::config::ComponentColors {
         crate::config::ComponentColors {
