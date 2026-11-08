@@ -169,9 +169,33 @@ struct ProcessCounters {
     written: u64,
 }
 
+/// Process identity and relatively stable metadata. `/proc/PID/stat` and
+/// `/proc/PID/io` remain live on every sample; only status and command-line
+/// reads are amortized across sampler ticks.
+struct ProcessMetadata {
+    start_ticks: u64,
+    name: String,
+    user_id: u32,
+    cpus_allowed_list: Option<String>,
+    command: String,
+    refreshed_at: Instant,
+    seen_at: Instant,
+}
+
+impl ProcessMetadata {
+    const MAX_AGE: Duration = Duration::from_secs(5);
+
+    fn valid_for(&self, process: &Process, now: Instant) -> bool {
+        self.start_ticks == process.start_ticks
+            && self.name == process.name
+            && now.saturating_duration_since(self.refreshed_at) < Self::MAX_AGE
+    }
+}
+
 #[derive(Default)]
 pub struct Monitor {
     previous: Option<Sample>,
+    metadata: HashMap<i32, ProcessMetadata>,
 }
 
 impl Monitor {
@@ -182,7 +206,7 @@ impl Monitor {
         let uptime_seconds = read_uptime().unwrap_or_default();
         let io = read_io();
         let page_size = unsafe { libc::sysconf(libc::_SC_PAGESIZE) }.max(4096) as u64;
-        let mut processes = read_processes(page_size)?;
+        let mut processes = read_processes(page_size, at, &mut self.metadata)?;
         let ticks_per_second = unsafe { libc::sysconf(libc::_SC_CLK_TCK) }.max(1) as u64;
         let unix_now = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
@@ -411,37 +435,71 @@ fn read_io() -> IoTotals {
     totals
 }
 
-fn read_processes(page_size: u64) -> io::Result<Vec<Process>> {
+fn read_processes(
+    page_size: u64,
+    at: Instant,
+    metadata: &mut HashMap<i32, ProcessMetadata>,
+) -> io::Result<Vec<Process>> {
     let entries = fs::read_dir("/proc")?;
-    Ok(entries
+    let processes = entries
         .flatten()
         .filter_map(|entry| entry.file_name().to_string_lossy().parse::<i32>().ok())
-        .filter_map(|pid| read_process(pid, page_size).ok())
-        .collect())
+        .filter_map(|pid| read_process(pid, page_size, at, metadata).ok())
+        .collect();
+    // A PID that disappeared must not keep its metadata indefinitely. A
+    // replacement process with the same PID is also checked by start_ticks.
+    metadata.retain(|_, cached| cached.seen_at == at);
+    Ok(processes)
 }
 
-fn read_process(pid: i32, page_size: u64) -> io::Result<Process> {
+fn read_process(
+    pid: i32,
+    page_size: u64,
+    at: Instant,
+    metadata: &mut HashMap<i32, ProcessMetadata>,
+) -> io::Result<Process> {
     let directory = Path::new("/proc").join(pid.to_string());
     let stat = fs::read_to_string(directory.join("stat"))?;
     let mut process = parse_process_stat(pid, &stat, page_size)?;
-    let status = fs::read_to_string(directory.join("status")).unwrap_or_default();
-    process.user_id = status
-        .lines()
-        .find_map(|line| line.strip_prefix("Uid:"))
-        .and_then(|s| s.split_whitespace().next())
-        .and_then(|s| s.parse().ok())
-        .unwrap_or(u32::MAX);
-    process.cpus_allowed_list = allowed_cpus(&status);
-    if let Ok(command) = fs::read(directory.join("cmdline")) {
-        let display = command
-            .split(|byte| *byte == 0)
-            .filter(|part| !part.is_empty())
-            .map(String::from_utf8_lossy)
-            .collect::<Vec<_>>()
-            .join(" ");
-        if !display.is_empty() {
-            process.command = display;
+    if let Some(cached) = metadata.get_mut(&pid)
+        && cached.valid_for(&process, at)
+    {
+        process.user_id = cached.user_id;
+        process.cpus_allowed_list = cached.cpus_allowed_list.clone();
+        process.command.clone_from(&cached.command);
+        cached.seen_at = at;
+    } else {
+        let status = fs::read_to_string(directory.join("status")).unwrap_or_default();
+        process.user_id = status
+            .lines()
+            .find_map(|line| line.strip_prefix("Uid:"))
+            .and_then(|s| s.split_whitespace().next())
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(u32::MAX);
+        process.cpus_allowed_list = allowed_cpus(&status);
+        if let Ok(command) = fs::read(directory.join("cmdline")) {
+            let display = command
+                .split(|byte| *byte == 0)
+                .filter(|part| !part.is_empty())
+                .map(String::from_utf8_lossy)
+                .collect::<Vec<_>>()
+                .join(" ");
+            if !display.is_empty() {
+                process.command = display;
+            }
         }
+        metadata.insert(
+            pid,
+            ProcessMetadata {
+                start_ticks: process.start_ticks,
+                name: process.name.clone(),
+                user_id: process.user_id,
+                cpus_allowed_list: process.cpus_allowed_list.clone(),
+                command: process.command.clone(),
+                refreshed_at: at,
+                seen_at: at,
+            },
+        );
     }
     if let Ok(io) = fs::read_to_string(directory.join("io")) {
         process.io_accessible = true;
@@ -616,6 +674,60 @@ mod tests {
             .unwrap();
         assert!((-20..=19).contains(&own.nice));
         assert!(own.cpus_allowed_list.is_some());
+    }
+
+    #[test]
+    fn metadata_cache_checks_identity_name_and_freshness() {
+        let now = Instant::now();
+        let cached = ProcessMetadata {
+            start_ticks: 77,
+            name: "original".into(),
+            user_id: 1000,
+            cpus_allowed_list: Some("0-3".into()),
+            command: "original --flag".into(),
+            refreshed_at: now,
+            seen_at: now,
+        };
+        let mut process = Process {
+            pid: 123,
+            start_ticks: 77,
+            name: "original".into(),
+            ..Process::default()
+        };
+        assert!(cached.valid_for(&process, now + Duration::from_secs(4)));
+        assert!(!cached.valid_for(&process, now + ProcessMetadata::MAX_AGE));
+        process.start_ticks += 1; // PID reuse must not reuse metadata.
+        assert!(!cached.valid_for(&process, now));
+        process.start_ticks = 77;
+        process.name = "exec-replacement".into(); // Same PID, exec'd program.
+        assert!(!cached.valid_for(&process, now));
+    }
+
+    #[test]
+    fn live_proc_metadata_is_reused_and_refreshed() {
+        let mut monitor = Monitor::default();
+        let pid = std::process::id() as i32;
+        let initial = monitor.sample().unwrap();
+        let process = initial.processes.iter().find(|p| p.pid == pid).unwrap();
+        let cached_at = monitor.metadata.get(&pid).unwrap().refreshed_at;
+        let updated = monitor.sample().unwrap();
+        let next = updated.processes.iter().find(|p| p.pid == pid).unwrap();
+        assert_eq!(process.user_id, next.user_id);
+        assert_eq!(process.command, next.command);
+        assert_eq!(monitor.metadata.get(&pid).unwrap().refreshed_at, cached_at);
+
+        // Expiration triggers a fresh read, while the PID identity stays valid.
+        monitor.metadata.get_mut(&pid).unwrap().refreshed_at = cached_at - ProcessMetadata::MAX_AGE;
+        monitor.sample().unwrap();
+        assert!(monitor.metadata.get(&pid).unwrap().refreshed_at > cached_at);
+
+        // A cached PID with another lifetime must be invalidated immediately.
+        monitor.metadata.get_mut(&pid).unwrap().start_ticks = 0;
+        monitor.sample().unwrap();
+        assert_eq!(
+            monitor.metadata.get(&pid).unwrap().start_ticks,
+            process.start_ticks
+        );
     }
 
     #[test]

@@ -2,6 +2,12 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
+## Unreleased — 2026-11-08
+
+- Lowered `/proc` polling work by caching stable per-process status/command metadata for at most five seconds, invalidated on PID lifetime or process-name change and pruned when a PID disappears. Live CPU/RSS/I/O counters and all process actions remain unaffected; mutable metadata can be displayed with a bounded five-second delay.
+- Automatically reduce sampling frequency while the GUI is minimized (minimum five seconds), then restore the configured interval upon unminimizing. The existing low-overhead setting and on-demand rendering remain intact.
+- Added metadata lifecycle, minimized-cadence and optional sampler CPU benchmark coverage; recorded measured limitations in `PERFORMANCE.md`. Actual Mint/X11 CPU and RAM improvements still require hardware verification.
+
 ## [1.0.0-rc.56] — 2026-11-07
 
 - Added opt-in **per-user startup RicePack** from Preferences → RicePack library: a validated absolute `.toml` path is persisted independently of session-only appearance overrides, and can be cleared with one click. This makes user-authored P2 dashboards reusable after restart without a resident service or executable RicePack content.
