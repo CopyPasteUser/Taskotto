@@ -216,6 +216,15 @@ To supply a versioned Taskotto design, set `RICEBOWL_TASKOTTO_RICEPACK=/absolute
 
 RiceBowl can export a compatible, validated Taskotto RicePack directly from its desktop recipe: `ricebowl de taskotto-export --recipe classic --output /absolute/path/taskotto-rice.toml`. Then run `taskotto --ricepack /absolute/path/taskotto-rice.toml`. The [cross-repository v1 fixture](tests/fixtures/ricebowl-classic-v1.toml) is tested by Taskotto's parser and CLI; this bridge is explicitly opt-in and does not make RiceBowl a dependency.
 
+In the optional **RiceBowl RiceProfile v1 Wayland session**, RiceBowl discovers
+compatible Taskotto versions by validating its generated RicePack with
+`taskotto --check-ricepack PATH`. It sets `RICEBOWL_TASKOTTO_RICEPACK` only for
+accepted versions; Taskotto then uses its existing live RicePack watcher to
+follow a reviewed session rice change (normally within two seconds). An
+explicit `--ricepack` always wins. No persistent Taskotto settings, service,
+system default or desktop integration is overwritten. If Taskotto is absent or
+incompatible, RiceBowl leaves it unmanaged; Taskotto still runs standalone.
+
 ### Custom design tokens
 
 The Preferences page offers color, typography, density, spacing, corner and navigation controls. RiceBowl or another theme generator can also write these settings as TOML (other preferences can be omitted):
