@@ -92,7 +92,7 @@ jobs:
         run: |
           sha256sum -c "taskotto-${RELEASE_TAG}-SHA256SUMS.txt"
           test_dir=$(mktemp -d)
-          tar -xzf "taskotto-${GITHUB_REF_NAME}-linux-x86_64.tar.gz" -C "$test_dir"
+          tar -xzf "taskotto-${RELEASE_TAG}-linux-x86_64.tar.gz" -C "$test_dir"
           "$test_dir/taskotto/taskotto" --version | grep -Fx "Taskotto ${RELEASE_TAG#v}"
           "$test_dir/taskotto/taskotto" --snapshot --json | jq -e '.logical_cpus > 0 and .memory.total > 0'
           HOME="$test_dir/home" CARGO_HOME="$test_dir/home/.cargo" XDG_DATA_HOME="$test_dir/user-data" bash "$test_dir/taskotto/install.sh"
