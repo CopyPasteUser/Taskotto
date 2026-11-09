@@ -24,7 +24,7 @@ A standalone **Rust** process manager and system monitor for X11 and Wayland, wi
 - **Seven built-in styles + custom layouts:** RicePack TOML themes, screen designer and live appearance reload without a desktop-shell dependency.
 - **Lightweight operation:** adjustable sampling, optional low-overhead mode, no root service or resident daemon; headless JSON snapshots are supported.
 
-**Status:** `1.0.0-rc.56` — not a stable 1.0 release. Native GUI and hardware/resource-use acceptance are pending. Window borders and title buttons remain the responsibility of the window manager.
+**Status:** `1.0.0` — first stable release, approved by the project owner after several days of everyday use (9 November 2026). The original cross-desktop test matrix and quantified GUI performance benchmarks were not individually submitted, so they remain documented follow-up checks. Window borders and title buttons remain the responsibility of the window manager.
 
 ## Install and run
 
@@ -61,4 +61,4 @@ cargo clippy --locked --all-targets -- -D warnings
 cargo test --locked --all-targets
 ```
 
-[Complete screenshot gallery](SCREENSHOT_GALLERY.md) · [Capture provenance](SCREENSHOTS.md) · [Design fidelity](RICE_FIDELITY.md) · [Performance tests](PERFORMANCE.md) · [QA checklist](QA.md) · [Release notes](RELEASE_NOTES.md) · [Changelog](CHANGELOG.md) · [MIT License](LICENSE)
+[Complete screenshot gallery](SCREENSHOT_GALLERY.md) · [Capture provenance](SCREENSHOTS.md) · [Design fidelity](RICE_FIDELITY.md) · [Performance tests](PERFORMANCE.md) · [QA checklist](QA.md) · [1.0 release notes](RELEASE_1_0_0.md) · [Changelog](CHANGELOG.md) · [MIT License](LICENSE)

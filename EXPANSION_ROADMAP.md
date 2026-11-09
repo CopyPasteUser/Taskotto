@@ -5,9 +5,10 @@ RiceBowl is an optional theme/launcher integration, never a mandatory runtime
 dependency. The goal is a genuine system monitor whose UI can be generated
 and remixed through versioned, safe RicePacks.
 
-This plan extends [the 1.0 release gates](ROADMAP.md), rather than silently
-considering them complete. Release numbering beyond the current RC is a plan,
-not a promise or schedule.
+This plan extends [the original 1.0 release gates](ROADMAP.md). The project
+owner approved the stable functional 1.0 on 2026-11-09 after several days of
+use, while the detailed multi-desktop and performance test matrix remains
+unsubmitted and explicitly open. Future work is not silently considered done.
 
 ## Non-negotiable quality gates
 
@@ -301,5 +302,6 @@ lean, offline-capable and independent from RiceBowl.
 4. **Throughout:** P0 physical-device acceptance and P8 measured resource
    costs, packaging recovery and stability gates.
 
-The stable 1.0 release remains gated by physical desktop verification, even
-when implementation work on the future feature track continues.
+The owner-approved first stable 1.0 does not imply all hardware-specific
+P0/P8 evidence was collected. Physical-desktop validation remains an explicit
+follow-up, alongside the independent future feature tracks.

@@ -3,14 +3,56 @@ name: Linux release
 on:
   push:
     tags: ['v1.*']
+    # Bootstrap v1.0.0 from a reviewed main merge. GITHUB_TOKEN tag pushes do
+    # not trigger a second Actions workflow, so this job publishes directly.
+    branches: [main]
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
+  preflight:
+    runs-on: ubuntu-24.04
+    outputs:
+      publish: ${{ steps.target.outputs.publish }}
+      tag: ${{ steps.target.outputs.tag }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Select release target
+        id: target
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(sed -n '/^\[package\]/,/^\[/s/^version = "\([^"]*\)"/\1/p' Cargo.toml | head -n 1)
+          test -n "$version"
+          tag="v${version}"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            test "$GITHUB_REF_NAME" = "$tag"
+          elif [[ "$GITHUB_REF" == 'refs/heads/main' && "$version" == '1.0.0' ]]; then
+            # The branch-triggered bootstrap is intentionally only for 1.0.0;
+            # all subsequent versions keep the existing explicit tag workflow.
+            if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+              echo 'Stable 1.0.0 release already exists; no new publication.'
+              echo 'publish=false' >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          else
+            echo 'publish=false' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo 'publish=true' >> "$GITHUB_OUTPUT"
+
   package:
+    needs: preflight
+    if: needs.preflight.outputs.publish == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 45
+    permissions:
+      contents: write
+    env:
+      RELEASE_TAG: ${{ needs.preflight.outputs.tag }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
@@ -20,7 +62,7 @@ jobs:
       - name: Verify tag matches Cargo version
         run: |
           version=$(cargo metadata --locked --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "taskotto") | .version')
-          test "v${version}" = "$GITHUB_REF_NAME"
+          test "v${version}" = "$RELEASE_TAG"
       - run: cargo fmt --all -- --check
       - run: cargo clippy --locked --all-targets -- -D warnings
       - run: cargo test --locked --all-targets
@@ -33,25 +75,25 @@ jobs:
           install -Dm644 packaging/io.github.copypasteuser.taskotto.desktop dist/taskotto/io.github.copypasteuser.taskotto.desktop
           install -Dm644 assets/io.github.copypasteuser.taskotto.svg dist/taskotto/io.github.copypasteuser.taskotto.svg
           install -Dm644 assets/io.github.copypasteuser.taskotto.png dist/taskotto/io.github.copypasteuser.taskotto.png
-          install -Dm644 README.md LICENSE QA.md RELEASE_NOTES.md CHANGELOG.md SECURITY.md dist/taskotto/
+          install -Dm644 README.md LICENSE QA.md ACCEPTANCE_1_0.md PERFORMANCE.md RELEASE_NOTES.md RELEASE_1_0_0.md CHANGELOG.md SECURITY.md dist/taskotto/
           # Stable ordering, ownership and timestamps for repeatable archive metadata.
           source_date_epoch=$(git log -1 --format=%ct)
           tar --sort=name --mtime="@${source_date_epoch}" \
             --owner=0 --group=0 --numeric-owner -C dist -cf - taskotto \
-            | gzip -n > "taskotto-${GITHUB_REF_NAME}-linux-x86_64.tar.gz"
-          sha256sum "taskotto-${GITHUB_REF_NAME}-linux-x86_64.tar.gz" > "taskotto-${GITHUB_REF_NAME}-SHA256SUMS.txt"
+            | gzip -n > "taskotto-${RELEASE_TAG}-linux-x86_64.tar.gz"
+          sha256sum "taskotto-${RELEASE_TAG}-linux-x86_64.tar.gz" > "taskotto-${RELEASE_TAG}-SHA256SUMS.txt"
           # Recreate the archive from the same release build and assert the
           # package bytes (order, ownership, timestamps, gzip headers) match.
           tar --sort=name --mtime="@${source_date_epoch}" \
             --owner=0 --group=0 --numeric-owner -C dist -cf - taskotto \
-            | gzip -n > "taskotto-${GITHUB_REF_NAME}-repeat.tar.gz"
-          cmp "taskotto-${GITHUB_REF_NAME}-linux-x86_64.tar.gz" "taskotto-${GITHUB_REF_NAME}-repeat.tar.gz"
+            | gzip -n > "taskotto-${RELEASE_TAG}-repeat.tar.gz"
+          cmp "taskotto-${RELEASE_TAG}-linux-x86_64.tar.gz" "taskotto-${RELEASE_TAG}-repeat.tar.gz"
       - name: Smoke-test release archive and user-local installation
         run: |
-          sha256sum -c "taskotto-${GITHUB_REF_NAME}-SHA256SUMS.txt"
+          sha256sum -c "taskotto-${RELEASE_TAG}-SHA256SUMS.txt"
           test_dir=$(mktemp -d)
           tar -xzf "taskotto-${GITHUB_REF_NAME}-linux-x86_64.tar.gz" -C "$test_dir"
-          "$test_dir/taskotto/taskotto" --version | grep -Fx "Taskotto ${GITHUB_REF_NAME#v}"
+          "$test_dir/taskotto/taskotto" --version | grep -Fx "Taskotto ${RELEASE_TAG#v}"
           "$test_dir/taskotto/taskotto" --snapshot --json | jq -e '.logical_cpus > 0 and .memory.total > 0'
           HOME="$test_dir/home" CARGO_HOME="$test_dir/home/.cargo" XDG_DATA_HOME="$test_dir/user-data" bash "$test_dir/taskotto/install.sh"
           test -x "$test_dir/home/.cargo/bin/taskotto"
@@ -64,13 +106,31 @@ jobs:
           test ! -e "$test_dir/user-data/applications/io.github.copypasteuser.taskotto.desktop"
           test ! -e "$test_dir/user-data/icons/hicolor/scalable/apps/io.github.copypasteuser.taskotto.svg"
           test ! -e "$test_dir/user-data/icons/hicolor/256x256/apps/io.github.copypasteuser.taskotto.png"
+      - name: Create stable 1.0.0 tag after all checks
+        if: github.ref == 'refs/heads/main'
+        run: |
+          # Re-running after a partial publication must never move a tag.
+          if git ls-remote --exit-code --tags origin "refs/tags/$RELEASE_TAG" >/dev/null; then
+            git fetch origin "refs/tags/$RELEASE_TAG:refs/tags/$RELEASE_TAG"
+            test "$(git rev-list -n 1 "$RELEASE_TAG")" = "$GITHUB_SHA"
+          else
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git tag -a "$RELEASE_TAG" -m 'Taskotto 1.0.0 — owner-approved stable release'
+            git push origin "refs/tags/$RELEASE_TAG"
+          fi
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           flags=()
-          if [[ "$GITHUB_REF_NAME" == *-rc.* ]]; then flags+=(--prerelease); fi
-          gh release create "$GITHUB_REF_NAME" \
-            "taskotto-${GITHUB_REF_NAME}-linux-x86_64.tar.gz" \
-            "taskotto-${GITHUB_REF_NAME}-SHA256SUMS.txt" \
-            --verify-tag --generate-notes "${flags[@]}"
+          if [[ "$RELEASE_TAG" == *-rc.* ]]; then flags+=(--prerelease); fi
+          if [[ "$RELEASE_TAG" == 'v1.0.0' ]]; then
+            flags+=(--notes-file RELEASE_1_0_0.md)
+          else
+            flags+=(--generate-notes)
+          fi
+          gh release create "$RELEASE_TAG" \
+            "taskotto-${RELEASE_TAG}-linux-x86_64.tar.gz" \
+            "taskotto-${RELEASE_TAG}-SHA256SUMS.txt" \
+            --verify-tag "${flags[@]}"

@@ -1,4 +1,21 @@
-# Taskotto 1.0.0-rc.56 — release candidate
+# Taskotto release notes
+
+## 1.0.0 — 9 November 2026 (stable)
+
+The project owner authorized the official stable 1.0 release after several days
+of real-world usage. The release includes the RC56 personal dashboard foundation,
+subsequent native desktop launcher/icon fixes, documented RiceProfile v1
+session compatibility and reduced sampling overhead (with bounded process-metadata cache
+and a slower minimized-window polling cadence).
+
+This is the first stable **functional** release, not a certified pixel-exact
+replica of proprietary operating systems. A detailed Mint/X11, KDE/Wayland and
+RiceBowl/labwc results matrix, quantified GUI RSS/CPU/startup measurements and
+vendor-specific GPU confirmation were not provided with the owner's approval;
+they remain explicitly open in `ACCEPTANCE_1_0.md` and `PERFORMANCE.md`.
+
+See [the concise release announcement](RELEASE_1_0_0.md) and the historical RC
+notes below.
 
 ## RC56 — Opt-in reusable personal dashboards
 

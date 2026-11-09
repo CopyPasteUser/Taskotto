@@ -1,9 +1,10 @@
 # Taskotto 1.0 — owner hardware sign-off
 
-The implementation and automated CI are **not** equivalent to a stable 1.0
-approval. Use this short pass/fail sheet on actual Linux desktops. For detailed
-edge cases and comparisons see [QA.md](QA.md). Record failures as reproducible
-issues; do not sign off until P0/P1 defects are fixed and retested.
+**Owner release decision (2026-11-09): approved.** The owner reported several
+days of real use and explicitly authorized an official 1.0.0 release. This is
+an overall product sign-off, **not** a claim that every check below was run or
+that missing measurements may be inferred. Keep the unsubmitted per-desktop
+evidence open as post-release validation. For full edge cases see [QA.md](QA.md).
 
 ## Prepare each machine
 
@@ -72,7 +73,8 @@ than checking off a test you did not run.
 | Fedora KDE / Wayland | TBD | TBD | TBD | TBD |
 | RiceBowl / labwc | TBD | TBD | TBD | TBD |
 
-**Owner sign-off:** name/date TBD. **Release engineer:** verify sign-off,
-address all release-blocking defects, update actual measurements and limitations
-in release notes, then bump to `1.0.0` and publish the stable tag. Until that
-sequence is complete, the repository remains a release candidate.
+**Owner sign-off:** CopyPasteUser, 2026-11-09, reported multi-day use and gave
+explicit permission to publish 1.0.0. **Detailed environment measurements:**
+not supplied; rows above intentionally remain `TBD`. New critical issues are
+handled through regular stable-release maintenance rather than hidden by this
+approval.

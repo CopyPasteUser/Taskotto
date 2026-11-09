@@ -1,5 +1,12 @@
 # Taskotto — Roadmap to 1.0
 
+**Stable release decision (9 November 2026):** the project owner explicitly
+approved version 1.0.0 after several days of real use. The original exhaustive
+cross-desktop acceptance matrix and measured GUI resource baseline were not
+individually submitted. Their unchecked items below remain transparent
+**post-release verification**, not evidence that these tests passed. See
+[owner sign-off](ACCEPTANCE_1_0.md) and [release notes](RELEASE_1_0_0.md).
+
 For the post-foundation feature tracks (RicePacks, advanced process controls,
 GPU, cgroups, diagnosis, dashboards and performance), see
 [the expansion roadmap](EXPANSION_ROADMAP.md). Its implementation can progress
@@ -132,22 +139,28 @@ Taskotto is a **standalone, on-demand Rust system monitor and process manager** 
 
 ## 1.0 — Stable release
 
-- [ ] Complete the hardware acceptance checklist on representative desktops.
-- [ ] Record reference performance and limitations in release notes.
-- [ ] Create a signed-off GitHub 1.0.0 tag/release with a reproducible Linux build.
-- [ ] Mark 1.0 only after all required gates pass.
+- [x] Receive explicit owner approval after multiple days of real use.
+- [x] Document unsubmitted cross-desktop evidence, GUI-performance numbers and
+  other limitations accurately rather than claim they passed.
+- [x] Prepare a reviewed 1.0.0 commit, version-locked release archive,
+  integrity checks and the automated stable tag/GitHub release publication.
+- [ ] Verify final GitHub Release and assets after the workflow completes.
+- [ ] Collect the full optional hardware benchmark/reference matrix for future
+  maintenance and performance comparisons.
 
 ### After 1.0 (not blockers)
 
 Optional per-GPU utilization (driver-specific), container/cgroup view, separate process inspector and more RiceBowl-specific window chrome. These must not burden the baseline runtime.
 
-## Remaining 1.0 release gate
+## Original release-gate checks retained for post-release evidence
 
 1. **Automated:** exact RC commit passes formatting, Clippy, tests, release build, headless JSON and process-signal integration checks in CI.
 2. **GUI:** launch, resize, navigate, persist profiles and signal disposable processes on Mint/X11, KDE/Wayland and labwc/Wayland.
 3. **Efficiency:** measure three GUI runs of RSS, idle CPU and startup at 500/1500/10000 ms; record kernel, system load and hardware.
 4. **Packaging:** verify installed `.desktop` entry and release binary on representative sessions.
-5. **Stable:** only after these gates pass, bump to `1.0.0` and create the stable release; until then maintain an accurately labelled prerelease.
+5. **Release decision:** the owner accepted first stable 1.0 following multi-day
+   use without supplying detailed measurements for each environment. The
+   outstanding checks remain open for later regression/performance reports.
 
 ### Why this architecture?
 

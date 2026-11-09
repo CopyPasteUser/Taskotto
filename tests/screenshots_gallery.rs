@@ -1,16 +1,19 @@
-//! Keep the expandable README gallery and real egui capture files in sync.
+//! Keep the README-linked gallery and real egui capture files in sync.
 use std::{collections::HashSet, fs::File, io::BufReader, path::Path};
 
 #[test]
-fn readme_all_screenshots_gallery_contains_every_capture() {
+fn readme_linked_screenshots_gallery_contains_every_capture() {
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
     let readme = include_str!("../README.md");
-    let (_, tail) = readme
-        .split_once("<summary><strong>All screenshots (52)</strong>")
-        .expect("README should expose a discoverable All screenshots section");
-    let (gallery, _) = tail
-        .split_once("</details>")
-        .expect("All screenshots section must be closed");
+    assert!(
+        readme.contains("](SCREENSHOT_GALLERY.md)"),
+        "README must link the complete screenshot gallery"
+    );
+    let gallery = include_str!("../SCREENSHOT_GALLERY.md");
+    assert!(
+        gallery.contains("52 headless screenshots"),
+        "gallery must describe the exact number of captured screens"
+    );
     let files = std::fs::read_dir(root.join("assets/screenshots"))
         .expect("screenshots directory exists")
         .map(|entry| entry.expect("valid directory entry").file_name())
@@ -26,7 +29,7 @@ fn readme_all_screenshots_gallery_contains_every_capture() {
         let clickable_preview = format!("]({path})]({path})");
         assert!(
             gallery.contains(&clickable_preview),
-            "{path} must have a clickable preview inside All screenshots"
+            "{path} must have a clickable preview in SCREENSHOT_GALLERY.md"
         );
         // Historical images vary with the live /proc workload, so exact
         // pixel hashes would be unstable. Check every committed raster is a
