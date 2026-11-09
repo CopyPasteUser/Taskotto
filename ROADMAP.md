@@ -144,7 +144,10 @@ Taskotto is a **standalone, on-demand Rust system monitor and process manager** 
   other limitations accurately rather than claim they passed.
 - [x] Prepare a reviewed 1.0.0 commit, version-locked release archive,
   integrity checks and the automated stable tag/GitHub release publication.
-- [ ] Verify final GitHub Release and assets after the workflow completes.
+- [x] Verify stable GitHub tag `v1.0.0` points to the exact tested commit,
+  successful Linux release workflow, attached x86_64 archive and SHA256
+  checksums ([release](https://github.com/CopyPasteUser/Taskotto/releases/tag/v1.0.0),
+  [Actions run](https://github.com/CopyPasteUser/Taskotto/actions/runs/42635269881)).
 - [ ] Collect the full optional hardware benchmark/reference matrix for future
   maintenance and performance comparisons.
 
