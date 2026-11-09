@@ -6,7 +6,7 @@
 
 A standalone **Rust** process manager and system monitor for X11 and Wayland, with seven OS-inspired interfaces and custom RicePacks. Optionally integrates with [RiceBowl](https://github.com/CopyPasteUser/Ricebowl).
 
-[Gallery](SCREENSHOT_GALLERY.md) · [1.0 roadmap](ROADMAP.md) · [Hardware QA](ACCEPTANCE_1_0.md) · [RicePack format](RICEPACK_FORMAT.md)
+[Download v1.0.0](https://github.com/CopyPasteUser/Taskotto/releases/tag/v1.0.0) · [Gallery](SCREENSHOT_GALLERY.md) · [1.0 roadmap](ROADMAP.md) · [Hardware QA](ACCEPTANCE_1_0.md) · [RicePack format](RICEPACK_FORMAT.md)
 
 </div>
 
