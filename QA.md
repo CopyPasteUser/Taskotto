@@ -1,6 +1,13 @@
 # Taskotto QA — real hardware acceptance
 
-Run this checklist before a stable 1.0 tag. Record distro, kernel, display server, compositor, CPU, and actual measurements. A green CI run is not a substitute for this list.
+**Release note (2026-11-09):** the owner approved stable 1.0 after several days
+of use. No detailed environment-by-environment results or measured GUI resource
+baseline were submitted, so unchecked items here are still unverified and
+should be completed during post-release regression work.
+
+When running the remaining checks, record distro, kernel, display server,
+compositor, CPU and actual measurements. A green CI run is not a substitute
+for these hardware observations.
 
 ## Automated checks (no desktop session needed)
 

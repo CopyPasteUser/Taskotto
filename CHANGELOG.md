@@ -2,7 +2,10 @@
 
 Taskotto follows semantic versioning; hardware-dependent stable-release gates are explicit.
 
-## Unreleased — 2026-11-08
+## [1.0.0] — 2026-11-09
+
+- Published the first stable Taskotto release after the project owner approved it following several days of real-world use. This approval does not constitute a completed per-desktop test matrix or measured GUI resource baseline; the outstanding evidence is tracked in `ACCEPTANCE_1_0.md` and `PERFORMANCE.md`.
+- Documents the existing RiceProfile v1 session selection contract and includes user-local desktop launcher/icon installation fixes delivered after RC56, plus the following sampler improvements.
 
 - Lowered `/proc` polling work by caching stable per-process status/command metadata for at most five seconds, invalidated on PID lifetime or process-name change and pruned when a PID disappears. Live CPU/RSS/I/O counters and all process actions remain unaffected; mutable metadata can be displayed with a bounded five-second delay.
 - Automatically reduce sampling frequency while the GUI is minimized (minimum five seconds), then restore the configured interval upon unminimizing. The existing low-overhead setting and on-demand rendering remain intact.

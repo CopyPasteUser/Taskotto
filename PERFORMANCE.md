@@ -32,6 +32,6 @@ for run in 1 2 3; do
 done
 ```
 
-## Required GUI baseline before stable 1.0
+## GUI benchmark follow-up after owner-approved 1.0
 
-No graphical session was available in the development environment. Startup, idle CPU, peak/steady RSS, process-list scaling and extended soak behavior are **unverified** on real desktop hardware. Record three reproducible GUI runs per machine at 500, 1500 and 10000 ms sampling intervals, plus kernel, load, compositor and RAM. Use [QA.md](QA.md) for test steps; do not replace that acceptance with the headless numbers above.
+No graphical session was available in the original development environment. The owner approved stable 1.0 on 2026-11-09 following several days of use, but detailed startup, idle CPU, peak/steady RSS, process-list scaling and extended soak measurements were **not submitted**. Record three reproducible GUI runs per machine at 500, 1500 and 10000 ms sampling intervals, plus kernel, load, compositor and RAM. Use [QA.md](QA.md) for test steps; do not replace that evidence with the headless numbers above.
