@@ -272,24 +272,29 @@ impl Monitor {
         } else {
             Rates::default()
         };
+        // Recycle the per-PID counter table rather than allocating and hashing
+        // a fresh table on every monitoring tick.
+        let mut counters = self
+            .previous
+            .take()
+            .map_or_else(HashMap::new, |sample| sample.processes);
+        counters.clear();
+        counters.extend(processes.iter().map(|p| {
+            (
+                p.pid,
+                ProcessCounters {
+                    start: p.start_ticks,
+                    cpu: p.total_ticks,
+                    read: p.read_bytes,
+                    written: p.written_bytes,
+                },
+            )
+        }));
         self.previous = Some(Sample {
             at,
             cpu,
             io,
-            processes: processes
-                .iter()
-                .map(|p| {
-                    (
-                        p.pid,
-                        ProcessCounters {
-                            start: p.start_ticks,
-                            cpu: p.total_ticks,
-                            read: p.read_bytes,
-                            written: p.written_bytes,
-                        },
-                    )
-                })
-                .collect(),
+            processes: counters,
         });
         Ok(Snapshot {
             cpu_percent,
@@ -490,12 +495,7 @@ fn read_process(
             .unwrap_or(u32::MAX);
         process.cpus_allowed_list = allowed_cpus(&status);
         if let Ok(command) = fs::read(directory.join("cmdline")) {
-            let display = command
-                .split(|byte| *byte == 0)
-                .filter(|part| !part.is_empty())
-                .map(String::from_utf8_lossy)
-                .collect::<Vec<_>>()
-                .join(" ");
+            let display = command_display(&command);
             if !display.is_empty() {
                 process.command = display;
             }
@@ -534,6 +534,20 @@ fn allowed_cpus(status: &str) -> Option<String> {
         .map(str::trim)
         .filter(|mask| !mask.is_empty() && mask.len() <= 128)
         .map(str::to_owned)
+}
+
+fn command_display(command: &[u8]) -> String {
+    let mut display = String::with_capacity(command.len());
+    for part in command
+        .split(|byte| *byte == 0)
+        .filter(|part| !part.is_empty())
+    {
+        if !display.is_empty() {
+            display.push(' ');
+        }
+        display.push_str(&String::from_utf8_lossy(part));
+    }
+    display
 }
 
 pub fn start_ticks(pid: i32) -> io::Result<u64> {
@@ -708,6 +722,17 @@ mod tests {
         process.start_ticks = 77;
         process.name = "exec-replacement".into(); // Same PID, exec'd program.
         assert!(!cached.valid_for(&process, now));
+    }
+
+    #[test]
+    fn command_line_display_joins_nul_fields_without_intermediate_vectors() {
+        assert_eq!(
+            command_display(b"/usr/bin/app\0--name\0hello\0"),
+            "/usr/bin/app --name hello"
+        );
+        assert_eq!(command_display(b"\0\0\0"), "");
+        assert_eq!(command_display(b"app\0\0option\0"), "app option");
+        assert_eq!(command_display(b"app\0\xff\0"), "app \u{fffd}");
     }
 
     #[test]

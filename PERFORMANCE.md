@@ -2,6 +2,13 @@
 
 Numbers below were observed, not estimated. They are **headless CLI samples**, not desktop GUI benchmarks. They must not be compared directly to `btop`, `xfce4-taskmanager` or GNOME/KDE monitors.
 
+## Further process-list and sampler optimizations — 2026-11-10
+
+- Repaints now reuse the previous process order and tree depths while the snapshot, sort, filter and tree settings are unchanged. A new sampler snapshot or sort-freeze action invalidates the cache. Only process indices/depths are retained; old snapshots and their command strings are **not** pinned by the cache. This trades a small index array for fewer sort/filter passes on extra GUI frames.
+- Sorting by process name now computes Unicode-lowercased sort keys once per matching process rather than per comparison. Case-insensitive ordering, direction and ascending PID tie-break are preserved.
+- The sampler reuses its previous per-PID counter hash table and joins `/proc/PID/cmdline` arguments directly into one string without a temporary argument vector. Per-process counter deltas, PID-reuse safeguards, and live sampling remain unchanged.
+- Existing tests cover process-order cache reuse/invalidation, filter and direction changes, PID reuse, tree view, and command-line parsing. No GUI layout or styling code was changed. **No physical GUI RSS/PSS or end-to-end CPU reduction is claimed** without the ThinkPad benchmark below.
+
 ## Sampler CPU optimization — 2026-11-08
 
 - Root cause: each periodic Linux process scan re-opened `/proc/PID/status` and `/proc/PID/cmdline` for **every** PID, even when the process identity and metadata were unchanged. The sampler already uses a background thread and egui already wakes on samples; adding another UI redraw timer would increase idle work.

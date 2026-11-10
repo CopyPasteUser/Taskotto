@@ -364,6 +364,7 @@ fn generate_headless_ui_screenshots() {
             worker: Worker::start(10_000, ctx.clone()),
             settings,
             snapshot: Some(snapshot.clone().into()),
+            process_order_cache: RefCell::new(None),
             history: History {
                 sampled_at_unix_ms: history.sampled_at_unix_ms.clone(),
                 cpu: history.cpu.clone(),
