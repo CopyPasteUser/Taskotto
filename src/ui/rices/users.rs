@@ -121,14 +121,13 @@ mod tests {
             (1000, 13, "helper"),
         ]
         .into_iter()
-        .map(|(uid, pid, name)| ProcessRow {
-            process: Process {
+        .map(|(uid, pid, name)| {
+            ProcessRow::for_test(Process {
                 user_id: uid,
                 pid,
                 name: name.to_owned(),
                 ..Default::default()
-            },
-            depth: 0,
+            })
         })
         .collect();
         let groups = by_uid(rows);

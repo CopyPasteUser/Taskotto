@@ -153,13 +153,12 @@ mod tests {
         let rows = [1000, 1001, 1000]
             .into_iter()
             .enumerate()
-            .map(|(index, uid)| ProcessRow {
-                process: Process {
+            .map(|(index, uid)| {
+                ProcessRow::for_test(Process {
                     pid: index as i32 + 10,
                     user_id: uid,
                     ..Default::default()
-                },
-                depth: 0,
+                })
             })
             .collect();
         assert_eq!(owned_rows(rows, 1000).len(), 2);
