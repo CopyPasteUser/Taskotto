@@ -11,7 +11,10 @@ use std::{
     collections::{HashMap, VecDeque},
     io,
     path::PathBuf,
-    sync::mpsc::{self, Receiver, Sender, TryRecvError, TrySendError},
+    sync::{
+        Arc,
+        mpsc::{self, Receiver, Sender, TryRecvError, TrySendError},
+    },
     thread::{self, JoinHandle},
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
@@ -322,9 +325,47 @@ struct PendingAction {
 }
 
 #[derive(Clone)]
+struct ProcessHandle {
+    snapshot: Arc<Snapshot>,
+    index: usize,
+}
+
+impl std::ops::Deref for ProcessHandle {
+    type Target = Process;
+
+    fn deref(&self) -> &Process {
+        &self.snapshot.processes[self.index]
+    }
+}
+
+#[derive(Clone)]
 struct ProcessRow {
-    process: Process,
+    process: ProcessHandle,
     depth: usize,
+}
+
+#[cfg(test)]
+impl ProcessRow {
+    fn for_test(process: Process) -> Self {
+        Self {
+            process: ProcessHandle {
+                snapshot: Arc::new(Snapshot {
+                    cpu_percent: 0.0,
+                    cores_percent: Vec::new(),
+                    memory: Default::default(),
+                    rates: Default::default(),
+                    uptime_seconds: 0.0,
+                    processes: vec![process],
+                    logical_cpus: 1,
+                    gpus: Vec::new(),
+                    power: Default::default(),
+                    pressure: Default::default(),
+                }),
+                index: 0,
+            },
+            depth: 0,
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -359,7 +400,7 @@ struct RicePackPreview {
 pub struct TaskottoApp {
     settings: Settings,
     worker: Worker,
-    snapshot: Option<Snapshot>,
+    snapshot: Option<Arc<Snapshot>>,
     history: History,
     history_export_path: String,
     page: Page,
@@ -782,7 +823,7 @@ impl TaskottoApp {
             match result {
                 Ok(snapshot) => {
                     self.history.record(&snapshot);
-                    self.snapshot = Some(snapshot);
+                    self.snapshot = Some(Arc::new(snapshot));
                 }
                 Err(err) => self.notification = Some(format!("Monitoring error: {err}")),
             }
@@ -860,32 +901,45 @@ impl TaskottoApp {
             return Vec::new();
         };
         let query = self.query.to_lowercase();
-        let mut matches: Vec<Process> = snapshot
+        let mut matches: Vec<usize> = snapshot
             .processes
             .iter()
-            .filter(|p| self.process_matches_filters(p, &query))
-            .cloned()
+            .enumerate()
+            .filter(|(_, p)| self.process_matches_filters(p, &query))
+            .map(|(index, _)| index)
             .collect();
-        matches.sort_by(|a, b| self.compare_process_order(a, b));
+        matches.sort_by(|&a, &b| {
+            self.compare_process_order(&snapshot.processes[a], &snapshot.processes[b])
+        });
         if !self.settings.tree_view {
             return matches
                 .into_iter()
-                .map(|process| ProcessRow { process, depth: 0 })
+                .map(|index| ProcessRow {
+                    process: ProcessHandle {
+                        snapshot: Arc::clone(snapshot),
+                        index,
+                    },
+                    depth: 0,
+                })
                 .collect();
         }
         // Preserve sorting among siblings, then visit every child exactly once.
         // Reuse this order for the tree rather than sorting the same processes twice.
-        let ordered = matches.iter().map(|p| p.pid).collect::<Vec<_>>();
+        let ordered = matches
+            .iter()
+            .map(|&index| snapshot.processes[index].pid)
+            .collect::<Vec<_>>();
         let mut by_pid = HashMap::with_capacity(matches.len());
-        for process in matches {
-            by_pid.insert(process.pid, process);
+        for index in matches {
+            by_pid.insert(snapshot.processes[index].pid, index);
         }
         let mut children: HashMap<i32, Vec<i32>> = HashMap::new();
         let mut roots = Vec::new();
         for pid in &ordered {
-            let Some(process) = by_pid.get(pid) else {
+            let Some(&index) = by_pid.get(pid) else {
                 continue;
             };
+            let process = &snapshot.processes[index];
             if process.pid != process.parent_pid && by_pid.contains_key(&process.parent_pid) {
                 children.entry(process.parent_pid).or_default().push(*pid);
             } else {
@@ -894,7 +948,7 @@ impl TaskottoApp {
         }
         let mut result = Vec::with_capacity(by_pid.len());
         for pid in roots.into_iter().chain(ordered) {
-            append_tree(pid, 0, &mut by_pid, &children, &mut result);
+            append_tree(pid, 0, &mut by_pid, &children, snapshot, &mut result);
         }
         result
     }
@@ -2672,16 +2726,23 @@ impl eframe::App for TaskottoApp {
 fn append_tree(
     pid: i32,
     depth: usize,
-    processes: &mut HashMap<i32, Process>,
+    processes: &mut HashMap<i32, usize>,
     children: &HashMap<i32, Vec<i32>>,
+    snapshot: &Arc<Snapshot>,
     result: &mut Vec<ProcessRow>,
 ) {
-    // Moving each process into its row also acts as the visited guard for cycles.
-    if let Some(process) = processes.remove(&pid) {
-        result.push(ProcessRow { process, depth });
+    // Removing each index also guards against malformed cyclic parent trees.
+    if let Some(index) = processes.remove(&pid) {
+        result.push(ProcessRow {
+            process: ProcessHandle {
+                snapshot: Arc::clone(snapshot),
+                index,
+            },
+            depth,
+        });
         if let Some(child_ids) = children.get(&pid) {
             for child in child_ids {
-                append_tree(*child, depth + 1, processes, children, result);
+                append_tree(*child, depth + 1, processes, children, snapshot, result);
             }
         }
     }
@@ -3020,7 +3081,7 @@ mod tests {
         let mut app = TaskottoApp {
             settings: Settings::default(),
             worker: Worker::start(10_000, ctx),
-            snapshot: Some(Snapshot {
+            snapshot: Some(Arc::new(Snapshot {
                 processes: vec![
                     Process {
                         pid: 42,
@@ -3046,7 +3107,7 @@ mod tests {
                 gpus: vec![],
                 power: Default::default(),
                 pressure: Default::default(),
-            }),
+            })),
             history: History::default(),
             history_export_path: String::new(),
             page: Page::Processes,
@@ -3075,10 +3136,14 @@ mod tests {
                 .collect::<Vec<_>>()
         };
         assert_eq!(pids(&app), [(42, 100), (7, 200)]);
+        assert!(Arc::ptr_eq(
+            &app.processes()[0].process.snapshot,
+            app.snapshot.as_ref().unwrap()
+        ));
         app.set_sort_frozen(true);
         assert_eq!(app.frozen_sort_order.as_ref().map(HashMap::len), Some(2));
 
-        let snapshot = app.snapshot.as_mut().unwrap();
+        let snapshot = Arc::get_mut(app.snapshot.as_mut().unwrap()).unwrap();
         snapshot.processes[0].cpu_percent = 1.0;
         snapshot.processes[1].cpu_percent = 99.0;
         // PID 42 has exited; a different process acquired the same numeric PID.
@@ -3095,7 +3160,10 @@ mod tests {
 
         app.settings.tree_view = true;
         app.set_sort_frozen(true);
-        app.snapshot.as_mut().unwrap().processes[0].parent_pid = 7;
+        Arc::get_mut(app.snapshot.as_mut().unwrap())
+            .unwrap()
+            .processes[0]
+            .parent_pid = 7;
         // Tree view still preserves the hierarchy; it never sacrifices it
         // just to reproduce a flat frozen row index.
         let rows = app.processes();
@@ -3262,26 +3330,33 @@ mod tests {
 
     #[test]
     fn tree_walker_handles_parent_cycles_without_duplicate_rows() {
-        let mut processes = HashMap::new();
-        processes.insert(
-            11,
-            Process {
-                pid: 11,
-                parent_pid: 12,
-                ..Process::default()
-            },
-        );
-        processes.insert(
-            12,
-            Process {
-                pid: 12,
-                parent_pid: 11,
-                ..Process::default()
-            },
-        );
+        let snapshot = Arc::new(Snapshot {
+            processes: vec![
+                Process {
+                    pid: 11,
+                    parent_pid: 12,
+                    ..Process::default()
+                },
+                Process {
+                    pid: 12,
+                    parent_pid: 11,
+                    ..Process::default()
+                },
+            ],
+            cpu_percent: 0.0,
+            cores_percent: Vec::new(),
+            memory: Default::default(),
+            rates: Default::default(),
+            uptime_seconds: 0.0,
+            logical_cpus: 1,
+            gpus: Vec::new(),
+            power: Default::default(),
+            pressure: Default::default(),
+        });
+        let mut processes = HashMap::from([(11, 0), (12, 1)]);
         let children = HashMap::from([(11, vec![12]), (12, vec![11])]);
         let mut result = Vec::new();
-        append_tree(11, 0, &mut processes, &children, &mut result);
+        append_tree(11, 0, &mut processes, &children, &snapshot, &mut result);
         assert_eq!(result.len(), 2);
         assert_eq!(result[0].depth, 0);
         assert_eq!(result[1].depth, 1);
@@ -3305,7 +3380,7 @@ mod tests {
         let mut app = TaskottoApp {
             worker: Worker::start(settings.effective_refresh_ms(), ctx.clone()),
             settings,
-            snapshot: Some(Snapshot {
+            snapshot: Some(Arc::new(Snapshot {
                 cpu_percent: 12.5,
                 cores_percent: vec![25.0, 0.0],
                 memory: crate::monitor::Memory {
@@ -3327,7 +3402,7 @@ mod tests {
                 gpus: vec![],
                 power: Default::default(),
                 pressure: Default::default(),
-            }),
+            })),
             history: History::default(),
             history_export_path: String::new(),
             page: Page::Processes,
@@ -3658,7 +3733,7 @@ mod tests {
         let mut app = TaskottoApp {
             worker: Worker::start(10_000, ctx.clone()),
             settings,
-            snapshot: Some(snapshot),
+            snapshot: Some(snapshot.into()),
             history,
             history_export_path: String::new(),
             page: Page::Processes,
@@ -3742,7 +3817,7 @@ mod tests {
                 theme: Theme::Macos,
                 ..Settings::default()
             },
-            snapshot: Some(Snapshot {
+            snapshot: Some(Arc::new(Snapshot {
                 cpu_percent: 24.0,
                 cores_percent: vec![24.0, 5.0],
                 memory: crate::monitor::Memory {
@@ -3766,7 +3841,7 @@ mod tests {
                 gpus: vec![],
                 power: Default::default(),
                 pressure: Default::default(),
-            }),
+            })),
             history: History::default(),
             history_export_path: String::new(),
             page: Page::Processes,
@@ -3854,7 +3929,7 @@ mod tests {
         let mut app = TaskottoApp {
             worker: Worker::start(10_000, ctx.clone()),
             settings,
-            snapshot: Some(Snapshot {
+            snapshot: Some(Arc::new(Snapshot {
                 cpu_percent: 23.0,
                 cores_percent: (0..24).map(|index| index as f32).collect(),
                 memory: crate::monitor::Memory {
@@ -3878,7 +3953,7 @@ mod tests {
                 gpus: vec![],
                 power: Default::default(),
                 pressure: Default::default(),
-            }),
+            })),
             history: History::default(),
             history_export_path: String::new(),
             page: Page::Processes,

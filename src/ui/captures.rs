@@ -363,7 +363,7 @@ fn generate_headless_ui_screenshots() {
         let mut app = TaskottoApp {
             worker: Worker::start(10_000, ctx.clone()),
             settings,
-            snapshot: Some(snapshot.clone()),
+            snapshot: Some(snapshot.clone().into()),
             history: History {
                 sampled_at_unix_ms: history.sampled_at_unix_ms.clone(),
                 cpu: history.cpu.clone(),

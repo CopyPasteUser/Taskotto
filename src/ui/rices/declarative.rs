@@ -146,7 +146,7 @@ fn metric_tile(
             ui.vertical(|ui| {
                 ui.label(egui::RichText::new(label).small());
                 ui.label(
-                    egui::RichText::new(metric_value(app.snapshot.as_ref(), binding))
+                    egui::RichText::new(metric_value(app.snapshot.as_deref(), binding))
                         .size(22.0)
                         .strong(),
                 );
@@ -173,7 +173,7 @@ fn metric_value(snapshot: Option<&Snapshot>, binding: Metric) -> String {
 }
 
 fn gauge(app: &TaskottoApp, ui: &mut egui::Ui, label: &str, binding: Gauge, paint: ComponentPaint) {
-    let actual = gauge_percent(app.snapshot.as_ref(), binding);
+    let actual = gauge_percent(app.snapshot.as_deref(), binding);
     ui.label(egui::RichText::new(label).strong());
     if let Some(percent) = actual {
         let progress = (percent / 100.0).clamp(0.0, 1.0);
@@ -220,7 +220,7 @@ fn status_strip(app: &TaskottoApp, ui: &mut egui::Ui, bindings: &[Metric], paint
                     ui.label(format!(
                         "{}: {}",
                         binding.label(),
-                        metric_value(app.snapshot.as_ref(), *binding)
+                        metric_value(app.snapshot.as_deref(), *binding)
                     ));
                 }
             });
