@@ -349,13 +349,16 @@ fn read_cpu() -> io::Result<Vec<CpuTicks>> {
     let text = fs::read_to_string("/proc/stat")?;
     let mut cpus = Vec::new();
     for line in text.lines().take_while(|line| line.starts_with("cpu")) {
-        let mut numbers = line.split_whitespace().skip(1).map(str::parse::<u64>);
-        let values = (0..10)
-            .map(|_| numbers.next().and_then(Result::ok).unwrap_or_default())
-            .collect::<Vec<_>>();
+        let mut total = 0_u64;
+        let mut idle = 0_u64;
+        for (index, value) in line.split_whitespace().skip(1).take(8).enumerate() {
+            let value = value.parse::<u64>().unwrap_or_default();
+            total = total.saturating_add(value);
+            if index == 3 || index == 4 {
+                idle = idle.saturating_add(value);
+            }
+        }
         // Guest ticks are already included in user/nice and must not be counted twice.
-        let total = values[..8].iter().sum();
-        let idle = values[3].saturating_add(values[4]);
         cpus.push(CpuTicks { total, idle });
     }
     if cpus.is_empty() {
@@ -369,24 +372,26 @@ fn read_cpu() -> io::Result<Vec<CpuTicks>> {
 
 fn read_memory() -> io::Result<Memory> {
     let text = fs::read_to_string("/proc/meminfo")?;
-    let mut values = HashMap::new();
+    let mut memory = Memory::default();
     for line in text.lines() {
         if let Some((key, rest)) = line.split_once(':')
+            && matches!(key, "MemTotal" | "MemAvailable" | "SwapTotal" | "SwapFree")
             && let Some(kib) = rest
                 .split_whitespace()
                 .next()
                 .and_then(|s| s.parse::<u64>().ok())
         {
-            values.insert(key, kib.saturating_mul(1024));
+            let bytes = kib.saturating_mul(1024);
+            match key {
+                "MemTotal" => memory.total = bytes,
+                "MemAvailable" => memory.available = bytes,
+                "SwapTotal" => memory.swap_total = bytes,
+                "SwapFree" => memory.swap_free = bytes,
+                _ => unreachable!(),
+            }
         }
     }
-    let get = |key| values.get(key).copied().unwrap_or_default();
-    Ok(Memory {
-        total: get("MemTotal"),
-        available: get("MemAvailable"),
-        swap_total: get("SwapTotal"),
-        swap_free: get("SwapFree"),
-    })
+    Ok(memory)
 }
 
 fn read_uptime() -> io::Result<f64> {
@@ -407,25 +412,32 @@ fn read_io() -> IoTotals {
             if interface.trim() == "lo" {
                 continue;
             }
-            let values = values
-                .split_whitespace()
-                .filter_map(|s| s.parse::<u64>().ok())
-                .collect::<Vec<_>>();
-            if values.len() >= 16 {
-                totals.rx = totals.rx.saturating_add(values[0]);
-                totals.tx = totals.tx.saturating_add(values[8]);
+            let mut columns = values.split_whitespace();
+            if let (Some(rx), Some(tx)) = (
+                columns.next().and_then(|s| s.parse::<u64>().ok()),
+                columns.nth(7).and_then(|s| s.parse::<u64>().ok()),
+            ) {
+                totals.rx = totals.rx.saturating_add(rx);
+                totals.tx = totals.tx.saturating_add(tx);
             }
         }
     }
     if let Ok(text) = fs::read_to_string("/proc/diskstats") {
         for line in text.lines() {
-            let fields = line.split_whitespace().collect::<Vec<_>>();
-            if fields.len() < 10 || !Path::new("/sys/block").join(fields[2]).exists() {
+            let mut fields = line.split_whitespace();
+            let Some(device) = fields.nth(2) else {
+                continue;
+            };
+            if !Path::new("/sys/block").join(device).exists() {
                 continue;
             }
             // Linux diskstats sectors are 512-byte units, independent of physical block size.
-            let sectors_read = fields[5].parse::<u64>().unwrap_or_default();
-            let sectors_written = fields[9].parse::<u64>().unwrap_or_default();
+            let sectors_read = fields.nth(2).and_then(|s| s.parse::<u64>().ok());
+            let sectors_written = fields.nth(3).and_then(|s| s.parse::<u64>().ok());
+            let (Some(sectors_read), Some(sectors_written)) = (sectors_read, sectors_written)
+            else {
+                continue;
+            };
             totals.read = totals.read.saturating_add(sectors_read.saturating_mul(512));
             totals.write = totals
                 .write
@@ -536,20 +548,15 @@ fn parse_process_stat(pid: i32, stat: &str, page_size: u64) -> io::Result<Proces
         return Err(invalid_stat());
     }
     let name = stat[left + 1..right].to_owned();
-    let fields = stat[right + 1..].split_whitespace().collect::<Vec<_>>();
-    let field = |index: usize| -> io::Result<u64> {
-        fields
-            .get(index)
-            .and_then(|s| s.parse().ok())
-            .ok_or_else(invalid_stat)
-    };
-    let signed_field = |index: usize| -> io::Result<i32> {
-        fields
-            .get(index)
-            .and_then(|s| s.parse().ok())
-            .ok_or_else(invalid_stat)
-    };
-    if fields.len() < 22 {
+    let mut fields = [""; 22];
+    for (slot, value) in fields.iter_mut().zip(stat[right + 1..].split_whitespace()) {
+        *slot = value;
+    }
+    let field =
+        |index: usize| -> io::Result<u64> { fields[index].parse().map_err(|_| invalid_stat()) };
+    let signed_field =
+        |index: usize| -> io::Result<i32> { fields[index].parse().map_err(|_| invalid_stat()) };
+    if fields[21].is_empty() {
         return Err(invalid_stat());
     }
     Ok(Process {

@@ -8,7 +8,7 @@ use crate::{
 };
 use eframe::egui::{self, Color32, RichText, Sense, Stroke, Vec2};
 use std::{
-    collections::{HashMap, HashSet, VecDeque},
+    collections::{HashMap, VecDeque},
     io,
     path::PathBuf,
     sync::mpsc::{self, Receiver, Sender, TryRecvError, TrySendError},
@@ -874,37 +874,27 @@ impl TaskottoApp {
                 .collect();
         }
         // Preserve sorting among siblings, then visit every child exactly once.
-        let pids = matches.iter().map(|p| p.pid).collect::<HashSet<_>>();
-        let mut children: HashMap<i32, Vec<i32>> = HashMap::new();
-        let mut by_pid = HashMap::new();
+        // Reuse this order for the tree rather than sorting the same processes twice.
+        let ordered = matches.iter().map(|p| p.pid).collect::<Vec<_>>();
+        let mut by_pid = HashMap::with_capacity(matches.len());
         for process in matches {
-            if process.pid != process.parent_pid && pids.contains(&process.parent_pid) {
-                children
-                    .entry(process.parent_pid)
-                    .or_default()
-                    .push(process.pid);
-            }
             by_pid.insert(process.pid, process);
         }
-        let roots = by_pid
-            .keys()
-            .copied()
-            .filter(|pid| {
-                !by_pid
-                    .get(pid)
-                    .is_some_and(|p| p.pid != p.parent_pid && by_pid.contains_key(&p.parent_pid))
-            })
-            .collect::<HashSet<_>>();
-        let ordered = self.sort_pids(by_pid.values().collect());
-        let mut visited = HashSet::new();
+        let mut children: HashMap<i32, Vec<i32>> = HashMap::new();
+        let mut roots = Vec::new();
+        for pid in &ordered {
+            let Some(process) = by_pid.get(pid) else {
+                continue;
+            };
+            if process.pid != process.parent_pid && by_pid.contains_key(&process.parent_pid) {
+                children.entry(process.parent_pid).or_default().push(*pid);
+            } else {
+                roots.push(*pid);
+            }
+        }
         let mut result = Vec::with_capacity(by_pid.len());
-        for pid in ordered
-            .iter()
-            .copied()
-            .filter(|pid| roots.contains(pid))
-            .chain(ordered.iter().copied())
-        {
-            append_tree(pid, 0, &by_pid, &children, &mut visited, &mut result);
+        for pid in roots.into_iter().chain(ordered) {
+            append_tree(pid, 0, &mut by_pid, &children, &mut result);
         }
         result
     }
@@ -920,12 +910,6 @@ impl TaskottoApp {
                     .users
                     .get(&process.user_id)
                     .is_some_and(|name| name.to_lowercase().contains(lowercase_query)))
-    }
-
-    fn sort_pids(&self, processes: Vec<&Process>) -> Vec<i32> {
-        let mut rows = processes;
-        rows.sort_by(|a, b| self.compare_process_order(a, b));
-        rows.into_iter().map(|p| p.pid).collect()
     }
 
     fn compare_process_order(&self, a: &Process, b: &Process) -> std::cmp::Ordering {
@@ -2688,22 +2672,16 @@ impl eframe::App for TaskottoApp {
 fn append_tree(
     pid: i32,
     depth: usize,
-    processes: &HashMap<i32, Process>,
+    processes: &mut HashMap<i32, Process>,
     children: &HashMap<i32, Vec<i32>>,
-    visited: &mut HashSet<i32>,
     result: &mut Vec<ProcessRow>,
 ) {
-    if !visited.insert(pid) {
-        return;
-    }
-    if let Some(process) = processes.get(&pid) {
-        result.push(ProcessRow {
-            process: process.clone(),
-            depth,
-        });
+    // Moving each process into its row also acts as the visited guard for cycles.
+    if let Some(process) = processes.remove(&pid) {
+        result.push(ProcessRow { process, depth });
         if let Some(child_ids) = children.get(&pid) {
             for child in child_ids {
-                append_tree(*child, depth + 1, processes, children, visited, result);
+                append_tree(*child, depth + 1, processes, children, result);
             }
         }
     }
@@ -3302,9 +3280,8 @@ mod tests {
             },
         );
         let children = HashMap::from([(11, vec![12]), (12, vec![11])]);
-        let mut visited = HashSet::new();
         let mut result = Vec::new();
-        append_tree(11, 0, &processes, &children, &mut visited, &mut result);
+        append_tree(11, 0, &mut processes, &children, &mut result);
         assert_eq!(result.len(), 2);
         assert_eq!(result[0].depth, 0);
         assert_eq!(result[1].depth, 1);
