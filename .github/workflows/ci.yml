@@ -35,6 +35,15 @@ jobs:
           grep -Fqx "Icon=$test_dir/user-data/icons/hicolor/256x256/apps/io.github.copypasteuser.taskotto.png" "$test_dir/user-data/applications/io.github.copypasteuser.taskotto.desktop"
       - run: ./target/release/taskotto --snapshot
       - run: ./target/release/taskotto --snapshot --json | jq -e '.logical_cpus > 0 and .memory.total > 0'
+      - name: Smoke-test read-only Linux GUI memory benchmark
+        run: |
+          sleep 5 &
+          target=$!
+          trap 'kill "$target" 2>/dev/null || true' EXIT
+          bash -n scripts/benchmark-gui-memory.sh
+          result=$(bash scripts/benchmark-gui-memory.sh --pid "$target" --seconds 1)
+          printf '%s\n' "$result" | grep -F 'RSS (MiB):'
+          printf '%s\n' "$result" | grep -F 'CPU:'
       - run: RUSTDOCFLAGS='-D warnings' cargo doc --locked --no-deps
 
   msrv:

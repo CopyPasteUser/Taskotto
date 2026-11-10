@@ -35,3 +35,11 @@ done
 ## GUI benchmark follow-up after owner-approved 1.0
 
 No graphical session was available in the original development environment. The owner approved stable 1.0 on 2026-11-09 following several days of use, but detailed startup, idle CPU, peak/steady RSS, process-list scaling and extended soak measurements were **not submitted**. Record three reproducible GUI runs per machine at 500, 1500 and 10000 ms sampling intervals, plus kernel, load, compositor and RAM. Use [QA.md](QA.md) for test steps; do not replace that evidence with the headless numbers above.
+
+To capture RSS, proportional set size (PSS), private dirty memory, and idle CPU of **the running GUI** on Linux, leave Taskotto open and run in another terminal:
+
+```bash
+bash scripts/benchmark-gui-memory.sh --seconds 60
+```
+
+The script auto-detects exactly one Taskotto process belonging to your user. Pass `--pid PID` if multiple windows exist. It reads `/proc` without root or new dependencies, takes one sample per second, verifies PID identity, and prints min/mean/max memory and average CPU usage over the measured wall time. Missing or restricted PSS stays *unavailable*, never substituted with RSS. Keep the same RicePack, desktop session, workload, and refresh interval when comparing versions. Take the old installed version's measurement **before updating**, then repeat with the new version; rerun each condition three times and compare the medians. No GUI-memory improvement in MiB is claimed until these real desktop results exist.
