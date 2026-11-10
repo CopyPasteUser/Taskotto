@@ -934,6 +934,7 @@ mod tests {
             settings: Settings::default(),
             worker: Worker::start(10_000, ctx),
             snapshot: None,
+            process_order_cache: RefCell::new(None),
             history: History::default(),
             history_export_path: String::new(),
             page: Page::Processes,

@@ -8,6 +8,7 @@ use crate::{
 };
 use eframe::egui::{self, Color32, RichText, Sense, Stroke, Vec2};
 use std::{
+    cell::RefCell,
     collections::{HashMap, VecDeque},
     io,
     path::PathBuf,
@@ -344,6 +345,36 @@ struct ProcessRow {
     depth: usize,
 }
 
+/// Only row indices and tree depths are retained between repaints. The cache
+/// never owns a snapshot, so old process/command strings can be freed promptly.
+struct ProcessOrderCache {
+    snapshot_identity: usize,
+    snapshot_len: usize,
+    query: String,
+    sort_by: SortBy,
+    descending: bool,
+    tree_view: bool,
+    show_kernel_threads: bool,
+    only_my_processes: bool,
+    frozen: bool,
+    rows: Vec<(usize, usize)>,
+}
+
+impl ProcessOrderCache {
+    fn matches(&self, app: &TaskottoApp) -> bool {
+        app.snapshot.as_ref().is_some_and(|snapshot| {
+            Arc::as_ptr(snapshot) as usize == self.snapshot_identity
+                && snapshot.processes.len() == self.snapshot_len
+        }) && self.query == app.query
+            && self.sort_by == app.settings.sort_by
+            && self.descending == app.settings.descending
+            && self.tree_view == app.settings.tree_view
+            && self.show_kernel_threads == app.settings.show_kernel_threads
+            && self.only_my_processes == app.settings.only_my_processes
+            && self.frozen == app.frozen_sort_order.is_some()
+    }
+}
+
 #[cfg(test)]
 impl ProcessRow {
     fn for_test(process: Process) -> Self {
@@ -401,6 +432,7 @@ pub struct TaskottoApp {
     settings: Settings,
     worker: Worker,
     snapshot: Option<Arc<Snapshot>>,
+    process_order_cache: RefCell<Option<ProcessOrderCache>>,
     history: History,
     history_export_path: String,
     page: Page,
@@ -478,6 +510,7 @@ impl TaskottoApp {
             worker: Worker::start(settings.effective_refresh_ms(), context.egui_ctx.clone()),
             settings,
             snapshot: None,
+            process_order_cache: RefCell::new(None),
             history: History::default(),
             history_export_path: String::new(),
             page: initial_page,
@@ -823,6 +856,7 @@ impl TaskottoApp {
             match result {
                 Ok(snapshot) => {
                     self.history.record(&snapshot);
+                    self.process_order_cache.get_mut().take();
                     self.snapshot = Some(Arc::new(snapshot));
                 }
                 Err(err) => self.notification = Some(format!("Monitoring error: {err}")),
@@ -900,6 +934,44 @@ impl TaskottoApp {
         let Some(snapshot) = &self.snapshot else {
             return Vec::new();
         };
+        if let Some(cache) = self.process_order_cache.borrow().as_ref()
+            && cache.matches(self)
+        {
+            return cache
+                .rows
+                .iter()
+                .map(|&(index, depth)| ProcessRow {
+                    process: ProcessHandle {
+                        snapshot: Arc::clone(snapshot),
+                        index,
+                    },
+                    depth,
+                })
+                .collect();
+        }
+        let rows = self.build_processes();
+        self.process_order_cache.replace(Some(ProcessOrderCache {
+            snapshot_identity: Arc::as_ptr(snapshot) as usize,
+            snapshot_len: snapshot.processes.len(),
+            query: self.query.clone(),
+            sort_by: self.settings.sort_by,
+            descending: self.settings.descending,
+            tree_view: self.settings.tree_view,
+            show_kernel_threads: self.settings.show_kernel_threads,
+            only_my_processes: self.settings.only_my_processes,
+            frozen: self.frozen_sort_order.is_some(),
+            rows: rows
+                .iter()
+                .map(|row| (row.process.index, row.depth))
+                .collect(),
+        }));
+        rows
+    }
+
+    fn build_processes(&self) -> Vec<ProcessRow> {
+        let Some(snapshot) = &self.snapshot else {
+            return Vec::new();
+        };
         let query = self.query.to_lowercase();
         let mut matches: Vec<usize> = snapshot
             .processes
@@ -908,9 +980,25 @@ impl TaskottoApp {
             .filter(|(_, p)| self.process_matches_filters(p, &query))
             .map(|(index, _)| index)
             .collect();
-        matches.sort_by(|&a, &b| {
-            self.compare_process_order(&snapshot.processes[a], &snapshot.processes[b])
-        });
+        if self.settings.sort_by == SortBy::Name && self.frozen_sort_order.is_none() {
+            // Unicode name normalization once per process, not on every sort
+            // comparison. PID remains the ascending tie-break in either order.
+            if self.settings.descending {
+                matches.sort_by_cached_key(|&index| {
+                    let p = &snapshot.processes[index];
+                    (std::cmp::Reverse(p.name.to_lowercase()), p.pid)
+                });
+            } else {
+                matches.sort_by_cached_key(|&index| {
+                    let p = &snapshot.processes[index];
+                    (p.name.to_lowercase(), p.pid)
+                });
+            }
+        } else {
+            matches.sort_by(|&a, &b| {
+                self.compare_process_order(&snapshot.processes[a], &snapshot.processes[b])
+            });
+        }
         if !self.settings.tree_view {
             return matches
                 .into_iter()
@@ -993,6 +1081,7 @@ impl TaskottoApp {
                 .collect();
             self.frozen_sort_order = Some(order);
         }
+        self.process_order_cache.get_mut().take();
     }
 
     fn topbar(&mut self, ctx: &egui::Context) {
@@ -3111,6 +3200,7 @@ mod tests {
             history: History::default(),
             history_export_path: String::new(),
             page: Page::Processes,
+            process_order_cache: RefCell::new(None),
             performance_focus: PerformanceFocus::Cpu,
             query: String::new(),
             focus_search: false,
@@ -3140,6 +3230,36 @@ mod tests {
             &app.processes()[0].process.snapshot,
             app.snapshot.as_ref().unwrap()
         ));
+        let cached_rows = app
+            .process_order_cache
+            .borrow()
+            .as_ref()
+            .unwrap()
+            .rows
+            .as_ptr();
+        assert_eq!(pids(&app), [(42, 100), (7, 200)]);
+        assert_eq!(
+            app.process_order_cache
+                .borrow()
+                .as_ref()
+                .unwrap()
+                .rows
+                .as_ptr(),
+            cached_rows,
+            "unchanged repaints should reuse the process order"
+        );
+        assert_eq!(Arc::strong_count(app.snapshot.as_ref().unwrap()), 1);
+
+        app.settings.sort_by = SortBy::Name;
+        app.settings.descending = false;
+        assert_eq!(pids(&app), [(42, 100), (7, 200)]);
+        app.settings.descending = true;
+        assert_eq!(pids(&app), [(7, 200), (42, 100)]);
+        app.query = "second".into();
+        assert_eq!(pids(&app), [(7, 200)]);
+        app.query.clear();
+        app.settings.sort_by = SortBy::Cpu;
+        assert_eq!(pids(&app), [(42, 100), (7, 200)]);
         app.set_sort_frozen(true);
         assert_eq!(app.frozen_sort_order.as_ref().map(HashMap::len), Some(2));
 
@@ -3406,6 +3526,7 @@ mod tests {
             history: History::default(),
             history_export_path: String::new(),
             page: Page::Processes,
+            process_order_cache: RefCell::new(None),
             performance_focus: PerformanceFocus::Cpu,
             query: String::new(),
             focus_search: false,
@@ -3470,6 +3591,7 @@ mod tests {
             history: History::default(),
             history_export_path: String::new(),
             page: Page::Processes,
+            process_order_cache: RefCell::new(None),
             performance_focus: PerformanceFocus::Cpu,
             query: String::new(),
             focus_search: false,
@@ -3580,6 +3702,7 @@ mod tests {
             history: History::default(),
             history_export_path: String::new(),
             page: Page::Processes,
+            process_order_cache: RefCell::new(None),
             performance_focus: PerformanceFocus::Cpu,
             query: String::new(),
             focus_search: false,
@@ -3653,6 +3776,7 @@ mod tests {
             history: History::default(),
             history_export_path: String::new(),
             page: Page::Processes,
+            process_order_cache: RefCell::new(None),
             performance_focus: PerformanceFocus::Cpu,
             query: String::new(),
             focus_search: false,
@@ -3737,6 +3861,7 @@ mod tests {
             history,
             history_export_path: String::new(),
             page: Page::Processes,
+            process_order_cache: RefCell::new(None),
             performance_focus: PerformanceFocus::Cpu,
             query: String::new(),
             focus_search: false,
@@ -3845,6 +3970,7 @@ mod tests {
             history: History::default(),
             history_export_path: String::new(),
             page: Page::Processes,
+            process_order_cache: RefCell::new(None),
             performance_focus: PerformanceFocus::Cpu,
             query: String::new(),
             focus_search: false,
@@ -3957,6 +4083,7 @@ mod tests {
             history: History::default(),
             history_export_path: String::new(),
             page: Page::Processes,
+            process_order_cache: RefCell::new(None),
             performance_focus: PerformanceFocus::Cpu,
             query: String::new(),
             focus_search: false,
