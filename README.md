@@ -2,11 +2,11 @@
 
 # 🍚 Taskotto
 
-**A Linux task manager with a desktop personality.**
+**A Linux task manager that fits your desktop.**
 
-A standalone **Rust** process manager and system monitor for X11 and Wayland, with seven OS-inspired interfaces and custom RicePacks. Optionally integrates with [RiceBowl](https://github.com/CopyPasteUser/Ricebowl).
+Built in **Rust** for X11 and Wayland. Seven OS-inspired interfaces, custom RicePacks, and optional [RiceBowl](https://github.com/CopyPasteUser/Ricebowl) integration. No root daemon or desktop-shell dependency.
 
-[Download v1.0.0](https://github.com/CopyPasteUser/Taskotto/releases/tag/v1.0.0) · [Gallery](SCREENSHOT_GALLERY.md) · [1.0 roadmap](ROADMAP.md) · [Hardware QA](ACCEPTANCE_1_0.md) · [RicePack format](RICEPACK_FORMAT.md)
+[**Download v1.0.0**](https://github.com/CopyPasteUser/Taskotto/releases/tag/v1.0.0) · [Screenshots](SCREENSHOT_GALLERY.md) · [RicePack guide](RICEPACK_FORMAT.md)
 
 </div>
 
@@ -14,21 +14,21 @@ A standalone **Rust** process manager and system monitor for X11 and Wayland, wi
 | :---: | :---: |
 | [![Frutiger Aero process view](assets/screenshots/taskotto-frutiger-aero-processes.png)](assets/screenshots/taskotto-frutiger-aero-processes.png) | [![Windows 10 process view](assets/screenshots/taskotto-win10-processes.png)](assets/screenshots/taskotto-win10-processes.png) |
 
-[See all 52 captured screens](SCREENSHOT_GALLERY.md), including Windows 98, XP Luna, Windows 7, ChromeOS, macOS and custom dashboards.
+[Explore all 52 real-data captures](SCREENSHOT_GALLERY.md), including Windows 98, XP Luna, Windows 7, ChromeOS, macOS and custom dashboards.
 
-## Features
+## What you get
 
-- **Processes:** live CPU/RAM/I/O data, search, filtering, tree view and confirmation-protected process actions with PID-reuse checks.
-- **System monitoring:** CPU, memory, network, disk, PSI, available GPU and battery sensors; missing readings are shown as unavailable.
-- **Process inspection:** cgroup details, on-demand PSS measurements, bounded process history and explicit CSV/JSON export.
-- **Seven built-in styles + custom layouts:** RicePack TOML themes, screen designer and live appearance reload without a desktop-shell dependency.
-- **Lightweight operation:** adjustable sampling, optional low-overhead mode, no root service or resident daemon; headless JSON snapshots are supported.
+- **Manage processes:** CPU, RAM and I/O, search, sorting, tree view and safe process actions with PID-reuse protection.
+- **Monitor Linux:** per-core CPU, memory, disk, network, pressure (PSI), and available GPU/battery sensors.
+- **Inspect details:** cgroups, on-demand PSS, bounded history and CSV/JSON exports.
+- **Make it yours:** seven built-in looks, TOML RicePacks, layout editor and live theme reload.
+- **Keep it efficient:** adjustable refresh, optional low-overhead mode, bounded queues and no background service.
 
-**Status:** `1.0.0` — first stable release, approved by the project owner after several days of everyday use (9 November 2026). The original cross-desktop test matrix and quantified GUI performance benchmarks were not individually submitted, so they remain documented follow-up checks. Window borders and title buttons remain the responsibility of the window manager.
+**Status:** `v1.0.0` is the stable release (9 November 2026). The `main` branch includes newer maintenance and performance improvements. Cross-desktop hardware checks and measured GUI memory benchmarks remain [documented follow-ups](QA.md).
 
-## Install and run
+## Install
 
-Requires Linux, **Rust 1.88+** and an X11 or Wayland session with OpenGL.
+Requires Linux, **Rust 1.88+**, and an X11 or Wayland session with OpenGL. To install the latest source version:
 
 ```bash
 git clone https://github.com/CopyPasteUser/Taskotto.git
@@ -36,24 +36,25 @@ cd Taskotto
 bash install.sh
 ```
 
-The user-local installer creates an applications-menu entry. To run directly from source instead:
+`install.sh` installs Taskotto for your user and adds its application-menu entry and icon. To update later, run from your Taskotto directory:
 
 ```bash
-cargo run --release
+git pull --ff-only
+bash install.sh
 ```
 
-Useful commands:
+## Run and customize
 
 ```bash
 taskotto --theme frutiger-aero
 taskotto --snapshot --json
 taskotto --check-ricepack examples/ricepacks/sea-glass.toml
-RICEBOWL_RICE=windows7 taskotto
+taskotto --ricepack examples/ricepacks/sea-glass.toml
 ```
 
-For a custom RicePack, use `taskotto --ricepack PATH`; it does not execute scripts or overwrite your saved theme. Process signals always require confirmation and use the current user's permissions.
+Run directly from source with `cargo run --release`, or select a RiceBowl-inspired style using `RICEBOWL_RICE=windows7 taskotto`. RicePacks are data-only and session overrides do not overwrite your saved theme. Process actions require confirmation and your normal Linux permissions.
 
-## Development and docs
+## Develop
 
 ```bash
 cargo fmt --all -- --check
@@ -61,4 +62,4 @@ cargo clippy --locked --all-targets -- -D warnings
 cargo test --locked --all-targets
 ```
 
-[Complete screenshot gallery](SCREENSHOT_GALLERY.md) · [Capture provenance](SCREENSHOTS.md) · [Design fidelity](RICE_FIDELITY.md) · [Performance tests](PERFORMANCE.md) · [QA checklist](QA.md) · [1.0 release notes](RELEASE_1_0_0.md) · [Changelog](CHANGELOG.md) · [MIT License](LICENSE)
+[Performance & benchmarks](PERFORMANCE.md) · [Hardware QA](QA.md) · [Roadmap](ROADMAP.md) · [Release notes](RELEASE_1_0_0.md) · [Changelog](CHANGELOG.md) · [MIT License](LICENSE)
